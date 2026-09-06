@@ -326,13 +326,20 @@ def main() -> int:
         action="store_true",
         help="Override manual UI mode and send from CLI",
     )
+    parser.add_argument(
+        "--ui-approved",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     args = parser.parse_args()
 
     if args.send:
         from linkedin_configure import linkedin_connect_allowed  # noqa: E402
 
         tid = args.track or "ai-engineer"
-        allowed, reason = linkedin_connect_allowed(tid, cli_force=args.force_send)
+        allowed, reason = linkedin_connect_allowed(
+            tid, cli_force=args.force_send, ui_approved=args.ui_approved
+        )
         if not allowed:
             print(f"ERROR: {reason}")
             return 1

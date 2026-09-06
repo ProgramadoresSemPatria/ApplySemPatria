@@ -55,6 +55,30 @@ def test_linkedin_configure_manual_mode_blocks_cli_send():
     assert "manual" in reason.lower()
 
 
+def test_linkedin_ui_approval_bypasses_manual_mode():
+    from unittest.mock import patch
+
+    from linkedin_configure import linkedin_send_allowed, set_linkedin_preferences  # noqa: E402
+
+    set_linkedin_preferences("ai-engineer", enabled=True, message_confirmed=True, mode="manual")
+    with patch("environment_setup.linkedin_cookies_ok", return_value=True):
+        ok, reason = linkedin_send_allowed("ai-engineer", ui_approved=True)
+    assert ok is True
+    assert reason == ""
+
+
+def test_gmail_ui_approval_bypasses_manual_mode():
+    from unittest.mock import patch
+
+    from gmail_configure import email_send_allowed, set_email_preferences  # noqa: E402
+
+    set_email_preferences("ai-engineer", enabled=True, message_confirmed=True, mode="manual")
+    with patch("environment_setup.gmail_auth_ok", return_value=True):
+        ok, reason = email_send_allowed("ai-engineer", ui_approved=True)
+    assert ok is True
+    assert reason == ""
+
+
 def test_linkedin_configure_disabled_blocks_send():
     from linkedin_configure import linkedin_send_allowed, set_linkedin_preferences  # noqa: E402
 

@@ -37,8 +37,9 @@ from linkedin_posts_merge import (  # noqa: E402
     sort_jobs_by_recency,
 )
 from registry import RUNS_DIR, job_key, load_registry  # noqa: E402
-from table_format import md_cell, normalize_company_display  # noqa: E402
+from table_format import format_posted, md_cell, normalize_company_display  # noqa: E402
 from track_store import filter_jobs_by_track, job_track_label, list_track_ids, track_label  # noqa: E402
+from position_disposition import disposition_label, get_disposition, include_in_apply_table  # noqa: E402
 import dm_state  # noqa: E402
 
 TZ = ZoneInfo("America/Sao_Paulo")
@@ -95,8 +96,17 @@ def _form_status(job: dict) -> str:
     return "☐ form pending"
 
 
+def load_progress_state() -> None:
+    """Load email / form / DM progress into module globals for status_cell."""
+    global _DM_STATE, _EMAIL_TO, _EMAIL_KEYS, _URL_SUBMITTED
+    _DM_STATE = dm_state.load()
+    _EMAIL_TO, _EMAIL_KEYS = load_email_sent()
+    _URL_SUBMITTED = load_url_submitted()
+
+
 def status_cell(job: dict) -> str:
     """Progress status for a row, based on channel + saved state."""
+    load_progress_state()
     channel = classify_channel(job)
     if channel == "email":
         email = (apply_email_for_job(job) or "").strip().lower()
@@ -239,14 +249,14 @@ def track_cell(job: dict) -> str:
 
 
 def linkedin_row(job: dict) -> str:
-    posted = job.get("posted_label") or (str(job.get("posted_at") or "")[:10] or "—")
+    posted = format_posted(job)
     salary = job.get("salary_usd") or "—"
     location = job.get("location_note") or "—"
     company = normalize_company_display(job.get("company") or "—")
     return (
         f"| ☐ | {md_cell(track_cell(job))} | {md_cell(priority(job))} | {md_cell(posted)} | {md_cell(job.get('role', '—'))} | "
-        f"{md_cell(company)} | {md_cell(salary)} | {md_cell(location)} | {md_cell(channel_label(job))} | "
-        f"{md_cell(status_cell(job))} | "
+        f"{md_cell(company)} | {md_cell(salary)} | {md_cell(location)} | {md_cell(disposition_label(get_disposition(job)))} | "
+        f"{md_cell(channel_label(job))} | {md_cell(status_cell(job))} | "
         f"{md_cell(post_url_for(job))} | {md_cell(apply_url_for(job))} | {md_cell(apply_email_display(job))} |"
     )
 
@@ -262,6 +272,7 @@ def board_row(job: dict) -> str:
         f"| ☐ | {md_cell(track_cell(job))} | {md_cell(pri)} | {md_cell(job.get('role', '—'))} | "
         f"{md_cell(normalize_company_display(job.get('company', '—')))} | "
         f"{md_cell(job.get('salary_usd') or '—')} | {md_cell(job.get('location_note') or '—')} | "
+        f"{md_cell(disposition_label(get_disposition(job)))} | "
         f"{md_cell(channel_label(job))} | {md_cell(status_cell(job))} | {md_cell(apply)} | {md_cell(url)} | {md_cell(apply_email_display(job))} |"
     )
 
@@ -277,10 +288,7 @@ def generate(
     boards_run_note: str = "",
     track_filter: str | None = None,
 ) -> dict[str, int]:
-    global _DM_STATE, _EMAIL_TO, _EMAIL_KEYS, _URL_SUBMITTED
-    _DM_STATE = dm_state.load()
-    _EMAIL_TO, _EMAIL_KEYS = load_email_sent()
-    _URL_SUBMITTED = load_url_submitted()
+    load_progress_state()
 
     registry = load_registry()
     all_jobs = registry["jobs"]
@@ -325,6 +333,9 @@ def generate(
 
     li_apply = dedupe_linkedin_rows(cap(eligible_pool, linkedin_eligible_limit))
     li_review_apply = dedupe_linkedin_rows(cap(review_pool, linkedin_review_limit))
+    boards_eligible = [j for j in boards_eligible if include_in_apply_table(j)]
+    li_apply = [j for j in li_apply if include_in_apply_table(j)]
+    li_review_apply = [j for j in li_review_apply if include_in_apply_table(j)]
 
     all_rows = li_apply + li_review_apply + boards_eligible
     chan_counts = {"email": 0, "url": 0, "dm": 0}
@@ -382,10 +393,10 @@ def generate(
         "",
         "---",
         "",
-        "## LinkedIn — apply first (eligible · newest first)",
+        "## LinkedIn — best fit (eligible · newest first)",
         "",
-        "| ☐ | Track | Pri | Posted | Role | Company | Salary | Location | Channel | Status | Post URL | Apply URL | Apply Email |",
-        "|---|-------|-----|--------|------|---------|--------|----------|---------|--------|----------|-----------|-------------|",
+        "| ☐ | Track | Pri | Posted | Role | Company | Salary | Location | Disposition | Channel | Status | Post URL | Apply URL | Apply Email |",
+        "|---|-------|-----|--------|------|---------|--------|----------|-------------|---------|--------|----------|-----------|-------------|",
     ]
     lines.extend(linkedin_row(j) for j in li_apply)
     lines += [
@@ -394,8 +405,8 @@ def generate(
         "",
         "## LinkedIn — needs review (newest first)",
         "",
-        "| ☐ | Track | Pri | Posted | Role | Company | Salary | Location | Channel | Status | Post URL | Apply URL | Apply Email |",
-        "|---|-------|-----|--------|------|---------|--------|----------|---------|--------|----------|-----------|-------------|",
+        "| ☐ | Track | Pri | Posted | Role | Company | Salary | Location | Disposition | Channel | Status | Post URL | Apply URL | Apply Email |",
+        "|---|-------|-----|--------|------|---------|--------|----------|-------------|---------|--------|----------|-----------|-------------|",
     ]
     lines.extend(linkedin_row(j) for j in li_review_apply)
     lines += [
@@ -404,8 +415,8 @@ def generate(
         "",
         "## Boards — since window",
         "",
-        "| ☐ | Track | Pri | Role | Company | Salary | Location | Channel | Status | Apply | URL | Apply Email |",
-        "|---|-------|-----|------|---------|--------|----------|---------|--------|-------|-----|-------------|",
+        "| ☐ | Track | Pri | Role | Company | Salary | Location | Disposition | Channel | Status | Apply | URL | Apply Email |",
+        "|---|-------|-----|------|---------|--------|----------|-------------|---------|--------|-------|-----|-------------|",
     ]
     lines.extend(board_row(j) for j in boards_eligible)
     lines += [

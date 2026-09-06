@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T17:58:46.932534-03:00",
+  "generated_at": "2026-09-06T18:37:51.791278-03:00",
   "day": "2026",
   "linkedin_since": "2026-08-31",
   "board_since": "2026-08-31",
@@ -28,6 +28,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7500718445278343168/",
       "apply_url": "https://lnkd.in/eiKYM66c",
       "apply_email": "—",
@@ -38,6 +43,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -93,6 +99,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7499475545320001536/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -103,6 +114,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -158,6 +170,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7498760693748428801/",
       "apply_url": "https://lnkd.in/dRiGmev9",
       "apply_email": "—",
@@ -168,6 +185,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -223,6 +241,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Jes%C3%BAs+Francisco+Escariz+Pardal%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -233,6 +256,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -288,6 +312,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/company/tribuesk/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -298,6 +327,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -353,6 +383,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22B%C3%A1rbara+Maria+Saenz%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -363,6 +398,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -415,9 +451,14 @@
       "priority": "★★★",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/in/jf-escariz-pardal-6a7679208/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -428,6 +469,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -483,6 +525,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22nCube+-+software+development+outsourcing+and+outstaffing+services%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dxv_2HSz",
       "apply_email": "—",
@@ -493,6 +540,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -548,6 +596,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/company/consalvos/posts/",
       "apply_url": "https://lnkd.in/dPBj-6qM",
       "apply_email": "—",
@@ -558,6 +611,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -610,9 +664,14 @@
       "priority": "★★☆",
       "channel": "url",
       "channel_label": "URL/Form",
-      "status": "not applied",
+      "status": "☐ form pending · message sent",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/in/nicolebarraconde/recent-activity/all/",
       "apply_url": "https://lnkd.in/e4m6CuUu",
       "apply_email": "—",
@@ -627,6 +686,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -644,24 +704,24 @@
         },
         "dm_connect": {
           "available": true,
-          "done": false,
+          "done": true,
           "in_progress": false,
           "label": "Send connection",
-          "status_text": "not applied"
+          "status_text": "done"
         },
         "dm_check": {
           "available": false,
-          "done": false,
+          "done": true,
           "in_progress": false,
           "label": "Check connection accepted",
-          "status_text": "not applied"
+          "status_text": "accepted"
         },
         "dm_message": {
           "available": true,
-          "done": false,
+          "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
-          "status_text": "not applied"
+          "status_text": "sent"
         }
       }
     },
@@ -679,9 +739,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/barbara-maria-saenz_barbara-invited-you-paraform-connectors-activity-7500168511013707776-jRZI/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -692,6 +757,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -744,9 +810,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/brunnacroches_1-live-project-beats-10-certificates-define-activity-7500289085094248448-6zeM/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -757,6 +828,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -812,6 +884,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Jes%C3%BAs+Francisco+Escariz+Pardal%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -822,6 +899,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -877,6 +955,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/tribuesk_tribuesk-hiring-techjobs-activity-7499889095335190528-3AcX/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -887,6 +970,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -942,6 +1026,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22TECH+JOBS+USA+%28+C2C+%2C+W2%2C+1099+and+fulltime+%29%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -952,6 +1041,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1007,6 +1097,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22PART+TIME+JOBS+Work+from+Home+Online+Freelance+Job+Freelancer+Remote+Flexible+Project+Affiliate%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -1017,6 +1112,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1069,9 +1165,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "connect sent · await accept",
       "status_kind": "connect_pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/sulisumen-peter_activity-7499747703128539137-H4Je/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -1082,6 +1183,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -1137,6 +1239,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22US+Staffing%2C+Bench+Sales%2C+IT+Recruiters%2C+Hotlist%2C+C2C%2C+W2%2C+Vendor%2C+Onboarding%2C+Healthcare+Recruiter%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -1147,6 +1254,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1199,9 +1307,14 @@
       "priority": "★★★",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/jf-escariz-pardal-6a7679208_tribuesk-hiring-techjobs-activity-7499464321224081409-uIaK/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -1212,6 +1325,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -1267,6 +1381,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/sergio-david-razo-jim%C3%A9nez-b349b4127_desarrollador-android-senior-certificado-activity-7485333589841035264-MWSZ/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -1277,6 +1396,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1332,6 +1452,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Innovaci%C3%B3nDigital360+-+Nextwork360+Latam%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eCnRmgwZ",
       "apply_email": "—",
@@ -1342,6 +1467,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1397,6 +1523,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Trio%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "DM recruiter",
       "apply_email": "—",
@@ -1407,6 +1538,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1459,9 +1591,14 @@
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
-      "status": "not applied",
+      "status": "✅ submitted",
       "status_kind": "form_submitted",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22FitNext+Co.%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/ePJDwKZj",
       "apply_email": "—",
@@ -1472,6 +1609,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1524,9 +1662,14 @@
       "priority": "★★★",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/posts/clemence-nyanyiwa-757a5928_good-day-my-network-i-have-these-interesting-activity-7499105329255809024-blur/",
       "apply_url": "DM recruiter",
       "apply_email": "—",
@@ -1537,6 +1680,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -1592,6 +1736,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Tehiner+A.%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eGtRvShQ",
       "apply_email": "—",
@@ -1602,6 +1751,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1654,9 +1804,14 @@
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
-      "status": "not applied",
+      "status": "✅ submitted",
       "status_kind": "form_submitted",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Danilo+Arpi%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/ddcxz7qp",
       "apply_email": "—",
@@ -1667,6 +1822,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1722,6 +1878,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Make+IT+-+Carreira+e+Recrutamento%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dargpsmi",
       "apply_email": "—",
@@ -1732,6 +1893,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1787,6 +1949,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_eligible",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22KETHERLABS%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eTm3uhGC",
       "apply_email": "—",
@@ -1797,6 +1964,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1852,6 +2020,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7500008584479444992/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -1862,6 +2035,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1917,6 +2091,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7500645966060986368/",
       "apply_url": "https://lnkd.in/ead5v976",
       "apply_email": "—",
@@ -1927,6 +2106,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -1936,7 +2116,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -1982,6 +2162,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:share:7500644407650512897/",
       "apply_url": "https://lnkd.in/eapznkQk",
       "apply_email": "—",
@@ -1992,6 +2177,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2001,7 +2187,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -2047,6 +2233,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:ugcpost:7500008006814752768/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2057,6 +2248,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2112,6 +2304,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7499199200329629696/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2122,6 +2319,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2177,6 +2375,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7499475658398494720/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2187,6 +2390,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2242,6 +2446,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:7498902189034106880/",
       "apply_url": "https://lnkd.in/deUqf7RN",
       "apply_email": "—",
@@ -2252,6 +2461,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2261,7 +2471,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -2307,6 +2517,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/netvagas-com-br/posts/",
       "apply_url": "https://lnkd.in/eWHYpA3i",
       "apply_email": "—",
@@ -2317,6 +2532,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2326,7 +2542,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -2372,6 +2588,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Antonio+Malagutti%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dQqH_8YZ",
       "apply_email": "—",
@@ -2382,6 +2603,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2391,7 +2613,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -2437,6 +2659,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Antonio+Malagutti%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dP8797ni",
       "apply_email": "—",
@@ -2447,6 +2674,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2456,7 +2684,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -2502,6 +2730,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Mat%C3%ADas+Jacob%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2512,6 +2745,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2567,6 +2801,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/nguyen-h-11a28b5/recent-activity/all/",
       "apply_url": "https://lnkd.in/eCKN3x-g",
       "apply_email": "—",
@@ -2581,6 +2820,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -2590,14 +2830,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -2611,7 +2851,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -2636,6 +2876,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/scalearmycareers/posts/",
       "apply_url": "DM recruiter",
       "apply_email": "—",
@@ -2646,6 +2891,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2701,6 +2947,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22CLAUDIA+YADIRA+CAMPOS+IBARRA%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2711,6 +2962,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2763,9 +3015,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/mehran-mehtab/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2776,6 +3033,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -2792,7 +3050,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -2806,7 +3064,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -2831,6 +3089,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Pablo+Pardo+Guti%C3%A9rrez%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2841,6 +3104,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2893,9 +3157,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/elvis-silva-dev/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -2906,6 +3175,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -2922,7 +3192,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -2936,7 +3206,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -2961,6 +3231,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/daily-remote-job-opportunities/posts/",
       "apply_url": "https://lnkd.in/dexsu4Vh",
       "apply_email": "—",
@@ -2971,6 +3246,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -2980,7 +3256,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -3026,6 +3302,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22EMPLEO+Remotos+LATAM+%2F+Ofertas+de+empleo+%28Colombia+Argentina+Brasil+Chile+Espa%C3%B1a+Mexico+Per%C3%BA%29%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/e37mANfF",
       "apply_email": "—",
@@ -3036,6 +3317,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -3045,7 +3327,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -3088,9 +3370,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/nicolarice/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3101,6 +3388,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3117,7 +3405,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -3131,7 +3419,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3156,6 +3444,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/mentors-coach/posts/",
       "apply_url": "https://lnkd.in/dSFzKSSm",
       "apply_email": "—",
@@ -3166,6 +3459,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -3175,7 +3469,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -3221,6 +3515,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/ntt-data-europe-latam/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3231,6 +3530,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -3286,6 +3586,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Jonathan+Muszkat%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eBdx-MgC",
       "apply_email": "—",
@@ -3296,6 +3601,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -3305,7 +3611,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -3351,6 +3657,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/marcos-quintero-60b772229/recent-activity/all/",
       "apply_url": "https://lnkd.in/dC25vKh4",
       "apply_email": "—",
@@ -3365,6 +3676,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3374,14 +3686,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -3395,7 +3707,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3417,9 +3729,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/pablo-gonzalo-arrieta/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3430,6 +3747,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3446,7 +3764,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -3460,7 +3778,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3485,6 +3803,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/hemanth-narayanapurapu-21964462/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3495,6 +3818,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3511,7 +3835,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -3525,7 +3849,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3550,6 +3874,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/mayenegranado/recent-activity/all/",
       "apply_url": "https://lnkd.in/eDGDyq7q",
       "apply_email": "—",
@@ -3564,6 +3893,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3573,14 +3903,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -3594,7 +3924,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3619,6 +3949,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/golabstech/posts/",
       "apply_url": "https://lnkd.in/eaYd653V",
       "apply_email": "—",
@@ -3629,6 +3964,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -3638,7 +3974,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -3684,6 +4020,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/davidcuellard/recent-activity/all/",
       "apply_url": "https://lnkd.in/eZs27emE",
       "apply_email": "—",
@@ -3698,6 +4039,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3707,14 +4049,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -3728,7 +4070,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3753,6 +4095,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/mathias-tsuneo-kunimoto-watanabe/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3763,6 +4110,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3779,7 +4127,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -3793,7 +4141,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3818,6 +4166,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Ger%C3%B3nimo+D%C3%ADaz+Justel%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3828,6 +4181,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -3880,9 +4234,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/rocio-iantosca-2ba316236/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -3893,6 +4252,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3909,7 +4269,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -3923,7 +4283,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -3948,6 +4308,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/candelaferreyra/recent-activity/all/",
       "apply_url": "https://lnkd.in/eEMi4NRY",
       "apply_email": "—",
@@ -3962,6 +4327,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -3971,14 +4337,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -3992,7 +4358,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -4017,6 +4383,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Ger%C3%B3nimo+Palacios%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4027,6 +4398,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4079,9 +4451,14 @@
       "priority": "★★☆",
       "channel": "email",
       "channel_label": "Email",
-      "status": "☐ pending",
+      "status": "✅ email sent",
       "status_kind": "email_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/luis-hernandez-75ba5399/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "luis@mexicoteksol.com",
@@ -4096,9 +4473,10 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Apply via email",
@@ -4112,7 +4490,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -4126,7 +4504,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -4151,6 +4529,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/devtal-co/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4161,6 +4544,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4216,6 +4600,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Daniel+Santiago+Beltran%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "DM recruiter",
       "apply_email": "—",
@@ -4226,6 +4615,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4281,6 +4671,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Ms.+Anmol+R+Goel%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4291,6 +4686,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4346,6 +4742,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Jose+Rodrigo+P%C3%A9rez+Aller%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4356,6 +4757,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4411,6 +4813,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/chaitali-r-86b314243/recent-activity/all/",
       "apply_url": "https://lnkd.in/dPJF_avk",
       "apply_email": "—",
@@ -4425,6 +4832,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -4434,14 +4842,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -4455,7 +4863,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -4480,6 +4888,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/aptalents/posts/",
       "apply_url": "https://lnkd.in/eXh8wmpB",
       "apply_email": "—",
@@ -4490,6 +4903,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4499,7 +4913,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -4545,6 +4959,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/dinocloud-arg/posts/",
       "apply_url": "https://lnkd.in/eH5JPTVc",
       "apply_email": "—",
@@ -4555,6 +4974,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4564,7 +4984,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -4607,9 +5027,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/tonyteshara/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4620,6 +5045,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -4636,7 +5062,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -4650,7 +5076,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -4675,6 +5101,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/florencia-gulino-1712a5183/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4685,6 +5116,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -4701,7 +5133,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -4715,7 +5147,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -4740,6 +5172,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Antonio+Malagutti%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dQku_qSN",
       "apply_email": "—",
@@ -4750,6 +5187,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4759,7 +5197,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -4805,6 +5243,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/webstarted-academy/posts/",
       "apply_url": "https://lnkd.in/dkTUPw2K",
       "apply_email": "—",
@@ -4815,6 +5258,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -4824,7 +5268,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -4870,6 +5314,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/valentina-abarca-ceciliano/recent-activity/all/",
       "apply_url": "https://lnkd.in/ep6aTQ2P",
       "apply_email": "—",
@@ -4884,6 +5333,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -4893,14 +5343,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -4914,7 +5364,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -4939,6 +5389,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/kethan-reddy-06b3a4183_were-hiring-at-criticalriver-criticalriver-activity-7496215976108105730-aIbi/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -4949,6 +5404,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -4965,7 +5421,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -4979,7 +5435,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5004,6 +5460,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/kenia-denisse-salinas-6899572b3_hiring-remotejobs-latam-activity-7500242688558972928-2s8t/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5014,6 +5475,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5030,7 +5492,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5044,7 +5506,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5066,9 +5528,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/gustavogarozzo_activity-7500566880202579970-1pqA/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5079,6 +5546,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5095,7 +5563,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -5109,7 +5577,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5134,6 +5602,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/sandra-m-0a4b39121_hiring-techjobs-latam-activity-7500203081838563329-f_pK/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5144,6 +5617,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5160,7 +5634,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5174,7 +5648,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5196,9 +5670,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/amit-dabral-55218b158_latam-ai-datascientist-activity-7500210055968100352-3ZoT/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5209,6 +5688,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5225,7 +5705,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -5239,7 +5719,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5264,6 +5744,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/companionville_executivesearch-recruitment-ai-activity-7499135576722571264-5tmS/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5274,6 +5759,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5290,7 +5776,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5304,7 +5790,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5329,6 +5815,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/allshore-global_aitalent-outsourcing-globalworkforce-activity-7496617549237743616-rXj7/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5339,6 +5830,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5355,7 +5847,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5369,7 +5861,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5394,6 +5886,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/isis-isambertt-mindiola_i2btech-talenthub-hiring-activity-7500538223266521088-MBe1/",
       "apply_url": "https://lnkd.in/e6-pxVkQ",
       "apply_email": "—",
@@ -5408,6 +5905,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5417,14 +5915,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5438,7 +5936,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5463,6 +5961,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/vamshi-krishna-b58089214_hiring-opentowork-azure-activity-7498401971394195457-Q1J2/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5473,6 +5976,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5489,7 +5993,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5503,7 +6007,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5525,9 +6029,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/daiana-cazzulo-431702248_agosto-septiembre-argentina-activity-7500198393974239232-Du8k/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5538,6 +6047,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -5554,7 +6064,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -5568,7 +6078,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5590,9 +6100,14 @@
       "priority": "★☆☆",
       "channel": "email",
       "channel_label": "Email",
-      "status": "☐ pending",
+      "status": "✅ email sent",
       "status_kind": "email_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/ileanazambranosanchez_hola-red-me-encuentro-en-b%C3%BAsqueda-de-un-activity-7480322831080263681-ADoa/",
       "apply_url": "See post",
       "apply_email": "izambrano@ovidio.us",
@@ -5607,9 +6122,10 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Apply via email",
@@ -5623,7 +6139,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -5637,7 +6153,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -5662,6 +6178,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Jos%C3%A9+Pablo+Cardoso%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5672,6 +6193,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -5727,6 +6249,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Vagas+de+TI+Brasil+%7C+VagaNet%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/e9eCTSrt",
       "apply_email": "—",
@@ -5737,6 +6264,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -5746,7 +6274,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -5792,6 +6320,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Irene+T.%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -5802,6 +6335,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -5857,6 +6391,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Netvagas%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eCj2QVx3",
       "apply_email": "—",
@@ -5867,6 +6406,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -5876,7 +6416,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -5922,6 +6462,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22mentors.coach%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/df_QM7Y7",
       "apply_email": "—",
@@ -5932,6 +6477,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -5941,7 +6487,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -5987,6 +6533,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22MENTORS.COACH+%D0%9F%D0%BE%D0%BC%D0%BE%D0%B3%D0%B0%D0%B5%D0%BC+%D0%BD%D0%B0%D0%B9%D1%82%D0%B8+%D0%B7%D0%B0%D1%80%D0%BF%D0%BB%D0%B0%D1%82%D1%83+%D0%B2+%D0%B2%D0%B0%D0%BB%D1%8E%D1%82%D0%B5%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dDAKqGxV",
       "apply_email": "—",
@@ -5997,6 +6548,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -6006,7 +6558,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -6052,6 +6604,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/ricardo-oliveira-backend-developer_programming-softwareengineering-careergrowth-activity-7408211974062366720-_rF6/",
       "apply_url": "https://lnkd.in/dZsqvHcZ",
       "apply_email": "—",
@@ -6066,6 +6623,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6075,14 +6633,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6096,7 +6654,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6121,6 +6679,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/aijaz-ali-247200148_were-hiring-for-karachi-based-client-hr-activity-7447710852209786881-I0Wj/",
       "apply_url": "https://lnkd.in/ggNu2g4n",
       "apply_email": "—",
@@ -6135,6 +6698,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6144,14 +6708,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6165,7 +6729,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6190,6 +6754,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/abdelsalam-usama-bab63372_engineering-berlinjobs-remotejobs-activity-7500592154549981184-VfvK/",
       "apply_url": "https://lnkd.in/e_giCSdk",
       "apply_email": "—",
@@ -6204,6 +6773,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6213,14 +6783,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6234,7 +6804,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6259,6 +6829,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/martin-raj-selvaraj-778a3511_our-client-is-looking-for-evaluation-engineer-activity-7499166913269456898-_muY/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -6269,6 +6844,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6285,7 +6861,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6299,7 +6875,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6324,6 +6900,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/tomascenteno_teamamea-confession-teammdlz-activity-7495283130803834880-wuf2/",
       "apply_url": "https://lnkd.in/dsFe5NrY",
       "apply_email": "—",
@@ -6338,6 +6919,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6347,14 +6929,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6368,7 +6950,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6390,9 +6972,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/marcelodesantis_apex-theascent-rafaracingclub-activity-7500545067678384128-X0h1/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -6403,6 +6990,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6419,7 +7007,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -6433,7 +7021,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6458,6 +7046,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/thalia-balbinot-768412163_vagasti-protheus-totvs-activity-7500534136483409921-GS8K/",
       "apply_url": "https://lnkd.in/dZ87_PfZ",
       "apply_email": "—",
@@ -6472,6 +7065,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6481,14 +7075,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6502,7 +7096,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6527,6 +7121,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Mauricio+Coimbra+Santos+gamescom+latam%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -6537,6 +7136,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -6592,6 +7192,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/remoteyeah_remote-senior-data-engineer-mfd-tieto-activity-7500591809232830464-tfsm/",
       "apply_url": "https://lnkd.in/e5eASgB5",
       "apply_email": "—",
@@ -6606,6 +7211,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6615,14 +7221,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6636,7 +7242,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6658,9 +7264,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/geronimo-palacios/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -6671,6 +7282,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6687,7 +7299,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -6701,7 +7313,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6726,6 +7338,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/oswaldo-alvarez_he-empezado-en-un-nuevo-puesto-de-react-activity-7356988355512791040-DVW3/",
       "apply_url": "https://lnkd.in/gw6JfUhZ",
       "apply_email": "—",
@@ -6740,6 +7357,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6749,14 +7367,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6770,7 +7388,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6795,6 +7413,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/raulmangolin_im-happy-to-share-that-ive-obtained-a-new-activity-7328513944644431872-MKMQ/",
       "apply_url": "https://lnkd.in/eCcUQm5u",
       "apply_email": "—",
@@ -6809,6 +7432,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6818,14 +7442,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6839,7 +7463,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6864,6 +7488,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/kasiriley_is-in-the-air-and-my-cup-maybe-pumpkin-activity-7500549347768623104-oAG4/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -6874,6 +7503,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -6890,7 +7520,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -6904,7 +7534,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -6929,6 +7559,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Sam+Anderson%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -6939,6 +7574,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -6994,6 +7630,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/jacqueline-bastidas_omron-wearehiring-cybersecurity-activity-7406451060933873664-sdf0/",
       "apply_url": "https://lnkd.in/gQdx_xHJ",
       "apply_email": "—",
@@ -7008,6 +7649,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7017,14 +7659,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7038,7 +7680,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7063,6 +7705,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/remote-ai-careers-usa_enterpriseai-aidata-datapartnership-activity-7499892447481634819-TON3/",
       "apply_url": "https://lnkd.in/gTW_ZQxP",
       "apply_email": "—",
@@ -7077,6 +7724,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7086,14 +7734,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7107,7 +7755,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7132,6 +7780,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Cognitive+Latam%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7142,6 +7795,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -7194,9 +7848,14 @@
       "priority": "★☆☆",
       "channel": "email",
       "channel_label": "Email",
-      "status": "☐ pending",
+      "status": "✅ email sent",
       "status_kind": "email_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/anand-patha_sap-product-activity-7500567534186942465-vPIQ/",
       "apply_url": "See post",
       "apply_email": "patha.kumar@ptrglobal.com",
@@ -7211,9 +7870,10 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Apply via email",
@@ -7227,7 +7887,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7241,7 +7901,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7266,6 +7926,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Talentus+Global%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/ehi-fkXR",
       "apply_email": "—",
@@ -7276,6 +7941,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -7285,7 +7951,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -7331,6 +7997,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/hireinternational_vagas-internacionais-para-voc%C3%AA-trabalhar-activity-7498451725381652481-L0k5/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7341,6 +8012,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7357,7 +8029,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7371,7 +8043,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7393,9 +8065,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/florenciabelenmayer_hiring-gtm-ai-engineer-in-latam-only-activity-7498459679971401728-5O51/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7406,6 +8083,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7422,7 +8100,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -7436,7 +8114,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7461,6 +8139,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/lauraestebes_aiengineer-machinelearningengineer-artificialintelligence-activity-7498486646867247104-3f4s/",
       "apply_url": "https://lnkd.in/dQy5ky8f",
       "apply_email": "—",
@@ -7475,6 +8158,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7484,14 +8168,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7505,7 +8189,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7527,9 +8211,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "connect sent · await accept",
       "status_kind": "connect_pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/trinahymes/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7540,6 +8229,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7556,21 +8246,21 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
-          "in_progress": true,
+          "in_progress": false,
           "label": "Send connection",
           "status_text": "connect sent"
         },
         "dm_check": {
-          "available": true,
+          "available": false,
           "done": false,
-          "in_progress": true,
+          "in_progress": false,
           "label": "Check connection accepted",
           "status_text": "awaiting accept"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7595,6 +8285,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/webstarted_engineer-developer-remote-activity-6845712516379615233-hhRz/",
       "apply_url": "https://lnkd.in/dn56g5ne",
       "apply_email": "—",
@@ -7609,6 +8304,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7618,14 +8314,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7639,7 +8335,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7664,6 +8360,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/mario-navarrete-purcell_generativeai-databricks-llm-activity-7498722248183402496-pnRW/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7674,6 +8375,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7690,7 +8392,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -7704,7 +8406,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7726,9 +8428,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/manuela-g%C3%A9nova/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7739,6 +8446,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7755,7 +8463,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -7769,7 +8477,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7794,6 +8502,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Remotive%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7804,6 +8517,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -7859,6 +8573,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Crist%C3%B3bal+Martinez%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dYw4nPtW",
       "apply_email": "—",
@@ -7869,6 +8588,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -7878,7 +8598,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -7921,9 +8641,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/cristiansantander/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7934,6 +8659,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -7950,7 +8676,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -7964,7 +8690,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -7989,6 +8715,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/arinsime/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -7999,6 +8730,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8015,7 +8747,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -8029,7 +8761,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -8054,6 +8786,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/tesoro-ai/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8064,6 +8801,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8119,6 +8857,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Vagas+TI+%2F+CURITIBA-PR%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/duJvJNzV",
       "apply_email": "—",
@@ -8129,6 +8872,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8138,7 +8882,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -8181,9 +8925,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "connect sent · await accept",
       "status_kind": "connect_pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/roberta-s-97a08616b/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8194,6 +8943,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8210,21 +8960,21 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
-          "in_progress": true,
+          "in_progress": false,
           "label": "Send connection",
           "status_text": "connect sent"
         },
         "dm_check": {
-          "available": true,
+          "available": false,
           "done": false,
-          "in_progress": true,
+          "in_progress": false,
           "label": "Check connection accepted",
           "status_text": "awaiting accept"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -8249,6 +8999,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/ventus-technology-sa-de-cv/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8259,6 +9014,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8311,9 +9067,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/agustinbellini_finalizamos-la-implementaci%C3%B3n-de-sityo-en-activity-7473842057296515072-y2U8/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8324,6 +9085,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8340,7 +9102,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -8354,7 +9116,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -8379,6 +9141,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/mihai-comsa88/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8389,6 +9156,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8405,7 +9173,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -8419,7 +9187,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -8441,9 +9209,14 @@
       "priority": "★☆☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/sam-ingwell/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8454,6 +9227,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8470,7 +9244,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -8484,7 +9258,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -8509,6 +9283,11 @@
       "status": "—",
       "status_kind": "not_started",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/muhammad-uzair-847078339/recent-activity/all/",
       "apply_url": "DM recruiter",
       "apply_email": "—",
@@ -8519,6 +9298,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8535,7 +9315,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -8549,7 +9329,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -8574,6 +9354,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Angelina+Renteria+%28Frease%29%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/gm3VkZnQ",
       "apply_email": "—",
@@ -8584,6 +9369,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8593,7 +9379,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -8639,6 +9425,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/techbridge-latam/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8649,6 +9440,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8704,6 +9496,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Tecla%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/ex-pcpkb",
       "apply_email": "—",
@@ -8714,6 +9511,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8723,7 +9521,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -8769,6 +9567,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/fast-lane-latam/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -8779,6 +9582,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8834,6 +9638,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22EvoTalents+%7C+UK-based+IT+Recruitment+%26+Technical+Sourcing%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eviZVpu6",
       "apply_email": "—",
@@ -8844,6 +9653,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8853,7 +9663,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -8899,6 +9709,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Natalia+Adasme+Alarc%C3%B3n%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/eFpwT7fD",
       "apply_email": "—",
@@ -8909,6 +9724,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -8918,7 +9734,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -8964,6 +9780,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/belfreitas_hiring-remotework-mexico-activity-7495085319554408448-y7JC/",
       "apply_url": "https://lnkd.in/e839k45F",
       "apply_email": "—",
@@ -8978,6 +9799,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -8987,14 +9809,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -9008,7 +9830,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -9033,6 +9855,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/eggnest-ai/posts/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9043,6 +9870,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9098,6 +9926,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Antonio+Malagutti%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dRqUQA5b",
       "apply_email": "—",
@@ -9108,6 +9941,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9117,7 +9951,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -9163,6 +9997,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Hyperion360%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/gG-rV-AB",
       "apply_email": "—",
@@ -9173,6 +10012,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9182,7 +10022,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -9228,6 +10068,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Roc%C3%ADo+Azparren%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9238,6 +10083,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9293,6 +10139,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Reiner+Ramos%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/ePU8TRzE",
       "apply_email": "—",
@@ -9303,6 +10154,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9312,7 +10164,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -9358,6 +10210,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Marri+Nikitha%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dEXpErrg",
       "apply_email": "—",
@@ -9368,6 +10225,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9377,7 +10235,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -9423,6 +10281,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Asifa+Mohammed%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9433,6 +10296,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9488,6 +10352,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Revanth+Kumar%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9498,6 +10367,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9553,6 +10423,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%224Geeks+Academy+Latam%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9563,6 +10438,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9618,6 +10494,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Luis+Reza%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9628,6 +10509,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9683,6 +10565,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Infracommerce+Latam%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/dDqesdsi",
       "apply_email": "—",
@@ -9693,6 +10580,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9702,7 +10590,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -9745,9 +10633,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/ncoutinho2/recent-activity/all/",
       "apply_url": "DM recruiter",
       "apply_email": "—",
@@ -9758,6 +10651,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -9774,7 +10668,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -9788,7 +10682,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -9813,6 +10707,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Carlos+Gallego%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -9823,6 +10722,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9878,6 +10778,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Rita+Cola%C3%A7o%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/e_wJpDYx",
       "apply_email": "—",
@@ -9888,6 +10793,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9897,7 +10803,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -9943,6 +10849,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Vagas+de+TI+na+Gringa%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/e3RRa5yA",
       "apply_email": "—",
@@ -9953,6 +10864,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -9962,7 +10874,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10005,9 +10917,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/posts/zeeshanramlan_activity-7500464324554072064-atL-/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -10018,6 +10935,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -10034,7 +10952,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -10048,7 +10966,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -10073,6 +10991,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/the-rational-desk/posts/",
       "apply_url": "https://lnkd.in/g-fAGRQu",
       "apply_email": "—",
@@ -10083,6 +11006,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10092,7 +11016,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10135,9 +11059,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/noeliac/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -10148,6 +11077,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -10164,7 +11094,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -10178,7 +11108,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -10203,6 +11133,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Remote+Job+Hub%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/gv3UtXQb",
       "apply_email": "—",
@@ -10213,6 +11148,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10222,7 +11158,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10265,9 +11201,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/golivi-roja-115b1a343/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -10278,6 +11219,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -10294,7 +11236,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -10308,7 +11250,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -10333,6 +11275,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Silvia+Matiello%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/d4pJVKm6",
       "apply_email": "—",
@@ -10343,6 +11290,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10352,7 +11300,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10398,6 +11346,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Nathalie+Vald%C3%A9s+Gonz%C3%A1lez%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -10408,6 +11361,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10460,9 +11414,14 @@
       "priority": "★★☆",
       "channel": "dm",
       "channel_label": "Direct Msg",
-      "status": "—",
+      "status": "message sent",
       "status_kind": "message_sent",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/abhishek-u-449501244/recent-activity/all/",
       "apply_url": "See post",
       "apply_email": "—",
@@ -10473,6 +11432,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -10489,7 +11449,7 @@
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send connection",
@@ -10503,7 +11463,7 @@
           "status_text": "accepted"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": true,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -10528,6 +11488,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Jobs+in+LATAM+%28Mexico%2C+Brazil%2C+Costa+Rica%2C+Colombia%2C+Argentina%2C...%29%22+%22Ai+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://lnkd.in/g3XPApXh",
       "apply_email": "—",
@@ -10538,6 +11503,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10547,7 +11513,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10593,6 +11559,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/remoteworldwide/posts/",
       "apply_url": "https://lnkd.in/d55y-tx8",
       "apply_email": "—",
@@ -10603,6 +11574,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10612,7 +11584,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10658,6 +11630,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/in/gugu-lourie/recent-activity/all/",
       "apply_url": "https://lnkd.in/ddk22sm9",
       "apply_email": "—",
@@ -10672,6 +11649,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": true,
       "actions": {
         "email": {
           "available": false,
@@ -10681,14 +11659,14 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
           "status_text": "not applied"
         },
         "dm_connect": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send connection",
@@ -10702,7 +11680,7 @@
           "status_text": "not applied"
         },
         "dm_message": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Send LinkedIn message",
@@ -10727,6 +11705,11 @@
       "status": "not applied",
       "status_kind": "pending",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/company/remoteyeah/posts/",
       "apply_url": "https://lnkd.in/e5eASgB5",
       "apply_email": "—",
@@ -10737,6 +11720,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10746,7 +11730,7 @@
           "status_text": "not applied"
         },
         "form": {
-          "available": true,
+          "available": false,
           "done": false,
           "in_progress": false,
           "label": "Apply via form",
@@ -10792,6 +11776,11 @@
       "status": "—",
       "status_kind": "unknown",
       "section": "linkedin_review",
+      "position_disposition": "human_review",
+      "position_disposition_label": "Human review",
+      "position_disposition_auto": "human_review",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": false,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Mihai+Com%C8%99a%22+%22Agentic+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "See post",
       "apply_email": "—",
@@ -10802,6 +11791,7 @@
           "label": "Direct message"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10850,13 +11840,18 @@
       "company": "TripleTen",
       "salary": "USD 40–150/hr",
       "location": "Brazil",
-      "posted": "1788713604",
+      "posted": "4h",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22TripleTen%22+%22AI+for+Business+%26+Transformation+Teaching+Experts%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/tripleten/jobs/ai-for-business-transformation-teaching-experts-9703334638",
       "apply_email": "—",
@@ -10867,6 +11862,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10915,13 +11911,18 @@
       "company": "Duck Creek Technologies",
       "salary": "USD 132,000–235,200/yr",
       "location": "Canada",
-      "posted": "1788449394",
+      "posted": "3d",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Duck+Creek+Technologies%22+%22Senior+Product+Manager+-+Agentic+AI+Platform%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/duck-creek-technologies/jobs/senior-product-manager-agentic-ai-platform",
       "apply_email": "—",
@@ -10932,6 +11933,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -10980,13 +11982,18 @@
       "company": "Invisible Technologies",
       "salary": "USD 70–100/hr",
       "location": "Worldwide",
-      "posted": "1788713229",
+      "posted": "4h",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Invisible+Technologies%22+%22GPU+Kernels+AI+Task+Auditor+-+Freelance+AI+Trainer+Project%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/inv/jobs/gpu-kernels-ai-task-auditor-freelance-ai-trainer-project",
       "apply_email": "—",
@@ -10997,6 +12004,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -11045,13 +12053,18 @@
       "company": "Evaboot",
       "salary": "USD 70,000–120,000/yr",
       "location": "Worldwide",
-      "posted": "1788188988",
+      "posted": "6d",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Evaboot%22+%22Agentic+Python+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/evaboot/jobs/agentic-python-engineer",
       "apply_email": "—",
@@ -11062,6 +12075,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -11110,13 +12124,18 @@
       "company": "mercor",
       "salary": "USD 58–62/hr",
       "location": "Norway",
-      "posted": "1788710460",
+      "posted": "5h",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22mercor%22+%22Norwegian+Language+Specialist+-+Fully+Remote+%7C+Upto+%2462%2Fhr+Part-time%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/mercor/jobs/norwegian-language-specialist-fully-remote-upto-62-hr-part-time",
       "apply_email": "—",
@@ -11127,6 +12146,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -11175,13 +12195,18 @@
       "company": "mercor",
       "salary": "USD 48–52/hr",
       "location": "Croatia",
-      "posted": "1788713710",
+      "posted": "4h",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22mercor%22+%22Croatian+Science+Expert+-+Fully+Remote+%7C+Upto+%2452%2Fhr+Part-time%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/mercor/jobs/croatian-science-expert-fully-remote-upto-52-hr-part-time",
       "apply_email": "—",
@@ -11192,6 +12217,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -11240,13 +12266,18 @@
       "company": "mercor",
       "salary": "USD 24/hr",
       "location": "Japan",
-      "posted": "1788710107",
+      "posted": "5h",
       "priority": "★★★",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22mercor%22+%22Japanese+Language+Specialist+-+Fully+Remote+%7C+Upto+%2424%2Fhr%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/mercor/jobs/japanese-language-specialist-fully-remote-upto-24-hr",
       "apply_email": "—",
@@ -11257,6 +12288,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -11305,13 +12337,18 @@
       "company": "Technomil",
       "salary": "USD 14,000–26,000/yr",
       "location": "India",
-      "posted": "1788711353",
+      "posted": "5h",
       "priority": "★★☆",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22Technomil%22+%22Lead+UX+Designer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/technomil/jobs/lead-ux-designer-4513992277",
       "apply_email": "—",
@@ -11322,6 +12359,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,
@@ -11370,13 +12408,18 @@
       "company": "micro1",
       "salary": "—",
       "location": "Worldwide",
-      "posted": "1788709825",
+      "posted": "5h",
       "priority": "★★☆",
       "channel": "url",
       "channel_label": "URL/Form",
       "status": "not applied",
       "status_kind": "pending",
       "section": "boards",
+      "position_disposition": "best_fit",
+      "position_disposition_label": "Best fit",
+      "position_disposition_auto": "best_fit",
+      "position_disposition_is_override": false,
+      "application_steps_enabled": true,
       "post_url": "https://www.linkedin.com/search/results/content/?keywords=%22micro1%22+%22AI+Engineer%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D",
       "apply_url": "https://himalayas.app/companies/micro1/jobs/ai-engineer-7982880650",
       "apply_email": "—",
@@ -11387,6 +12430,7 @@
           "label": "Form"
         }
       ],
+      "form_link_message_enabled": false,
       "actions": {
         "email": {
           "available": false,

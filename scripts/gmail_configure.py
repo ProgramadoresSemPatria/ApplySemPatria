@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import getpass
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -219,7 +220,12 @@ def _step_send_mode(track_id: str, non_interactive: bool, mode_override: str | N
     return mode
 
 
-def email_send_allowed(track_id: str, *, cli_force: bool = False) -> tuple[bool, str]:
+def email_send_allowed(
+    track_id: str,
+    *,
+    cli_force: bool = False,
+    ui_approved: bool = False,
+) -> tuple[bool, str]:
     """Whether CLI batch send is allowed for this track."""
     from environment_setup import gmail_auth_ok  # noqa: WPS433
 
@@ -234,7 +240,8 @@ def email_send_allowed(track_id: str, *, cli_force: bool = False) -> tuple[bool,
             "Application email message not confirmed. "
             f"Run: jobsearch configure gmail --track {track_id} --preview"
         )
-    if cfg.get("email_apply_mode") == "manual" and not cli_force:
+    approved = cli_force or ui_approved or os.environ.get("JOBSEARCH_UI_APPROVED") == "1"
+    if cfg.get("email_apply_mode") == "manual" and not approved:
         return False, (
             "Manual send mode — use the applications UI to approve each email, "
             "or pass --force-send to override from CLI."

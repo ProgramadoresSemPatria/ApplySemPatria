@@ -312,7 +312,12 @@ def _step_form_link_message_toggle(track_id: str, non_interactive: bool) -> bool
     return False
 
 
-def linkedin_connect_allowed(track_id: str, *, cli_force: bool = False) -> tuple[bool, str]:
+def linkedin_connect_allowed(
+    track_id: str,
+    *,
+    cli_force: bool = False,
+    ui_approved: bool = False,
+) -> tuple[bool, str]:
     from environment_setup import linkedin_cookies_ok  # noqa: WPS433
 
     cfg = load_linkedin_config_raw(track_id)
@@ -321,7 +326,8 @@ def linkedin_connect_allowed(track_id: str, *, cli_force: bool = False) -> tuple
             f"LinkedIn DM apply is disabled for {track_id}. "
             f"Enable: jobsearch configure linkedin --track {track_id}"
         )
-    if cfg.get("dm_apply_mode") == "manual" and not cli_force:
+    approved = cli_force or ui_approved or os.environ.get("JOBSEARCH_UI_APPROVED") == "1"
+    if cfg.get("dm_apply_mode") == "manual" and not approved:
         return False, (
             "Manual DM mode — use the applications UI to approve each connect/message, "
             "or pass --force-send to override from CLI."
@@ -338,8 +344,11 @@ def linkedin_message_allowed(
     job: dict[str, Any] | None = None,
     *,
     cli_force: bool = False,
+    ui_approved: bool = False,
 ) -> tuple[bool, str]:
-    ok, reason = linkedin_connect_allowed(track_id, cli_force=cli_force)
+    ok, reason = linkedin_connect_allowed(
+        track_id, cli_force=cli_force, ui_approved=ui_approved
+    )
     if not ok:
         return ok, reason
 
@@ -365,9 +374,14 @@ def linkedin_message_allowed(
     return True, ""
 
 
-def linkedin_send_allowed(track_id: str, *, cli_force: bool = False) -> tuple[bool, str]:
+def linkedin_send_allowed(
+    track_id: str,
+    *,
+    cli_force: bool = False,
+    ui_approved: bool = False,
+) -> tuple[bool, str]:
     """Backward-compatible alias — checks connect permissions."""
-    return linkedin_connect_allowed(track_id, cli_force=cli_force)
+    return linkedin_connect_allowed(track_id, cli_force=cli_force, ui_approved=ui_approved)
 
 
 def run_linkedin_configure(args: Any) -> int:

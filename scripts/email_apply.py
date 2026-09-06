@@ -236,6 +236,11 @@ def main() -> int:
         metavar="EMAIL",
         help="Send one test message to this address (uses sample AI Engineer role)",
     )
+    parser.add_argument(
+        "--ui-approved",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.track)
@@ -246,7 +251,9 @@ def main() -> int:
         from gmail_configure import email_send_allowed  # noqa: E402
 
         tid = args.track or "ai-engineer"
-        allowed, reason = email_send_allowed(tid, cli_force=args.force_send)
+        allowed, reason = email_send_allowed(
+            tid, cli_force=args.force_send, ui_approved=args.ui_approved
+        )
         if not allowed:
             print(f"ERROR: {reason}")
             return 1

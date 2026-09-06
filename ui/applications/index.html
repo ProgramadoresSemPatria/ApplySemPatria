@@ -194,6 +194,18 @@
 
     .live-btn:hover { background: rgba(110, 231, 255, 0.08); }
 
+    .server-stale {
+      margin: 0 1.75rem;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      background: rgba(251, 191, 36, 0.1);
+      color: var(--amber);
+      font-size: 0.82rem;
+    }
+
+    .server-stale code { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; }
+
     /* —— Main —— */
     .main {
       display: flex;
@@ -317,6 +329,95 @@
       gap: 0.75rem;
     }
 
+    .card-header-actions {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .card-menu-btn {
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .card-menu-btn:hover,
+    .card-menu-btn[aria-expanded="true"] {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      border-color: var(--border-bright);
+    }
+
+    .card-menu {
+      position: absolute;
+      top: calc(100% + 0.35rem);
+      right: 0;
+      min-width: 13.5rem;
+      padding: 0.35rem;
+      border-radius: 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-bright);
+      box-shadow: var(--shadow);
+      z-index: 20;
+      display: none;
+    }
+
+    .card-menu.open { display: block; }
+
+    .card-menu label {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 0.35rem 0.5rem 0.25rem;
+    }
+
+    .card-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.45rem 0.55rem;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .card-menu button:hover { background: rgba(255,255,255,0.06); }
+    .card-menu button.active {
+      background: rgba(110, 231, 255, 0.1);
+      color: var(--accent);
+    }
+
+    .card.dimmed { opacity: 0.72; }
+
+    .steps-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed var(--border);
+      line-height: 1.45;
+    }
+
+    .steps-block-review {
+      margin-top: 0.15rem;
+    }
+
     .card-title {
       font-size: 1.05rem;
       font-weight: 700;
@@ -347,6 +448,16 @@
 
     .badge-track { background: rgba(167, 139, 250, 0.15); color: #c4b5fd; }
     .badge-review { background: rgba(251, 146, 60, 0.14); color: #fdba74; }
+    .badge-real { background: rgba(52, 211, 153, 0.14); color: #6ee7b7; }
+    .badge-best-fit { background: rgba(167, 139, 250, 0.12); color: #c4b5fd; }
+    .badge-override {
+      font-size: 0.55rem;
+      opacity: 0.75;
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    .badge-not-real { background: rgba(251, 113, 133, 0.12); color: #fda4af; }
+    .badge-hidden-pos { background: rgba(255,255,255,0.06); color: var(--muted); }
     .badge-channel-email { background: rgba(110, 231, 255, 0.12); color: var(--accent); }
     .badge-channel-url { background: rgba(251, 191, 36, 0.12); color: var(--amber); }
     .badge-channel-dm { background: rgba(52, 211, 153, 0.12); color: var(--green); }
@@ -580,15 +691,19 @@
         </div>
         <div class="filters" id="filters">
           <button class="chip active" data-filter="all">All</button>
-          <button class="chip" data-filter="linkedin_eligible">Apply first</button>
+          <button class="chip" data-filter="linkedin_eligible">Best fit</button>
           <button class="chip" data-filter="linkedin_review">Needs review</button>
-          <button class="chip" data-filter="boards">Boards</button>
           <button class="chip" data-filter="email">Email</button>
           <button class="chip" data-filter="form">Form</button>
           <button class="chip" data-filter="dm">Direct message</button>
+          <button class="chip" data-filter="dismissed">Dismissed</button>
         </div>
       </div>
-      <div class="cards-wrap">
+      <div class="server-stale" id="serverStale" hidden>
+        UI server is outdated — card taps cannot approve connects. Restart:
+        <code>jobsearch ui</code> (or stop the old process on port 8765).
+      </div>
+      <div class="cards-wrap" id="cardsWrap">
         <div class="cards-grid" id="cardsGrid"></div>
         <div class="empty" id="emptyState" hidden>
           <h3>No roles for this day</h3>
@@ -605,13 +720,68 @@
     let activeDay = null;
     let sectionFilter = "all";
     let searchQuery = "";
+    let serverUiApproval = false;
+
+    const DISPOSITION_OVERRIDES = [
+      { id: "auto", label: "Reset to automatic" },
+      { id: "real_role", label: "Override → Real role" },
+      { id: "best_fit", label: "Override → Best fit" },
+      { id: "human_review", label: "Override → Human review" },
+      { id: "not_real", label: "Override → Not a real position" },
+      { id: "hidden", label: "Override → Hide position" },
+    ];
+
+    function dispositionBadgeClass(d) {
+      return {
+        real_role: "badge-real",
+        best_fit: "badge-best-fit",
+        human_review: "badge-review",
+        not_real: "badge-not-real",
+        hidden: "badge-hidden-pos",
+      }[d] || "badge-section";
+    }
+
+    function hasAnyStepPill(actions) {
+      return ACTION_ORDER.some(k => {
+        const s = actions[k] || {};
+        return s.available || s.done || s.in_progress;
+      });
+    }
+
+    function isDismissed(job) {
+      return job.position_disposition === "not_real" || job.position_disposition === "hidden";
+    }
+
+    function closeAllMenus() {
+      document.querySelectorAll(".card-menu.open").forEach(m => m.classList.remove("open"));
+      document.querySelectorAll(".card-menu-btn[aria-expanded]").forEach(b => b.setAttribute("aria-expanded", "false"));
+    }
 
     const dayList = document.getElementById("dayList");
+    const cardsWrap = document.getElementById("cardsWrap");
     const cardsGrid = document.getElementById("cardsGrid");
     const emptyState = document.getElementById("emptyState");
     const viewTitle = document.getElementById("viewTitle");
     const viewSubtitle = document.getElementById("viewSubtitle");
     const toast = document.getElementById("toast");
+    const serverStale = document.getElementById("serverStale");
+
+    async function checkServerMeta() {
+      try {
+        const res = await fetch("/api/meta");
+        if (!res.ok) {
+          serverUiApproval = false;
+          serverStale.hidden = false;
+          return;
+        }
+        const meta = await res.json();
+        serverUiApproval = meta.ui_approval === true;
+        serverStale.hidden = serverUiApproval;
+      } catch {
+        serverUiApproval = false;
+        serverStale.hidden = false;
+      }
+    }
 
     function formatDay(iso) {
       if (iso === "live") return "Live";
@@ -668,7 +838,7 @@
     }
 
     function sectionLabel(s) {
-      return { linkedin_eligible: "Apply first", linkedin_review: "Review", boards: "Board" }[s] || s;
+      return { linkedin_eligible: "Best fit", linkedin_review: "Review", boards: "Board" }[s] || s;
     }
 
     function hasFormat(job, id) {
@@ -676,15 +846,19 @@
     }
 
     function filteredJobs() {
-      return snapshot.jobs.filter(j => {
-        if (sectionFilter !== "all") {
-          if (sectionFilter === "email") {
-            if (!hasFormat(j, "email")) return false;
-          } else if (sectionFilter === "form") {
-            if (!hasFormat(j, "form")) return false;
-          } else if (sectionFilter === "dm") {
-            if (!hasFormat(j, "direct_message")) return false;
-          } else if (j.section !== sectionFilter) return false;
+      return (snapshot.jobs || []).filter(j => {
+        const disp = j.position_disposition || j.position_disposition_auto || "best_fit";
+        if (sectionFilter === "dismissed") {
+          if (!isDismissed(j)) return false;
+        } else if (isDismissed(j)) {
+          return false;
+        }
+        if (sectionFilter === "linkedin_eligible" || sectionFilter === "linkedin_review" || sectionFilter === "boards") {
+          if (j.section !== sectionFilter) return false;
+        } else if (["email", "form", "dm"].includes(sectionFilter)) {
+          if (sectionFilter === "email" && !hasFormat(j, "email")) return false;
+          if (sectionFilter === "form" && !hasFormat(j, "form")) return false;
+          if (sectionFilter === "dm" && !hasFormat(j, "direct_message")) return false;
         }
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
@@ -740,50 +914,161 @@
       }).join("");
     }
 
+    function renderDispositionMenu(job) {
+      const effective = job.position_disposition || job.position_disposition_auto || "best_fit";
+      const override = job.position_disposition_is_override;
+      const items = DISPOSITION_OVERRIDES.map(d => {
+        const stored = job.position_disposition;
+        const active = (d.id === "auto" && !override)
+          || (d.id !== "auto" && override && d.id === stored);
+        return `<button type="button" class="${active ? "active" : ""}" data-disposition="${d.id}">${esc(d.label)}</button>`;
+      }).join("");
+      return `<div class="card-header-actions">
+        <button type="button" class="card-menu-btn" aria-label="Override position status" aria-expanded="false">⋮</button>
+        <div class="card-menu" role="menu">
+          <label>Override status</label>
+          ${items}
+        </div>
+      </div>`;
+    }
+
+    function renderStepsBlock(job, actions) {
+      const disp = job.position_disposition || job.position_disposition_auto || "best_fit";
+      const isHumanReview = disp === "human_review" && !job.application_steps_enabled;
+
+      if (isHumanReview) {
+        return `<div class="steps-block steps-block-review">
+          <div class="steps-hint">Pipeline marked this as <strong>human review</strong> — check the post first. Use ⋮ → <strong>Real role</strong> to enable apply steps.</div>
+        </div>`;
+      }
+
+      if (!job.application_steps_enabled) return "";
+
+      const pills = renderSteps(actions, job);
+      if (!pills.trim() || !hasAnyStepPill(actions)) return "";
+
+      return `<div class="steps-block">
+        <label>Application steps</label>
+        <div class="step-pills">${pills}</div>
+      </div>`;
+    }
+
+    function findCard(job_key) {
+      return cardsGrid.querySelector(`[data-job-key="${CSS.escape(job_key)}"]`);
+    }
+
+    function buildCardElement(job) {
+      const card = document.createElement("article");
+      const disp = job.position_disposition || job.position_disposition_auto || "best_fit";
+      const overrideMark = job.position_disposition_is_override ? ' <span class="badge-override">manual</span>' : "";
+      card.className = "card" + (isDismissed(job) ? " dimmed" : "");
+      const actions = job.actions || {};
+      card.innerHTML = `
+        <div class="card-header">
+          <div>
+            <div class="card-title">${esc(job.role)}</div>
+            <div class="card-company">${esc(job.company)}</div>
+          </div>
+          ${renderDispositionMenu(job)}
+        </div>
+        <div class="badges">
+          <span class="badge badge-track">${esc(job.track_label)}</span>
+          <span class="badge ${dispositionBadgeClass(disp)}">${esc(job.position_disposition_label || "Best fit")}${overrideMark}</span>
+        </div>
+        <div class="card-meta">
+          <div class="meta-item meta-item-full">
+            <label>Application format</label>
+            <div class="format-tags">${renderFormatTags(job.application_formats)}</div>
+          </div>
+          <div class="meta-item"><label>Role from</label><span>${esc(job.role_from_label)}</span></div>
+          <div class="meta-item"><label>Salary</label><span>${esc(job.salary)}</span></div>
+          <div class="meta-item"><label>Posted</label><span>${esc(job.posted)}</span></div>
+          <div class="meta-item"><label>Location</label><span>${esc(job.location)}</span></div>
+        </div>
+        <div class="card-links">
+          ${job.post_url && job.post_url.startsWith("http") ? `<a href="${esc(job.post_url)}" target="_blank" rel="noopener">Post ↗</a>` : ""}
+          ${job.apply_url && job.apply_url.startsWith("http") ? `<a href="${esc(job.apply_url)}" target="_blank" rel="noopener">Apply link ↗</a>` : ""}
+          ${job.profile_url ? `<a href="${esc(job.profile_url)}" target="_blank" rel="noopener">Profile ↗</a>` : ""}
+        </div>
+        ${renderStepsBlock(job, actions)}`;
+      card.dataset.jobKey = job.job_key;
+      wireCard(card);
+      return card;
+    }
+
+    function wireCard(card) {
+      const menuBtn = card.querySelector(".card-menu-btn");
+      if (menuBtn) {
+        menuBtn.onclick = (e) => {
+          e.stopPropagation();
+          const menu = menuBtn.parentElement.querySelector(".card-menu");
+          const open = menu.classList.contains("open");
+          closeAllMenus();
+          if (!open) {
+            menu.classList.add("open");
+            menuBtn.setAttribute("aria-expanded", "true");
+          }
+        };
+      }
+
+      card.querySelectorAll(".card-menu button[data-disposition]").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          setDisposition(card.dataset.jobKey, btn.dataset.disposition);
+        };
+      });
+
+      card.querySelectorAll(".step-pill.clickable").forEach(btn => {
+        btn.onclick = () => runAction(btn);
+      });
+    }
+
+    function jobVisible(job_key) {
+      return filteredJobs().some(j => j.job_key === job_key);
+    }
+
+    function findJob(job_key) {
+      return (snapshot.jobs || []).find(j => j.job_key === job_key);
+    }
+
+    /** Patch one card in place — keeps scroll position in cardsWrap. */
+    function updateCard(job_key) {
+      const job = findJob(job_key);
+      const existing = findCard(job_key);
+      const visible = job && jobVisible(job_key);
+
+      if (!visible) {
+        if (existing) existing.remove();
+        emptyState.hidden = filteredJobs().length > 0;
+        return;
+      }
+
+      const next = buildCardElement(job);
+      if (existing) {
+        existing.replaceWith(next);
+      } else {
+        cardsGrid.appendChild(next);
+      }
+      emptyState.hidden = true;
+    }
+
+    function applySnapshot(newSnapshot, job_key) {
+      if (newSnapshot) snapshot = newSnapshot;
+      if (job_key) {
+        updateCard(job_key);
+      } else {
+        renderCards();
+      }
+    }
+
     function renderCards() {
+      closeAllMenus();
+      const scrollTop = cardsWrap.scrollTop;
       const jobs = filteredJobs();
       cardsGrid.innerHTML = "";
       emptyState.hidden = jobs.length > 0;
-      jobs.forEach(job => {
-        const card = document.createElement("article");
-        card.className = "card";
-        const actions = job.actions || {};
-        card.innerHTML = `
-          <div class="card-header">
-            <div>
-              <div class="card-title">${esc(job.role)}</div>
-              <div class="card-company">${esc(job.company)}</div>
-            </div>
-          </div>
-          <div class="badges">
-            <span class="badge badge-track">${esc(job.track_label)}</span>
-            ${job.section === "linkedin_review" ? '<span class="badge badge-review">Human review</span>' : ""}
-          </div>
-          <div class="card-meta">
-            <div class="meta-item meta-item-full">
-              <label>Application format</label>
-              <div class="format-tags">${renderFormatTags(job.application_formats)}</div>
-            </div>
-            <div class="meta-item"><label>Role from</label><span>${esc(job.role_from_label)}</span></div>
-            <div class="meta-item"><label>Salary</label><span>${esc(job.salary)}</span></div>
-            <div class="meta-item"><label>Posted</label><span>${esc(job.posted)}</span></div>
-            <div class="meta-item"><label>Location</label><span>${esc(job.location)}</span></div>
-          </div>
-          <div class="card-links">
-            ${job.post_url && job.post_url.startsWith("http") ? `<a href="${esc(job.post_url)}" target="_blank" rel="noopener">Post ↗</a>` : ""}
-            ${job.apply_url && job.apply_url.startsWith("http") ? `<a href="${esc(job.apply_url)}" target="_blank" rel="noopener">Apply link ↗</a>` : ""}
-            ${job.profile_url ? `<a href="${esc(job.profile_url)}" target="_blank" rel="noopener">Profile ↗</a>` : ""}
-          </div>
-          <div class="steps-block">
-            <label>Application steps</label>
-            <div class="step-pills">${renderSteps(actions, job)}</div>
-          </div>`;
-        cardsGrid.appendChild(card);
-      });
-
-      cardsGrid.querySelectorAll(".step-pill.clickable").forEach(btn => {
-        btn.onclick = () => runAction(btn);
-      });
+      jobs.forEach(job => cardsGrid.appendChild(buildCardElement(job)));
+      cardsWrap.scrollTop = scrollTop;
     }
 
     function esc(s) {
@@ -801,6 +1086,23 @@
       dm_message: "dm_message",
     };
 
+    async function setDisposition(job_key, disposition) {
+      try {
+        const res = await fetch("/api/disposition", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job_key, disposition }),
+        });
+        const data = await res.json();
+        showToast(data.message || (data.ok ? "Updated" : "Failed"), data.ok);
+        if (data.snapshot) {
+          applySnapshot(data.snapshot, job_key);
+        }
+      } catch (e) {
+        showToast(String(e), false);
+      }
+    }
+
     async function runAction(btn) {
       const raw = btn.dataset.action;
       const action = ACTION_MAP[raw] || raw;
@@ -816,12 +1118,17 @@
           body: JSON.stringify({ action, job_key }),
         });
         const data = await res.json();
-        showToast(data.message || (data.ok ? "Done" : "Failed"), data.ok);
+        let msg = data.message || (data.ok ? "Done" : "Failed");
+        if (!data.ok && msg.includes("Manual DM mode") && !serverUiApproval) {
+          msg += " — restart the UI server: jobsearch ui";
+        }
+        showToast(msg, data.ok);
         if (data.snapshot) {
-          snapshot = data.snapshot;
-          renderCards();
+          applySnapshot(data.snapshot, job_key);
         } else if (activeDay) {
+          const scrollTop = cardsWrap.scrollTop;
           await loadSnapshot(activeDay);
+          cardsWrap.scrollTop = scrollTop;
         }
       } catch (e) {
         showToast(e.message, false);
@@ -830,6 +1137,8 @@
         btn.classList.remove("loading");
       }
     }
+
+    document.addEventListener("click", () => closeAllMenus());
 
     document.getElementById("searchInput").oninput = e => {
       searchQuery = e.target.value.trim();
@@ -852,6 +1161,7 @@
     };
 
     (async () => {
+      await checkServerMeta();
       await loadDays();
       if (activeDay) await loadSnapshot(activeDay);
     })();

@@ -216,6 +216,11 @@ def main() -> int:
         action="store_true",
         help="Override manual UI mode and send from CLI",
     )
+    parser.add_argument(
+        "--ui-approved",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     args = parser.parse_args()
 
     if args.send:
@@ -237,7 +242,10 @@ def main() -> int:
         for entry in entries:
             job = jobs_by_key.get(entry.get("job_key") or "")
             allowed, reason = linkedin_message_allowed(
-                tid, job, cli_force=getattr(args, "force_send", False)
+                tid,
+                job,
+                cli_force=getattr(args, "force_send", False),
+                ui_approved=getattr(args, "ui_approved", False),
             )
             if not allowed:
                 print(f"ERROR: {reason}")

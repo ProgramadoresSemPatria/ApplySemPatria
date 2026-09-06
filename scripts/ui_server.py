@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import os
 import subprocess
 import sys
 import threading
@@ -20,6 +21,25 @@ UI_DIR = ROOT / "ui" / "applications"
 sys.path.insert(0, str(SCRIPTS))
 
 PY = sys.executable
+UI_APPROVE = ("--ui-approved",)
+UI_META = {"ui_approval": True, "version": 2}
+
+
+def _ui_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["JOBSEARCH_UI_APPROVED"] = "1"
+    return env
+
+
+def _run_apply_cmd(cmd: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        cmd,
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env=_ui_subprocess_env(),
+    )
 
 
 def _find_job(job_key: str) -> dict[str, Any] | None:
@@ -37,10 +57,17 @@ def _match_company(job: dict[str, Any]) -> str:
 
 def run_action(action: str, job_key: str, track: str | None = None) -> dict[str, Any]:
     from generate_applications import apply_url_for  # noqa: E402
+    from position_disposition import application_steps_enabled  # noqa: E402
 
     job = _find_job(job_key)
     if not job:
         return {"ok": False, "message": f"Job not found: {job_key}"}
+
+    if not application_steps_enabled(job):
+        return {
+            "ok": False,
+            "message": "Application steps are disabled (human review). Use ⋮ → Real role to enable, or dismiss if noise.",
+        }
 
     tid = track or job.get("track") or "ai-engineer"
     match = _match_company(job)
@@ -50,6 +77,7 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
             PY,
             str(SCRIPTS / "email_apply.py"),
             "--send",
+            *UI_APPROVE,
             "--smtp",
             "--force-send",
             "--company",
@@ -79,6 +107,7 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
             PY,
             str(SCRIPTS / "dm_apply.py"),
             "--send",
+            *UI_APPROVE,
             "--force-send",
             "--match",
             match,
@@ -103,6 +132,7 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
             PY,
             str(SCRIPTS / "dm_followup.py"),
             "--send",
+            *UI_APPROVE,
             "--force-send",
             "--match",
             match,
@@ -115,13 +145,7 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
         return {"ok": False, "message": f"Unknown action: {action}"}
 
     try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(ROOT),
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
+        proc = _run_apply_cmd(cmd)
     except subprocess.TimeoutExpired:
         return {"ok": False, "message": "Action timed out (browser may still be open)."}
     except OSError as exc:
@@ -138,6 +162,41 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
         "exit_code": proc.returncode,
         "action": action,
         "job_key": job_key,
+    }
+
+
+def set_disposition(job_key: str, disposition: str) -> dict[str, Any]:
+    from position_disposition import (  # noqa: E402
+        DISPOSITION_AUTO,
+        DISPOSITIONS,
+        disposition_label,
+        get_disposition,
+        disposition_is_override,
+        update_disposition,
+    )
+    from registry import load_registry, save_registry  # noqa: E402
+
+    if disposition not in DISPOSITIONS and disposition != DISPOSITION_AUTO:
+        return {"ok": False, "message": f"Invalid disposition: {disposition}"}
+
+    registry = load_registry()
+    job = update_disposition(registry, job_key, disposition)
+    if not job:
+        return {"ok": False, "message": f"Job not found: {job_key}"}
+
+    save_registry(registry)
+    effective = get_disposition(job)
+    if disposition == DISPOSITION_AUTO:
+        msg = "Reset to automatic pipeline classification."
+    else:
+        msg = f"Override set: {disposition_label(effective)}."
+    return {
+        "ok": True,
+        "message": msg,
+        "job_key": job_key,
+        "position_disposition": effective,
+        "position_disposition_label": disposition_label(effective),
+        "position_disposition_is_override": disposition_is_override(job),
     }
 
 
@@ -182,6 +241,10 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             self._json(200, {"days": days})
             return
 
+        if path.path == "/api/meta":
+            self._json(200, UI_META)
+            return
+
         if path.path == "/api/snapshot":
             day = (qs.get("day") or ["live"])[0]
             from applications_ui_data import load_snapshot, refresh_live_snapshot  # noqa: E402
@@ -210,10 +273,24 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
-        if path != "/api/action":
+        if path not in ("/api/action", "/api/disposition"):
             self.send_error(404)
             return
         body = self._read_json()
+
+        if path == "/api/disposition":
+            job_key = str(body.get("job_key") or "")
+            disposition = str(body.get("disposition") or "")
+            if not job_key or not disposition:
+                self._json(400, {"ok": False, "message": "job_key and disposition required"})
+                return
+            result = set_disposition(job_key, disposition)
+            from applications_ui_data import refresh_live_snapshot  # noqa: E402
+
+            result["snapshot"] = refresh_live_snapshot()
+            self._json(200 if result.get("ok") else 400, result)
+            return
+
         action = str(body.get("action") or "")
         job_key = str(body.get("job_key") or "")
         track = body.get("track")

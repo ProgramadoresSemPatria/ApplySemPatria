@@ -58,8 +58,17 @@ from generate_applications import (  # noqa: E402
     track_cell,
 )
 from registry import job_key, load_registry  # noqa: E402
+from table_format import format_posted  # noqa: E402
 from table_paths import APPLICATIONS_TABLES_DIR  # noqa: E402
 import dm_state  # noqa: E402
+from position_disposition import (  # noqa: E402
+    application_steps_enabled,
+    auto_disposition_for_job,
+    disposition_is_override,
+    disposition_label,
+    get_disposition,
+    include_in_apply_table,
+)
 
 
 def _snapshot_path_for_md(md_path: Path) -> Path:
@@ -228,6 +237,12 @@ def job_to_card(
         resolved = (job.get("apply_url") or "").strip()
         if resolved.startswith("http"):
             apply_url = resolved
+    actions = _action_states(job, dm, email_to, email_keys, url_done, li_cfg=li_cfg)
+    steps_on = application_steps_enabled(job)
+    if not steps_on:
+        for state in actions.values():
+            state["available"] = False
+            state["in_progress"] = False
     return {
         "job_key": job_key(job),
         "track": job.get("track") or "",
@@ -238,20 +253,25 @@ def job_to_card(
         "company": job.get("company") or "—",
         "salary": job.get("salary_usd") or "—",
         "location": job.get("location_note") or "—",
-        "posted": job.get("posted_label") or (str(job.get("posted_at") or "")[:10] or "—"),
+        "posted": format_posted(job),
         "priority": priority(job),
         "channel": classify_channel(job),
         "channel_label": channel_label(job),
         "status": status_cell(job),
         "status_kind": kind,
         "section": section,
+        "position_disposition": get_disposition(job),
+        "position_disposition_label": disposition_label(get_disposition(job)),
+        "position_disposition_auto": auto_disposition_for_job(job),
+        "position_disposition_is_override": disposition_is_override(job),
+        "application_steps_enabled": steps_on,
         "post_url": post_url_for(job),
         "apply_url": apply_url,
         "apply_email": apply_email_display(job) or "",
         "profile_url": dm_profile_url(job) or "",
         "application_formats": list_application_formats(job),
         "form_link_message_enabled": recruiter_message_enabled(job, li_cfg or {}),
-        "actions": _action_states(job, dm, email_to, email_keys, url_done, li_cfg=li_cfg),
+        "actions": actions,
     }
 
 
