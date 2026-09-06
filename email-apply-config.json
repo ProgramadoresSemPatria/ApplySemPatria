@@ -1,0 +1,15 @@
+{
+  "sender_email": "caiohandradelima@gmail.com",
+  "sender_name": "Caio Lima",
+  "resume_path": "/Users/caio/Downloads/CaioSeniorAIEngineer.docx-2.pdf",
+  "linkedin_url": "https://www.linkedin.com/in/caiohandradelima/",
+  "location": "São Paulo, Brazil (remote · LATAM)",
+  "subject_template": "Application for {role}",
+  "body_template_file": "templates/email-application.txt",
+  "gmail_credentials_path": "secrets/gmail-credentials.json",
+  "gmail_token_path": "state/gmail-token.json",
+  "sent_log_path": "state/email-applications.json",
+  "rate_limit_seconds": 45,
+  "skip_if_already_applied_in_applika": true,
+  "log_to_applika": true
+}

@@ -1,0 +1,40 @@
+{
+  "query": "\"ai engineer\" + \"latam\"",
+  "url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+  "methods": [
+    {
+      "method": "curl",
+      "elapsed_sec": 2.17,
+      "html_bytes": 2309777,
+      "feed_markers": 6,
+      "unique_activity_urns": 3,
+      "hiring_regex_hits": 2,
+      "posts_parsed": 4,
+      "roles_kept": 2,
+      "notes": "Static HTML only \u2014 JS scroll results NOT included"
+    },
+    {
+      "method": "mcp",
+      "elapsed_sec": 0.0,
+      "feed_markers": 3,
+      "posts_parsed": 3,
+      "roles_kept": 2,
+      "source_file": "/Users/caio/job-search/runs/mcp-responses-2026-08-31-quoted/q01-ai-engineer-latam.json"
+    },
+    {
+      "method": "browser_scroll",
+      "error": "BrowserType.launch_persistent_context: Executable doesn't exist at /Users/caio/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell\n\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n\u2551 Looks like Playwright was just installed or updated.       \u2551\n\u2551 Please run the following command to download new browsers: \u2551\n\u2551                                                            \u2551\n\u2551     patchright install                                     \u2551\n\u2551                                                            \u2551\n\u2551 <3 Patchright Team                                         \u2551\n\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d"
+    }
+  ],
+  "winner": "curl",
+  "ranking": [
+    {
+      "method": "curl",
+      "roles_kept": 2
+    },
+    {
+      "method": "mcp",
+      "roles_kept": 2
+    }
+  ]
+}

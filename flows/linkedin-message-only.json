@@ -1,0 +1,18 @@
+{
+  "name": "linkedin-message-only",
+  "description": "Send a DM on an already-connected / accepted profile. No Connect steps.",
+  "match": { "url_contains": ["linkedin.com/in/"] },
+  "vars_required": ["message"],
+  "steps": [
+    { "action": "dismiss_premium", "optional": true },
+    { "action": "sleep", "seconds": 0.3 },
+    { "action": "click", "selector": "main a:has-text('Message'), main button:has-text('Message')", "optional": true },
+    { "action": "sleep", "seconds": 2.0 },
+    { "action": "dismiss_premium", "optional": true },
+    { "action": "sleep", "seconds": 0.3 },
+    { "action": "fill", "selector": "div.msg-form__contenteditable[contenteditable='true']", "value_template": "{message}", "optional": true },
+    { "action": "sleep", "seconds": 0.8 },
+    { "action": "click", "selector": "button.msg-form__send-button, button.msg-form__send-btn, .msg-form button[type='submit']", "optional": true, "destructive": true, "commit": true, "commit_kind": "message" },
+    { "action": "sleep", "seconds": 1.2 }
+  ]
+}

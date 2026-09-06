@@ -1,0 +1,39 @@
+================================================================================
+  LinkedIn setup — DM apply for hiring posts (Direct Msg channel)
+================================================================================
+
+jobsearch uses a browser session (cookies) to connect with recruiters and send
+direct messages on LinkedIn. No Cursor MCP required.
+
+What DM apply does:
+  - Opens the recruiter's profile from a hiring post
+  - If NOT connected: sends a connection request WITHOUT a note
+  - If already connected: sends your application message (no resume attached yet)
+  - NEVER comments on posts
+
+Steps — choose ONE sign-in method:
+
+  A) Import from your browser (easiest if you're already logged in)
+     1. Stay logged into LinkedIn in Chrome, Brave, or Edge
+     2. When prompted, choose "Import from browser"
+     3. Cookies saved to: ~/.linkedin-mcp/cookies.json
+
+  B) Sign in via browser window
+     1. When prompted, choose "Browser login"
+     2. Complete LinkedIn sign-in in the window that opens
+     3. Cookies saved to: ~/.linkedin-mcp/cookies.json
+
+Requirements:
+  - Patchright/browser deps: jobsearch install --browser
+  - uvx (for session helper): https://docs.astral.sh/uv/
+
+Check session anytime:
+    jobsearch login status
+
+Re-import if session expires:
+    jobsearch configure linkedin --track YOUR_TRACK
+
+Turn LinkedIn DM apply off:
+    jobsearch configure linkedin --track YOUR_TRACK --disable
+
+================================================================================

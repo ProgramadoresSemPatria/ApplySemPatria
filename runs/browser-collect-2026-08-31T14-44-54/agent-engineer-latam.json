@@ -1,0 +1,26 @@
+{
+  "source": "browser_scroll",
+  "query": "\"agent engineer\" + \"latam\"",
+  "role_keyword": "ai engineer",
+  "region": "latam",
+  "url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+  "period_days": 7,
+  "scroll_stats": {
+    "scrolls": 0,
+    "stale": 0,
+    "errors": [
+      "no_results_page"
+    ],
+    "auth_mode": "cookies"
+  },
+  "posts_found": 0,
+  "roles_kept": 0,
+  "elapsed_sec": 3.9,
+  "sections": {
+    "search_results": ""
+  },
+  "references": {
+    "search_results": []
+  },
+  "jobs": []
+}

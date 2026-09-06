@@ -1,0 +1,105 @@
+{
+  "period_days": 7,
+  "queries": [
+    {
+      "query": "ai engineer latam",
+      "role_keyword": "ai engineer",
+      "region": "latam",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=ai+engineer+latam&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nIsleen Hernández\n\n \n • 2nd\n\nIT Recruiter | Human Capital Administrator | IT & Tech Talent Acquisition | Candidate Sourcing & Screening Expert\n\n2d • \n\nFollow\n\nWe're hiring: Kubernetes Technical Support Engineer\n\nWe're looking for a highly technical Tier 2/3 Support Engineer to join an exciting AI Vision platform project.\n\n🔹 Kubernetes in production\n🔹 Cloud & Linux troubleshooting\n🔹 L2/L3 technical support\n🔹 Customer-facing experience\n🔹 Strong English communication\nLATAM | Remote \n\nExperience with AWS/Azure, Docker, monitoring, or AI/Computer Vision is a plus.\nhttps://lnkd.in/gtA4--xd\n\nInterested? Send me a DM or apply\n… more\n\nFeed post\n\nRocio Colman\n\n \n • 2nd\n\nGlobal IT Recruiter\n\n5d • \n\nFollow\n\n❗ #Hiring ❗\n\n#SoftwareEngineer | #DocumentAI | #OCR Opportunity 👇\n\n📍 #LATAM-based candidates only\n🕒 Full-time | Remote | 40 hours/week\n💵 Payment in USD\n\nWe're looking for a Software Engineer with strong experience in Document AI, OCR, and production ML inference.\n\nFeed post\n\nArslan Arshad - CHRMP - CIRP Certified\n\n6d • \n\n🚀 LATAM ANALYTICS ENGINEERS — Senior Analytics Engineer | 100% Remote | LATAM Only\n\ndbt + Databricks + Terraform + Fabric\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {"kind": "person", "url": "/in/isleenhc/", "text": "Isleen Hernández"},
+            {"kind": "person", "url": "/in/rocio0it0recruiter0talent0acquisition/", "text": "Rocio Colman"},
+            {"kind": "person", "url": "/in/arslan-a-564958198/", "text": "Arslan Arshad - CHRMP - CIRP Certified"}
+          ]
+        }
+      }
+    },
+    {
+      "query": "ai engineer worldwide",
+      "role_keyword": "ai engineer",
+      "region": "worldwide",
+      "mcp_response": {
+        "sections": {
+          "search_results": "Did you mean ai engineers worldwide?\n\nFeed post\n\nTimothy Klein\n\n5d • \n\nMedtronic Senior Integration Engineer - on-site Fridley MN - not remote AI manufacturing\n\nFeed post\n\nSzymon Idziniak\n\n2d • \n\n🚀 We're hiring: Senior Software Engineer – AI & Intelligent Systems\n🌍 Fully Remote – Worldwide\n💰 $1,500–$3,000 USD/month\nIf you have relevant experience, please DM directly at igor@ecomflow.com\n\nFeed post\n\nDominik Mark Metzger\n\n2d • \n\nSAP IndustryAI Forward Deployed Engineering - Munich hub\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {"kind": "person", "url": "/in/szymon-idziniak-42311a419/", "text": "Szymon Idziniak"}
+          ]
+        }
+      }
+    },
+    {
+      "query": "agent engineer latam",
+      "role_keyword": "agent engineer",
+      "region": "latam",
+      "mcp_response": {
+        "sections": {
+          "search_results": "Feed post\n\nMuqadas khan\n\n5d • \n\n🚀 Hiring: ML Engineer | Remote LATAM\n💰 $84K–$120K USD\n\nFeed post\n\nZahra Y.\n\n1w • \n\nHiring: AI Platform Engineers Remote LATAM $100K–$132K + Equity\nhttps://lnkd.in/ggNu2g4n\n\nFeed post\n\nAna Lauren\n\n3d • \n\nAI ENGINEER LLM AI AGENTS PYTHON US$ 2.100 a US$ 3.500/mês LATAM\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {"kind": "person", "url": "/in/muqadas-khan-2a0a18397/", "text": "Muqadas khan"},
+            {"kind": "person", "url": "/in/zahra-y-a95081317/", "text": "Zahra Y."},
+            {"kind": "person", "url": "/in/ana-lauren-4478a61a9/", "text": "Ana Lauren"}
+          ]
+        }
+      }
+    },
+    {
+      "query": "agent engineer worldwide",
+      "role_keyword": "agent engineer",
+      "region": "worldwide",
+      "mcp_response": {
+        "sections": {
+          "search_results": "Feed post\n\nAnna Frick\n\n2d • \n\nWe're hiring! Application Engineer (consultant) World Bank Group R/Shiny Washington DC Remote\nSend CV to alehner@worldbank.org\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {"kind": "person", "url": "/in/annafrick1/", "text": "Anna Frick"}
+          ]
+        }
+      }
+    },
+    {
+      "query": "agentic engineer latam",
+      "role_keyword": "agentic engineer",
+      "region": "latam",
+      "mcp_response": {
+        "sections": {
+          "search_results": "Did you mean agenti engineer latam?\n\nFeed post\n\nZahra Y.\n\n1w • \n\nHiring: AI Platform Engineers agentic AI Remote LATAM $100K–$132K\n\nFeed post\n\nAna Lauren\n\n3d • \n\nAI ENGINEER agentic workflows LATAM USD\n\nFeed post\n\nFLORENCIA MAYER\n\n20h • \n\nHIRING GTM Ai Engineer in LATAM only agentic workflows Claude OpenAI n8n\n\nFeed post\n\nMusffa Ikram\n\n10h • \n\nWe're hiring AI Engineer Generative AI Remote LATAM agentic AI solutions LLMs cristina.caetano@zazmic.ai USD hourly\n\nFeed post\n\nJuscieldo (Lavi) Santos\n\n5d • \n\nLooking for Design Engineer agentic workflows AI - LATAM Spanish or Portuguese DM\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {"kind": "person", "url": "/in/zahra-y-a95081317/", "text": "Zahra Y."},
+            {"kind": "person", "url": "/in/ana-lauren-4478a61a9/", "text": "Ana Lauren"},
+            {"kind": "person", "url": "/in/florenciabelenmayer/", "text": "FLORENCIA MAYER"},
+            {"kind": "person", "url": "/in/musffa-ikram/", "text": "Musffa Ikram"},
+            {"kind": "person", "url": "/in/juscieldo/", "text": "Juscieldo (Lavi) Santos"}
+          ]
+        }
+      }
+    },
+    {
+      "query": "agentic engineer worldwide",
+      "role_keyword": "agentic engineer",
+      "region": "worldwide",
+      "mcp_response": {
+        "sections": {
+          "search_results": "Feed post\n\nFabio Giorgi\n\n1d • \n\nWe're hiring: Agentic AI SDLC Architect Siemens Erlangen Munich Germany hybrid\n\nFeed post\n\nLavanyaa P\n\n3d • \n\nWalmart Global Tech Staff Software Engineer MLE Bangalore Agentic AI RAG\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {"kind": "person", "url": "/in/fabio-giorgi-176a9313/", "text": "Fabio Giorgi"},
+            {"kind": "person", "url": "/in/lavanyaap/", "text": "Lavanyaa P"}
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "ats-workable",
+  "description": "Workable-hosted application form (apply.workable.com). Deterministic field selectors.",
+  "match": { "domains": ["workable.com", "apply.workable.com"] },
+  "steps": [
+    { "action": "sleep", "seconds": 3.0 },
+    { "action": "fill", "selector": "input[name='firstname']", "profile_key": "first_name", "optional": true },
+    { "action": "fill", "selector": "input[name='lastname']", "profile_key": "last_name", "optional": true },
+    { "action": "fill", "selector": "input[name='email']", "profile_key": "email", "optional": true },
+    { "action": "fill", "selector": "input[name='phone']", "profile_key": "phone", "optional": true },
+    { "action": "upload", "selector": "input[type=file]", "profile_key": "resume_path", "destructive": true, "optional": true },
+    { "action": "screenshot", "path": "runs/workable-filled.png" }
+  ]
+}

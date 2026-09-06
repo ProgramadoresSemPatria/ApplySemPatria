@@ -1,0 +1,66 @@
+{
+  "_comment": "Domains and URL patterns excluded from all job discovery pipelines. Add entries when a site mirrors real JDs but redirects Apply to phishing or unverified forms.",
+  "domains": [
+    {
+      "domain": "66ghz.com",
+      "reason": "fake_job_aggregator",
+      "note": "Talentpulse — copies real JDs; Apply redirects to phishing (allboardsolutions.in)"
+    },
+    {
+      "domain": "totalh.net",
+      "reason": "fake_job_aggregator",
+      "note": "Taskworks — same pattern as Talentpulse"
+    },
+    {
+      "domain": "synergize.co",
+      "reason": "fake_job_aggregator",
+      "note": "Workvista host — unverified apply flow"
+    },
+    {
+      "domain": "allboardsolutions.in",
+      "reason": "phishing_apply_portal",
+      "note": "Known credential-harvesting apply site (ihire.allboardsolutions.in)"
+    },
+    {
+      "domain": "fast-page.org",
+      "reason": "fake_job_aggregator",
+      "note": "Careerbyte-style free-hosted job pages"
+    },
+    {
+      "domain": "zya.me",
+      "reason": "fake_job_mirror",
+      "note": "flexgen.zya.me and similar mirrors"
+    },
+    {
+      "domain": "42web.io",
+      "reason": "free_host_job_scam",
+      "note": "jobsy.42web.io, taskium.42web.io, etc."
+    },
+    {
+      "domain": "lovestoblog.com",
+      "reason": "free_host_job_scam",
+      "note": "skillnex.lovestoblog.com and similar"
+    },
+    {
+      "domain": "liveblog365.com",
+      "reason": "free_host_job_scam",
+      "note": "willowyn.liveblog365.com and similar"
+    },
+    {
+      "domain": "mysmartpros.com",
+      "reason": "unverified_job_scraper",
+      "note": "Reposts third-party listings without verified apply links"
+    }
+  ],
+  "url_substrings": [
+    {
+      "match": "ihire.allboardsolutions.in",
+      "reason": "phishing_apply_portal"
+    },
+    {
+      "match": "/apply-for-the-job/",
+      "reason": "phishing_apply_portal",
+      "note": "Generic path used by allboardsolutions phishing flow"
+    }
+  ]
+}

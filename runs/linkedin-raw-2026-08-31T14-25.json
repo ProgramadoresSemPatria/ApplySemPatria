@@ -1,0 +1,210 @@
+{
+  "period_days": 7,
+  "queries": [
+    {
+      "query": "\"ai engineer\" + \"latam\"",
+      "role_keyword": "ai engineer",
+      "region": "latam",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nThalia Balbinot\n\n \n • 2nd\n\nTech Recruiter | Talent Acquisition | IT Hiring | Global Recruitment\n\n2d • \n\nConnect\n\nAI Engineer | Remote | LATAM\n\nWe're looking for an AI Engineer to join a US-based company and work on real-world AI products in a fully remote, long-term role.\nThe ideal candidate has 3+ years of experience and hands-on experience building AI features for production, especially with:\n\n• LLMs, AI Agents & RAG\n• Python & SQL\n• Snowflake & ETL\n• REST APIs\n• Agentic workflows\n• AWS / Lambda\n• Computer Vision\nExperience integrating AI into existing products is especially valuable.\nEnglish: B2\nLocation: Colombia or Mexico\nCompensation: USD 2.1K–3.5K/month\nSchedule: Full-time, 40h/week\n\nInterested? Apply through the link and take the next step in your AI career.\nhttps://lnkd.in/dZ87_PfZ\n… more\n\n14\n​\n2\nFeed post\n\nIrene T.\n\n \n • 2nd\n\nUS & LATAM Recruiter | Building High-Impact Tech Teams | GENTY Recruitment  🌎🔍\n\n13h • \n\nConnect\n\n🚀 LATAM, we're hiring!\n\n🤖 Hey, AI Engineers... this one's for you!\n\nWe're looking for a Senior AI Engineer who has already shipped an LLM/AI-powered applications to real users.\n\n✨ Think you're the right fit? Send me a message.\n🤝 Know someone who is? Tag them or share this post (+1000000 to your karma 😉)\n\n#AIEngineer #LLM #GenerativeAI #MachineLearning #ArtificialIntelligence #AIJobs #LATAMJobs #LATAMRemoteJobs #RemoteJobs\n… more\n\n14\n​\n​\nFeed post\n\nEmpresa Confidencial\n\n6d • \n\nAlerta de empleo | emprego\n\nSubscribe\n\nNew LATAM Jobs Update - 25th Aug 2026\n\nEmpresa Confidencial\n\n53\n​\n​\n\nComments have been turned off on this post. You can still react or repost it.\n\nAre these results helpful?\n\nYour feedback helps us improve search results"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/thalia-balbinot-768412163/",
+              "text": "Thalia Balbinot"
+            },
+            {
+              "kind": "person",
+              "url": "/in/trofimovairina/",
+              "text": "Irene T."
+            },
+            {
+              "kind": "company",
+              "url": "/company/empresa-confidencial/",
+              "text": "Empresa Confidencial"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"ai engineer\" + \"worldwide\"",
+      "role_keyword": "ai engineer",
+      "region": "worldwide",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22worldwide%22&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nRemote Worldwide\n\n23h • \n\nFollow\n\n📢 Job Alert: Senior AI Engineer (m/f/d)\n\n    🌍 Remote —> #EMEA\n\n🏢 Kayzen\n\n#job #remoteworldwide #ai #hiring #worldwide #senior #ai #emea\n\nApply Below 👇\nhttps://lnkd.in/d55y-tx8\n\n… more\n\n​\n​\n​\nFeed post\n\nGugu Lourie\n\n • 3rd+\n\nFounder @ TechFinancials News | Business Journalism, Telecommunications\n\n1w • \n\nFollow\n\nGlobal backers bet R19.5M on Verascient's revolutionary #AI operating system as co-founders Keagan Stokoe and Emile Ferreira issue a rallying cry for South Africa's elite AI engineers to drive worldwide expansion.\n\nhttps://lnkd.in/ddk22sm9\n… more\n\nSA Founders Land R19.5M In Global Backing, Launch Urgent Search For Nation's Top 1% AI Talent\nSA Founders Land R19.5M In Global Backing, Launch Urgent Search For Nation's Top 1% AI Talent\n\ntechfinancials.co.za\n\n51\n8\n​\nFeed post\n\nSameer Ray\n\n \n • 3rd+\n\nFull-Stack + AI Engineer | I build AI systems, then make sure they're not lying to  you | Python · React · LangChain\n\n4d • \n\nFollow\n\nOpen to remote, worldwide-eligible roles — Full-Stack & AI Engineer\nI build things end-to-end: backend, frontend, and the AI layer that ties it together.\nA few things I've shipped solo: 🔹 NexMesh — 7,100-line distributed multi-agent system 🔹 AppDrop — Tauri/Rust + React desktop app, 255 automated tests 🔹 AirDial — voice AI pipeline (Deepgram, Twilio, ElevenLabs) 🔹 NepaliGPT — trained a language model from scratch on a 528K-row Devanagari dataset, published as open datasets on Hugging Face\nStack: Python, TypeScript, React, Next.js, FastAPI, Django, LangChain/LangGraph, RAG, Vector DBs, Docker, AWS.\nBackground: as an MIS Analyst/AI Engineer at an enterprise ISP, founded and architected an EdTech platform from zero to launch, and currently training/evaluating AI systems as a Master Coding Specialist.\nI'm based in Kathmandu, Nepal, work async-friendly hours, and I'm actively looking for a remote AI Engineer / Full-Stack AI role with a team that hires globally.\nIf that's you — or you know a team like that — I'd love to connect. 👇\n#RemoteWork #Hiring #OpenToWork #AIEngineer #FullStackDeveloper #RemoteJobs #HiringRemote\n\n… more\n\n1\n​\n​\n\nAre these results helpful?\n\nYour feedback helps us improve search results"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "company",
+              "url": "/company/remoteworldwide/",
+              "text": "Remote Worldwide"
+            },
+            {
+              "kind": "person",
+              "url": "/in/gugu-lourie/",
+              "text": "Gugu Lourie"
+            },
+            {
+              "kind": "person",
+              "url": "/in/sameer-ray-5429a8199/",
+              "text": "Sameer Ray"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agent engineer\" + \"latam\"",
+      "role_keyword": "agent engineer",
+      "region": "latam",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nEmpresa Confidencial\n\n6d • \n\nAlerta de empleo | emprego\n\nSubscribe\n\nNew LATAM Jobs Update - 25th Aug 2026\n\nEmpresa Confidencial\n\n53\n​\n​\n\nComments have been turned off on this post. You can still react or repost it.\n\nFeed post\n\nGerónimo Palacios\n\n \n • 1st\n\nSenior Talent Acquisition Specialist | AI-Driven Technical Recruiting | LATAM & Global Teams | Full-Cycle Hiring for Engineering, Fintech & AI-Native Products\n\n3d • \n\nA few years ago, nobody asked me to find an AI Engineer. Now it's one of the most requested positions in the engineering space, and one of the most challenging to fill.\n\nFirst, I had to figure out what I was looking for before I could source the right people. AI Engineer, AI Agent & Platform Engineer. These titles continue to morph with the ever-changing AI landscape, and haven't yet settled into a clear standard.\n\nFinding talent is not the problem. LATAM has incredible engineers. The second goal was to create the missing framework around AI engineering positions.\n\nThe third flex is screening. To find the right talent for our clients, we have to know these roles inside and out. As engineering practices mature in the AI space, oftentimes the hard technical skills are not the only consideration. Soft skills such as curiosity and adaptability will tip the scales between equally qualified candidates.\n\nThe market is creating important new roles with no playbook. The exciting part of my job is to write them as I go.\n… more\n\n11\n4\n1\nFeed post\n\nRaul Mangolin\n\n \n • 2nd\n\nSoftware Engineering Manager\n\n3d • \n\nFollow\n\nWe're hiring at Appnovation!\nThere are some exciting opportunities open across Appnovation right now.\n\nWe're currently looking for people across a range of roles, including:\n- AI / Agent Engineers\n- AI Evaluation Engineers (QA)\n- Cloud Solutions Architects\n- Data Architects / Engineers\n- Senior Fullstack Python Developers\n- Full-Stack Developers – AI Design-to-Dev\n- Tech Leads\n- Scrum Masters\n…and many more.\n\nThere are opportunities across Brazil, Canada, the US, UK, LATAM and APAC, including several positions here in São Paulo.\n\nIf you're looking for your next challenge, especially if you're interested in where software engineering and AI are heading, it's definitely worth taking a look.\n\nCheck out all open positions: https://lnkd.in/eCcUQm5u\n\nAnd if you see something that looks like a good fit, feel free to reach out to me.\n\n#Appnovation #Hiring #TechJobs #AIJobs #SoftwareEngineering #ArtificialIntelligence #DataEngineering #CloudComputing #TechCareers #HiringNow\n\n… more\n\nAppnovation Technologies\nAppnovation Technologies\n\njob-boards.greenhouse.io\n\n10\n​\n5\n\nAre these results helpful?\n\nYour feedback helps us improve search results"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "company",
+              "url": "/company/empresa-confidencial/",
+              "text": "Empresa Confidencial"
+            },
+            {
+              "kind": "person",
+              "url": "/in/geronimo-palacios/",
+              "text": "Gerónimo Palacios"
+            },
+            {
+              "kind": "person",
+              "url": "/in/raulmangolin/",
+              "text": "Raul Mangolin"
+            },
+            {
+              "kind": "company",
+              "url": "/company/appnovation/",
+              "text": "Appnovation"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agent engineer\" + \"worldwide\"",
+      "role_keyword": "agent engineer",
+      "region": "worldwide",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22worldwide%22&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nBen Cooper\n\n \n • 3rd+\n\nBuilding Linear in APAC\n\n11h • \n\nFollow\n\nI'm super excited to be joining Linear.\n\nLinear wins over top engineering teams worldwide by obsessing over speed, simplicity, and great design. But what excites me most about this next chapter is how the platform is evolving.\n\nIt has rapidly become the control plane for modern software development. It's a true multi-player orchestration layer where AI agents, engineers and PMs collaborate from spec to release. It provides the structured context and governance that teams need to manage multi-agent workflows.\n\nIf you're building in the region or want to chat about where software development is heading, let's grab a coffee or jump on a call.\n… more\n\nStarting a new position\n\n90\n5\n​\nFeed post\n\nMax Luo\n\n \n • 3rd+\n\nAI Security Engineering Lead (Crypto/Web3) | Open-Source Book Author: AI for Security & Security for AI | Blockchain Security | OSCE³\n\n6d • \n\nFollow\n\nI spent the past few years rebuilding security operations around LLMs, and the tooling kept dying under me: LangChain, then Dify, then OpenClaw. Everything now runs on Codex, Claude Code, and DeepSeek Harness, so I finally wrote down where I think this is going.\nMy answer: the next SOC looks like Codex. Engineers talk to agents in one workbench instead of working a ticket queue. A separate engine grinds through the alert volume around the clock. Humans keep exactly one job: approving high-risk actions. Three tiers of analysts collapse into one engineer supervising three tiers of agents.\nThe piece has the architecture, the four generations of tooling I burned through to get here, and the decoupling rules that keep you from getting locked into any one vendor. Tell me where I'm wrong.\n\n#Cybersecurity #AIAgents #SecurityOperations #AISecOps #LLM\n… more\n\nWhat the Next AI SOC Looks Like: A Codex for Security Operations\n\nMax Luo\n\n4\n1\n​\nFeed post\n\nHotel Jobs Worldwide\n\n6h • \n\nFollow\n\nJob Openings at Hilton Doha Hotel | All Departments:-\n-Management & Commercial\n-Commercial Director\n-Director of Finance\n-Director of Engineering\n-Venue Manager – Society Doha\n-Culinary\n-Head Chef – Trader Vic's Doha\n-Sous Chef – Cold Kitchen\n-Chef de Partie\n-Food & Beverage\n-Guest Relations Agent – Society Doha\n-Mini Bar Attendant – Room Service\n-Captain – Society Doha\n-F&B Waiter and Waitress – Sushi On\n-F&B Waiter and Waitress – Trader Vic's Doha\n-Barista\n-Reservation\n-Reservation Agent\n-Engineering\n-HVAC Technician\n-Electrician\n-Spa & Wellness\n-Spa Supervisor\n-Spa Therapist\nCLICK HERE TO SEND YOUR CV: https://lnkd.in/dSRhi6BR\n… more\n\n64\n2\n​\n\nAre these results helpful?\n\nYour feedback helps us improve search results"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/benjaminjcooper/",
+              "text": "Ben Cooper"
+            },
+            {
+              "kind": "feed_post",
+              "url": "/feed/update/urn:li:activity:7500067950968754176/",
+              "text": "Starting a new position"
+            },
+            {
+              "kind": "person",
+              "url": "/in/max-luo/",
+              "text": "Max Luo"
+            },
+            {
+              "kind": "company",
+              "url": "/company/hotel-jobs-worldwide/",
+              "text": "Hotel Jobs Worldwide"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agentic engineer\" + \"latam\"",
+      "role_keyword": "agentic engineer",
+      "region": "latam",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agentic+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nSam Ingwell\n\n \n • 3rd+\n\nLeadership & teams to drive digital & AI transformation ⚡️\n\n5d • Edited • \n\nFollow\n\nProbably the busiest market we've seen all year at Stott and May Consulting\n\nA lot happening across Data, AI, Microsoft and Software Engineering right now, with all of these contractor requirements currently open:\n\n🇺🇸 US REMOTE\n🟣 Fabric + Power BI Lead | Pharma | 6 months\n⚡ PowerApps Developer | Pharma | 6 months\n☁️ AWS + dbt Engineer | Consulting | 224-hour project / part-time\n🤖 ML Engineer | Manufacturing | 6 months+\n🧠 Agentic AI Engineer | Consumer Brand | 6 months+\n☁️ DevOps Context Lead | Start-up | 6 months + C2H\n\n🇺🇸 US HYBRID\n📊 Fabric + Power BI Consultant | Food & Beverage | Philadelphia | 6 months+\n🔎 SQL Analyst | Consulting | New York | 6 months+\n💻 Node.js + TypeScript Engineer | Start-up | New York | 3 months\n🛡️ Data Governance Lead | Utility | Detroit Metro | 6 months + C2H\n\n🌎 NEARSHORE / LATAM\n🧪 AI Quality Lead | AdTech | Remote, Mexico | 6 months+\n⚙️ Epicor L1/L2 Support | Manufacturing | Remote, Brazil/Mexico | 12 months\n\nQuite a mix, but definitely seeing businesses push ahead with projects and use contractors to get them delivered.\n\nIf you're a contractor working across any of these areas, or know someone good, drop me a message.\n\nAnd if you're hiring across Data, AI, Microsoft, Software Engineering or ERP, we clearly have a lot of activity in the market right now too.\n\nPlease note: this post is for direct candidates/contractors on the market and direct businesses only. No third parties, C2C vendors, bench recruiters or hotlists please.\n… more\n\n24\n2\n2\nFeed post\n\nRaul Mangolin\n\n \n • 2nd\n\nSoftware Engineering Manager\n\n3d • \n\nFollow\n\nWe're hiring at Appnovation!\nThere are some exciting opportunities open across Appnovation right now.\n\nWe're currently looking for people across a range of roles, including:\n- AI / Agent Engineers\n- AI Evaluation Engineers (QA)\n- Cloud Solutions Architects\n- Data Architects / Engineers\n- Senior Fullstack Python Developers\n- Full-Stack Developers – AI Design-to-Dev\n- Tech Leads\n- Scrum Masters\n…and many more.\n\nThere are opportunities across Brazil, Canada, the US, UK, LATAM and APAC, including several positions here in São Paulo.\n\nIf you're looking for your next challenge, especially if you're interested in where software engineering and AI are heading, it's definitely worth taking a look.\n\nCheck out all open positions: https://lnkd.in/eCcUQm5u\n\nAnd if you see something that looks like a good fit, feel free to reach out to me.\n\n#Appnovation #Hiring #TechJobs #AIJobs #SoftwareEngineering #ArtificialIntelligence #DataEngineering #CloudComputing #TechCareers #HiringNow\n\n… more\n\nAppnovation Technologies\nAppnovation Technologies\n\njob-boards.greenhouse.io\n\n10\n​\n5\nFeed post\n\nThe Rational Desk\n\n \n\nRequest services\n\n6d • \n\nFollow\n\n🚀 AI, ML & Data Science Professionals — New Global Opportunities!\nThe AI job market is expanding rapidly across Generative AI, Agentic AI, LLMs, RAG, AI Engineering, Data Science, AI Research, AI Training & Model Evaluation.\n\nBraintrust has 20+ opportunities for AI/ML and technology professionals worldwide.\n\n👉 Join the Braintrust Talent Network: https://lnkd.in/g-fAGRQu\n\n🔥 AI / ML / Data Opportunities\n1. Senior Forward Deployed Engineer – Agentic AI & RAG\n🔗 https://lnkd.in/gdzUhNUM\n2. Principal Data Scientist – US Remote\n🔗 https://lnkd.in/giT6RrPa\n3. Principal Data Scientist – South America Remote\n🔗 https://lnkd.in/gqgem9-H\n4. AI Automation Engineer – Agentic AI\n🔗 https://lnkd.in/gpyf3VXB\n5. Senior AI Engineer – LATAM\n🔗 https://lnkd.in/gqgXVXgy\n6. Senior AI Solutions Engineer – LATAM\n🔗 https://lnkd.in/ggx9YUvF\n7. AI Platform Engineer – USA Remote\n🔗 https://lnkd.in/gNE-q-Q3\n8. Lead AI & Data Platform Engineer – Marketplace\n🔗 https://lnkd.in/gkCpC8vG\n9. Principal Coding Annotator / LLM Evaluation Engineer\n🔗 https://lnkd.in/ghFfPwBc\n10. AI Engineering Consultant – Canada\n🔗 https://lnkd.in/gyzvKw9f\n11. PhD in Quantitative Finance – Remote AI Research Evaluator\n🔗 https://lnkd.in/gkP7aycV\n12. STEM PhD Expert – AI Reasoning & Evaluation\n🔗 https://lnkd.in/gzeXtT4r\n13. Remote Software Engineer – AI Code Evaluation\n🔗 https://lnkd.in/g_e8yyEH\n14. Physics Expert – AI Model Evaluation\n🔗 https://lnkd.in/g6N-fmrG\n15. STEM – AI Mathematics Research Specialist\n🔗 https://lnkd.in/gt_eTvHK\n16. Agentic AI Software Engineer – AI Training / OpenClaw\n🔗 https://lnkd.in/gnVQHheq\n17. Senior Software Engineer – Agent Evaluation\n🔗 https://lnkd.in/gmDVrxVX\n18. Senior Software Engineer – Python – Agent Evaluation\n🔗 https://lnkd.in/gCxyQRvA\n19. Full Stack Software Engineer – AI Training\n🔗 https://lnkd.in/grWtm_jz\n20. Software Engineer – Python + pytest – AI Coding Agent Evaluation\n🔗 https://lnkd.in/gNkaYD_9\n\n🌍 Relevant for: AI Engineers, ML Engineers, Data Scientists, LLM Engineers, AI Researchers, AI Trainers, AI Evaluators, Python Developers & Software Engineers.\n📌 Save & share with someone exploring AI careers!\n\n#MachineLearningJobs #DataScienceJobs #GenerativeAI #AgenticAI #LLM #RAG #AIEvaluation #PythonJobs #RemoteJobs #TechJobs #AIEngineer #DataScientist #MachineLearning \n… more\n\n3\n1\n​\n\nAre these results helpful?\n\nYour feedback helps us improve search results"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/sam-ingwell/",
+              "text": "Sam Ingwell"
+            },
+            {
+              "kind": "person",
+              "url": "/in/raulmangolin/",
+              "text": "Raul Mangolin"
+            },
+            {
+              "kind": "company",
+              "url": "/company/appnovation/",
+              "text": "Appnovation"
+            },
+            {
+              "kind": "company",
+              "url": "/company/the-rational-desk/",
+              "text": "The Rational Desk"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agentic engineer\" + \"worldwide\"",
+      "role_keyword": "agentic engineer",
+      "region": "worldwide",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agentic+engineer%22+%2B+%22worldwide%22&origin=FACETED_SEARCH&datePosted=%5B%22past-week%22%5D",
+        "sections": {
+          "search_results": "Feed post\n\nMihai Comșa\n\n \n • 3rd+\n\nLead Talent Acquisition Business Partner for EEA MU| @ Capgemini | Psychotherapist, Clinical Psychology Organizational and Occupational Psychology\n\nView my portfolio\n\n5d • \n\nFollow\n\nImagine building AI systems that don't just respond, but actively plan, decide, and execute. As an Agentic AI Engineer, you'll work with advanced AI technologies to create autonomous agents that solve real-world challenges, streamline operations, and unlock new possibilities for organizations worldwide.\nIf you're excited about the future of AI, this is your opportunity to create it.\n#getthefutureyouwant\n… more\n\nAgentic AI Architect (Verified job)\nAgentic AI Architect \n\nCapgemini\n\nBucharest, Romania (Hybrid)\n\nView job\n\nActively reviewing applicants\n\n20\n1\n2\nFeed post\n\nBen Cooper\n\n \n • 3rd+\n\nBuilding Linear in APAC\n\n11h • \n\nFollow\n\nI'm super excited to be joining Linear.\n\nLinear wins over top engineering teams worldwide by obsessing over speed, simplicity, and great design. But what excites me most about this next chapter is how the platform is evolving.\n\nIt has rapidly become the control plane for modern software development. It's a true multi-player orchestration layer where AI agents, engineers and PMs collaborate from spec to release. It provides the structured context and governance that teams need to manage multi-agent workflows.\n\nIf you're building in the region or want to chat about where software development is heading, let's grab a coffee or jump on a call.\n… more\n\nStarting a new position\n\n90\n5\n​\nFeed post\n\nRemoteYeah\n\n3d • \n\nFollow\n\nLooking for remote work? Hostinger is hiring a Agentic Product Engineer | AI Builder | Remote. 🏢 Employment type: Full-time, 📍Remote locations: Worldwide\n\n💻 Skills: JavaScript, TypeScript, React.js, Vue.js, Node.js, Docker, Angular.js, LESS, GCP, REST, Kubernetes, Vite.js, PostgreSQL, MySQL, RabbitMQ, CI/CD, ChatGPT, Large Language Models, Go, Hostinger, Grafana, Message queues, Prometheus\n\nRepost to help your network 🌱\n\n#remotework #remoteworking #remotejobs #workfromhome #wfh #software #developer #dev #coding #hiring #tech #engineer #development #career #jobopening #javascript #typescript #reactjs #vuejs #nodejs #docker #angularjs #less #gcp #restful #kubernetes #vitejs #postgresql #mysql #rabbitmq #cicd #chatgpt #llms #go #hostinger #grafana #messagequeues #prometheus #other #fulltime\n\nApply now: https://lnkd.in/e5eASgB5\n… more\n\nRemote Agentic Product Engineer | AI Builder | Remote at Hostinger\nRemote Agentic Product Engineer | AI Builder | Remote at Hostinger\n\nremoteyeah.com\n\n​\n​\n​\n\nAre these results helpful?\n\nYour feedback helps us improve search results"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/mihai-comsa88/",
+              "text": "Mihai Comșa"
+            },
+            {
+              "kind": "job",
+              "url": "/jobs/view/4459145703/",
+              "text": "job"
+            },
+            {
+              "kind": "person",
+              "url": "/in/benjaminjcooper/",
+              "text": "Ben Cooper"
+            },
+            {
+              "kind": "feed_post",
+              "url": "/feed/update/urn:li:activity:7500067950968754176/",
+              "text": "Starting a new position"
+            },
+            {
+              "kind": "company",
+              "url": "/company/remoteyeah/",
+              "text": "RemoteYeah"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

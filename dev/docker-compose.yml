@@ -1,0 +1,11 @@
+services:
+  onboarding-smoke:
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+    volumes:
+      - ..:/repo:ro
+    environment:
+      REPO_ROOT: /repo
+      JOBSEARCH_SKIP_LINKEDIN: "1"
+    command: ["bash", "/repo/dev/onboarding-smoke.sh"]

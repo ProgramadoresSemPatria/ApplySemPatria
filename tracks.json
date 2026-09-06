@@ -1,0 +1,23 @@
+{
+  "default_track": "ai-engineer",
+  "tracks": {
+    "ai-engineer": {
+      "label": "AI Engineer",
+      "profile_path": "tracks/ai-engineer/applicant-profile.json",
+      "board_config_path": "tracks/ai-engineer/config.json",
+      "linkedin_config_path": "tracks/ai-engineer/linkedin-posts-config.json",
+      "google_config_path": "tracks/ai-engineer/google-jobs-config.json",
+      "email_config_path": "tracks/ai-engineer/email-apply-config.json",
+      "form_answers_path": "tracks/ai-engineer/form-answers.json"
+    },
+    "android-developer": {
+      "label": "Android Developer",
+      "profile_path": "tracks/android-developer/applicant-profile.json",
+      "board_config_path": "tracks/android-developer/config.json",
+      "linkedin_config_path": "tracks/android-developer/linkedin-posts-config.json",
+      "google_config_path": "tracks/android-developer/google-jobs-config.json",
+      "email_config_path": "tracks/android-developer/email-apply-config.json",
+      "form_answers_path": "tracks/android-developer/form-answers.json"
+    }
+  }
+}

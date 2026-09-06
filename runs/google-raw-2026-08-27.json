@@ -1,0 +1,102 @@
+{
+  "queries": [
+    {
+      "query": "\"ai engineer\" \"rag\" \"llm\" remote after:2026-08-20",
+      "role_keyword": "ai engineer",
+      "results": [
+        {
+          "url": "https://workvista.synergize.co/remote-jobs/ai-engineer-architect-agentic-rag",
+          "title": "AI Engineer / Architect (Agentic RAG) | Workvista",
+          "snippet": "Posted Aug 22, 2026. Agentic RAG, LangChain, vector databases, multi-agent. Remote."
+        },
+        {
+          "url": "https://talentpulse.66ghz.com/remote-jobs/genai-engineer",
+          "title": "GenAI Engineer | Talentpulse",
+          "snippet": "Posted Aug 19, 2026. 100% remote Mexico, Brasil, Peru, Chile. RAG, agent systems, LLM pipelines."
+        },
+        {
+          "url": "https://jobs.lever.co/ciandt/a431fffd-91aa-4008-bd99-4529f1e3faf2",
+          "title": "Senior AI Engineer | CI&T",
+          "snippet": "Brazil / Colombia Homeoffice. Agentic AI platform, Bedrock AgentCore, RAG, MCP, LangChain."
+        },
+        {
+          "url": "https://taskworks.totalh.net/remote-jobs/senior-ai-engineer-5",
+          "title": "Senior AI Engineer | Taskworks",
+          "snippet": "LATAM remote. RAG, agentic frameworks, LLM, MLOps. Posted Aug 16."
+        },
+        {
+          "url": "https://taskworks.totalh.net/remote-jobs/principal-ai-engineer-8",
+          "title": "Principal AI Engineer | Able",
+          "snippet": "100% remote LatAm. RAG, agentic, USD payments. Posted Aug 18."
+        },
+        {
+          "url": "https://jobs.lever.co/tryjeeves/639e39d0-b357-4bc2-aff2-968cdedb14b6",
+          "title": "Senior AI Engineer | Jeeves",
+          "snippet": "Engineering LatAm. Full-time remote. RAG, LangChain, pgvector."
+        },
+        {
+          "url": "https://jobs.lever.co/oowlish/765cab63-09c4-4963-a095-720abb851e19",
+          "title": "Senior LLM Engineer RAG AWS Bedrock | Oowlish",
+          "snippet": "Remote Latin America. RAG, AWS Bedrock."
+        },
+        {
+          "url": "https://jobs.oneseventech.com/ai-llm-engineer-python-langchain-rag-aws-lambda-279464/",
+          "title": "AI/LLM Engineer | OneSeven Tech",
+          "snippet": "Remote Argentina LATAM. Up to $5,500/month USD. LangChain, RAG, AWS Lambda."
+        },
+        {
+          "url": "https://remotive.com/remote-jobs/ai-ml/senior-ai-engineer-3755518",
+          "title": "Senior AI Engineer | 99x Brazil",
+          "snippet": "Brazil remote. LangChain, LangGraph, RAG."
+        },
+        {
+          "url": "https://flexgen.zya.me/job/remote-senior-ai-engineer-agentic-and-rag-systems",
+          "title": "Senior AI Engineer Agentic RAG | EPAM",
+          "snippet": "Open to candidates in USA only."
+        }
+      ]
+    },
+    {
+      "query": "\"agent engineer\" \"rag\" \"llm\" remote after:2026-08-20",
+      "role_keyword": "agent engineer",
+      "results": [
+        {
+          "url": "https://careerbyte.fast-page.org/remote-jobs/senior-agentic-ai-engineer-remote",
+          "title": "Senior Agentic AI Engineer | Careerbyte",
+          "snippet": "Posted Aug 23, 2026. Agentic workflows, RAG, multi-agent."
+        },
+        {
+          "url": "https://jobgether.com/offer/6a806a00490731f1e1a5aacd-senior-software-engineer---agentic-ai-development-remote-latam",
+          "title": "Senior SWE Agentic AI | ITX",
+          "snippet": "Remote Latin America. LangGraph CrewAI. $5,400-$7,900/mo USD."
+        },
+        {
+          "url": "https://flexgen.zya.me/job/remote-aiml-engineer-agentic-ai-builder",
+          "title": "AI/ML Engineer Agentic AI Builder",
+          "snippet": "Open to candidates in USA."
+        }
+      ]
+    },
+    {
+      "query": "\"agentic engineer\" \"rag\" \"llm\" remote after:2026-08-20",
+      "role_keyword": "agentic engineer",
+      "results": [
+        {
+          "url": "https://workvista.synergize.co/remote-jobs/ai-engineer-architect-agentic-rag",
+          "title": "AI Engineer Architect Agentic RAG | Workvista",
+          "snippet": "Posted Aug 22, 2026. Remote."
+        },
+        {
+          "url": "https://careerbyte.fast-page.org/remote-jobs/senior-agentic-ai-engineer-remote",
+          "title": "Senior Agentic AI Engineer",
+          "snippet": "Aug 23 2026. RAG agentic GenAI."
+        },
+        {
+          "url": "https://taskium.42web.io/job/lead-generative-ai-engineer-agentic-ai-rag-2-0-prompt-engineering-aws",
+          "title": "Lead GenAI Engineer | Taskium",
+          "snippet": "Remote USA Aug 25. LangGraph RAG."
+        }
+      ]
+    }
+  ]
+}

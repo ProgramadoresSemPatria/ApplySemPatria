@@ -1,0 +1,26 @@
+{
+  "search": {
+    "title_keywords": ["android developer", "android engineer", "mobile developer"],
+    "tags": ["android", "kotlin", "mobile", "jetpack compose"]
+  },
+  "filters": {
+    "require_usd_salary": true,
+    "salary_unknown_action": "skip",
+    "skip_eu_only": true,
+    "skip_us_only": true,
+    "skip_single_country_restrictions": false
+  },
+  "blacklist_path": "domain-blacklist.json",
+  "sources": {
+    "remoteok": { "enabled": true },
+    "weworkremotely": { "enabled": true, "rss_url": "https://weworkremotely.com/categories/remote-programming-jobs.rss" },
+    "defi": { "enabled": false },
+    "himalayas": { "enabled": true, "max_pages": 10, "page_size": 50 },
+    "opentoworkremote": { "enabled": true, "api_url": "https://opentoworkremote-api.herokuapp.com/jobs" },
+    "wellfound": { "enabled": false },
+    "f6s": { "enabled": false },
+    "linkedin": { "enabled": false, "note": "LinkedIn discovery via linkedin-deep-collect.sh (Patchright browser only)" }
+  },
+  "himalayas_max_age_days": 14,
+  "opentoworkremote_max_pages": 5
+}

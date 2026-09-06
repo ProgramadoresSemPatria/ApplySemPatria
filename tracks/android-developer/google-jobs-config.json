@@ -1,0 +1,16 @@
+{
+  "roles": ["android developer", "android engineer", "mobile developer"],
+  "query_template": "\"{role}\" \"kotlin\" \"android\" remote -\"only in US\" -\"only in Europe\" after:{after_date}",
+  "default_after_days": 7,
+  "max_results_total": 20,
+  "max_results_per_role": 10,
+  "require_usd_salary": false,
+  "posts_default_filter_result": "needs_review",
+  "google_cse": {
+    "api_key_env": "GOOGLE_CSE_API_KEY",
+    "cx_env": "GOOGLE_CSE_CX",
+    "date_restrict": "w1"
+  },
+  "profile_match_keywords": ["android developer", "android engineer", "kotlin", "jetpack compose", "mobile developer"],
+  "job_page_hints": ["apply", "hiring", "responsibilities", "requirements", "qualifications", "job description", "remote", "salary", "usd", "$"]
+}

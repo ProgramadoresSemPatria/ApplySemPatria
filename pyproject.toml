@@ -1,0 +1,9 @@
+[project]
+name = "jobsearch-cli"
+version = "0.1.0"
+description = "Multi-track job discovery and apply CLI"
+requires-python = ">=3.11"
+
+# Run without install:
+#   python3 ~/job-search/scripts/jobsearch.py tracks list
+#   python3 ~/job-search/scripts/jobsearch.py doctor

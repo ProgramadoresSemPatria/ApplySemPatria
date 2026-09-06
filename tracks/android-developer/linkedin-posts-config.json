@@ -1,0 +1,20 @@
+{
+  "roles": ["android developer", "android engineer", "mobile developer"],
+  "region_suffixes": ["latam", "worldwide"],
+  "query_template": "\"{role}\" + \"{region}\"",
+  "default_period_days": 7,
+  "default_max_pages": 10,
+  "expected_posts_per_query": "Up to 100 per query with browser deep-collect (see playbooks/linkedin-content-search-limitations.md)",
+  "recency_map": {
+    "1": "past-24h",
+    "7": "past-week",
+    "30": "past-month"
+  },
+  "require_usd_salary": false,
+  "posts_default_filter_result": "needs_review",
+  "table_sort": "date_posted",
+  "search_sort": "date_posted",
+  "dm_apply_enabled": false,
+  "dm_apply_mode": "manual",
+  "dm_message_confirmed": false
+}

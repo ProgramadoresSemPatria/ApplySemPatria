@@ -1,0 +1,33 @@
+{
+  "name": "linkedin-connect-or-message",
+  "description": "Priority: CONNECT (no note) if a Connect affordance exists (top card OR More menu). Only if there is NO Connect anywhere do we fall back to a direct Message. Never messages an open profile that could be connected (saves free-message quota). Runner stops after the first committed action. Top-card actions scoped to <main>.",
+  "match": { "url_contains": ["linkedin.com/in/"] },
+  "vars_required": ["profile_url", "message"],
+  "steps": [
+    { "action": "dismiss_premium", "optional": true },
+    { "action": "sleep", "seconds": 0.3 },
+    { "action": "click", "scope": "main", "role": "button", "name_regex": "^connect$|^invite .*to connect$", "optional": true },
+    { "action": "sleep", "seconds": 1.3 },
+    { "action": "click", "role": "button", "name_regex": "Send without|Not now|Continue without Premium|Continue for free", "optional": true, "destructive": true, "commit": true, "commit_kind": "connect" },
+    { "action": "sleep", "seconds": 1.0 },
+
+    { "action": "click", "scope": "main", "role": "button", "name_regex": "^More", "optional": true },
+    { "action": "sleep", "seconds": 1.1 },
+    { "action": "click", "role": "menuitem", "name_regex": "^connect$|^invite .*to connect$", "optional": true },
+    { "action": "sleep", "seconds": 1.3 },
+    { "action": "click", "role": "button", "name_regex": "Send without|Not now|Continue without Premium|Continue for free", "optional": true, "destructive": true, "commit": true, "commit_kind": "connect" },
+    { "action": "sleep", "seconds": 1.0 },
+
+    { "action": "press", "key": "Escape" },
+    { "action": "sleep", "seconds": 0.6 },
+
+    { "action": "click", "selector": "main a:has-text('Message'), main button:has-text('Message')", "optional": true },
+    { "action": "sleep", "seconds": 2.5 },
+    { "action": "dismiss_premium", "optional": true },
+    { "action": "sleep", "seconds": 0.3 },
+    { "action": "fill", "selector": "div.msg-form__contenteditable[contenteditable='true']", "value_template": "{message}", "optional": true },
+    { "action": "sleep", "seconds": 0.8 },
+    { "action": "click", "selector": "button.msg-form__send-button, button.msg-form__send-btn, .msg-form button[type='submit']", "optional": true, "destructive": true, "commit": true, "commit_kind": "message" },
+    { "action": "sleep", "seconds": 1.2 }
+  ]
+}

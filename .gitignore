@@ -1,0 +1,22 @@
+# Secrets & local credentials
+secrets/
+state/gmail-token.json
+secrets/gmail-app-password
+.env
+.env.*
+
+# Runtime / personal apply state (rebuilt locally)
+state/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,14 @@
+{
+  "name": "ats-greenhouse",
+  "description": "Greenhouse-hosted application form. Deterministic field selectors.",
+  "match": { "domains": ["greenhouse.io", "boards.greenhouse.io", "job-boards.greenhouse.io"] },
+  "steps": [
+    { "action": "sleep", "seconds": 3.0 },
+    { "action": "fill", "selector": "#first_name", "profile_key": "first_name", "optional": true },
+    { "action": "fill", "selector": "#last_name", "profile_key": "last_name", "optional": true },
+    { "action": "fill", "selector": "#email", "profile_key": "email", "optional": true },
+    { "action": "fill", "selector": "#phone", "profile_key": "phone", "optional": true },
+    { "action": "upload", "selector": "input[type=file]", "profile_key": "resume_path", "destructive": true, "optional": true },
+    { "action": "screenshot", "path": "runs/greenhouse-filled.png" }
+  ]
+}

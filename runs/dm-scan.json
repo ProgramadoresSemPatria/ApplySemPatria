@@ -1,0 +1,89 @@
+{
+  "counts": {
+    "follow_only": 5,
+    "connect_more": 3,
+    "connected": 2
+  },
+  "results": [
+    {
+      "company": "Mehran Mehtab",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/mehran-mehtab/",
+      "affordance": "follow_only",
+      "actionable": false,
+      "job_key": "https://www.linkedin.com/in/mehran-mehtab/recent-activity/all"
+    },
+    {
+      "company": "Elvis Silva",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/elvis-silva-dev/",
+      "affordance": "connect_more",
+      "actionable": true,
+      "job_key": "https://www.linkedin.com/in/elvis-silva-dev/recent-activity/all"
+    },
+    {
+      "company": "Nicola Rice",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/nicolarice/",
+      "affordance": "connect_more",
+      "actionable": true,
+      "job_key": "https://www.linkedin.com/in/nicolarice/recent-activity/all"
+    },
+    {
+      "company": "Pablo Gonzalo Arrieta",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/pablo-gonzalo-arrieta/",
+      "affordance": "follow_only",
+      "actionable": false,
+      "job_key": "https://www.linkedin.com/in/pablo-gonzalo-arrieta/recent-activity/all"
+    },
+    {
+      "company": "Hemanth Narayanapurapu",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/hemanth-narayanapurapu-21964462/",
+      "affordance": "follow_only",
+      "actionable": false,
+      "job_key": "https://www.linkedin.com/in/hemanth-narayanapurapu-21964462/recent-activity/all"
+    },
+    {
+      "company": "Mathias Tsuneo Kunimoto Watanabe",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/mathias-tsuneo-kunimoto-watanabe/",
+      "affordance": "follow_only",
+      "actionable": false,
+      "job_key": "https://www.linkedin.com/in/mathias-tsuneo-kunimoto-watanabe/recent-activity/all"
+    },
+    {
+      "company": "Rocio Iantosca",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/rocio-iantosca-2ba316236/",
+      "affordance": "connect_more",
+      "actionable": true,
+      "job_key": "https://www.linkedin.com/in/rocio-iantosca-2ba316236/recent-activity/all"
+    },
+    {
+      "company": "JF Escariz Pardal",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/jf-escariz-pardal-6a7679208/",
+      "affordance": "connected",
+      "actionable": true,
+      "job_key": "https://www.linkedin.com/in/jf-escariz-pardal-6a7679208/recent-activity/all"
+    },
+    {
+      "company": "Tony Teshara",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/tonyteshara/",
+      "affordance": "connected",
+      "actionable": true,
+      "job_key": "https://www.linkedin.com/in/tonyteshara/recent-activity/all"
+    },
+    {
+      "company": "Florencia Gulino",
+      "role": "Ai Engineer",
+      "profile_url": "https://www.linkedin.com/in/florencia-gulino-1712a5183/",
+      "affordance": "follow_only",
+      "actionable": false,
+      "job_key": "https://www.linkedin.com/in/florencia-gulino-1712a5183/recent-activity/all"
+    }
+  ]
+}

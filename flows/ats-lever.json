@@ -1,0 +1,15 @@
+{
+  "name": "ats-lever",
+  "description": "Lever-hosted application form (jobs.lever.co). Deterministic field selectors.",
+  "match": { "domains": ["lever.co", "jobs.lever.co"] },
+  "steps": [
+    { "action": "sleep", "seconds": 3.0 },
+    { "action": "fill", "selector": "input[name='name']", "profile_key": "full_name", "optional": true },
+    { "action": "fill", "selector": "input[name='email']", "profile_key": "email", "optional": true },
+    { "action": "fill", "selector": "input[name='phone']", "profile_key": "phone", "optional": true },
+    { "action": "fill", "selector": "input[name='urls[LinkedIn]']", "profile_key": "linkedin_url", "optional": true },
+    { "action": "fill", "selector": "input[name='urls[GitHub]']", "profile_key": "github_url", "optional": true },
+    { "action": "upload", "selector": "input[type=file]", "profile_key": "resume_path", "destructive": true, "optional": true },
+    { "action": "screenshot", "path": "runs/lever-filled.png" }
+  ]
+}

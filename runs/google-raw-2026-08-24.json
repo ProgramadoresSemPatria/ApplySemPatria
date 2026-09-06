@@ -1,0 +1,112 @@
+{
+  "queries": [
+    {
+      "query": "\"ai engineer\" \"rag\" \"llm\" remote -\"only in US\" -\"only in Europe\" -\"only in EU\" -\"US only\" -\"Europe only\" -\"US citizen\" -\"authorized to work in the US\" -\"must reside in\" -\"local candidates only\" after:2026-08-17",
+      "role_keyword": "ai engineer",
+      "results": [
+        {
+          "url": "https://jobs.oneseventech.com/ai-llm-engineer-python-langchain-rag-aws-lambda-279464/",
+          "title": "AI/LLM Engineer — Python, LangChain, RAG, AWS Lambda at OneSeven Tech",
+          "snippet": "Remote, Argentina. Up to $5,500/month USD. Fully Remote — work from anywhere in Latin America."
+        },
+        {
+          "url": "https://jobs.lever.co/tryjeeves/639e39d0-b357-4bc2-aff2-968cdedb14b6",
+          "title": "Jeeves - Senior AI Engineer",
+          "snippet": "Engineering - LatAm. Full-time remote. RAG architectures, LLM pipelines, LangChain, vector databases."
+        },
+        {
+          "url": "https://jobs.lever.co/oowlish/765cab63-09c4-4963-a095-720abb851e19",
+          "title": "Oowlish Technology - Senior LLM Engineer (RAG & AWS Bedrock)",
+          "snippet": "Remote work Latin America. RAG solutions, AWS Bedrock, conversational AI."
+        },
+        {
+          "url": "https://talentpulse.66ghz.com/remote-jobs/ai-engineering-lead-latam",
+          "title": "AI Engineering Lead (LATAM) | CoPilot Innovations",
+          "snippet": "Posted Aug 18, 2026. Remote work-from-anywhere. LLM, RAG, agentic workflows. USD compensation."
+        },
+        {
+          "url": "https://jobs.lever.co/cloudwalk/c23aa4c6-0d61-4331-8d87-7a53cda19f23",
+          "title": "CloudWalk - Machine Learning Engineer - LLM",
+          "snippet": "Full Time remote Brazil. RAG pipelines, LLMs, fintech conversational AI."
+        },
+        {
+          "url": "https://hiretik.com/jobs/69fae3f3-fbaa-41d7-83f5-db659d81d032",
+          "title": "Senior Fullstack AI Developer (Python + React) | Devsu",
+          "snippet": "Region LATAM. Work remotely from anywhere in Latam. RAG, LangChain, vector databases."
+        },
+        {
+          "url": "https://jobgether.com/offer/6a806a00490731f1e1a5aacd-senior-software-engineer---agentic-ai-development-remote-latam",
+          "title": "Senior Software Engineer - Agentic AI Development (Remote, LATAM) | ITX",
+          "snippet": "Remote from Latin America. LangGraph, CrewAI, AutoGen. Pay $5,400 to $7,900 monthly USD."
+        },
+        {
+          "url": "https://job-boards.greenhouse.io/censys/jobs/8540995002",
+          "title": "Senior AI/LLM Engineer at Censys",
+          "snippet": "Remote (US/Canada). Within the United States or Canada only."
+        },
+        {
+          "url": "https://jobsy.42web.io/job/remote-ai-developer-engineer-python-rag-agent-ai-w2-only",
+          "title": "[Remote] AI Developer / Engineer",
+          "snippet": "Remote, USA. Open to candidates in USA only. W2 only."
+        }
+      ]
+    },
+    {
+      "query": "\"agent engineer\" \"rag\" \"llm\" remote -\"only in US\" -\"only in Europe\" -\"only in EU\" -\"US only\" -\"Europe only\" -\"US citizen\" -\"authorized to work in the US\" -\"must reside in\" -\"local candidates only\" after:2026-08-17",
+      "role_keyword": "agent engineer",
+      "results": [
+        {
+          "url": "https://hiretik.com/jobs/f059c1a3-04c8-4519-9609-85eb2f645cea",
+          "title": "LatAm - Senior AWS Agentic Engineer | Perficient",
+          "snippet": "Remote anywhere in Latin America. Agentic AI, RAG, Amazon Bedrock, LangChain, LangGraph."
+        },
+        {
+          "url": "https://simplify.jobs/p/af275daa-bc43-4b2e-8f47-751fd8edbf65/Agentic-AI-Engineer",
+          "title": "Agentic AI Engineer @ CodeRoad",
+          "snippet": "Remote within Latin America. RAG, MCP, agentic AI. Competitive USD compensation."
+        },
+        {
+          "url": "https://simplify.jobs/p/594c7476-08f5-4474-bf05-b8a80819337f/Agent-Engineer",
+          "title": "Agent Engineer @ TRM Labs",
+          "snippet": "Remote in USA. Open to candidates in USA."
+        },
+        {
+          "url": "https://willowyn.liveblog365.com/remote-jobs/ai-agent-developer-remote-latam-only",
+          "title": "AI Agent Developer | Remote LATAM Only | Willowyn",
+          "snippet": "Posted Aug 16, 2026. LATAM only. RAG, LangChain, LLM, multi-agent architectures."
+        },
+        {
+          "url": "https://prairie.totalh.net/remote-jobs/remote-staff-engineer-agentic-ai",
+          "title": "[Remote] Staff Engineer - Agentic AI",
+          "snippet": "Open to candidates in USA. RAG, LangGraph."
+        }
+      ]
+    },
+    {
+      "query": "\"agentic engineer\" \"rag\" \"llm\" remote -\"only in US\" -\"only in Europe\" -\"only in EU\" -\"US only\" -\"Europe only\" -\"US citizen\" -\"authorized to work in the US\" -\"must reside in\" -\"local candidates only\" after:2026-08-17",
+      "role_keyword": "agentic engineer",
+      "results": [
+        {
+          "url": "https://workvista.synergize.co/remote-jobs/ai-engineer-architect-agentic-rag",
+          "title": "AI Engineer / Architect (Agentic RAG) | Workvista",
+          "snippet": "Posted Aug 22, 2026. Agentic RAG, LangChain, vector databases, multi-agent. Remote."
+        },
+        {
+          "url": "https://aijobs.net/job/senior-agentic-ai-engineer-latin-america-292090/",
+          "title": "Senior Agentic AI Engineer - Latin America",
+          "snippet": "Latin America Remote. USD 132K-188K. RAG pipelines, LangGraph, CrewAI, MCP, Pinecone."
+        },
+        {
+          "url": "https://willowyn.liveblog365.com/remote-jobs/ai-agent-developer-remote-latam-only",
+          "title": "AI Agent Developer LATAM | Willowyn",
+          "snippet": "100% remote LATAM only. RAG, LLM fine-tuning, LangChain."
+        },
+        {
+          "url": "https://jobs.oneseventech.com/ai-llm-engineer-python-langchain-rag-aws-lambda-279464/",
+          "title": "AI/LLM Engineer OneSeven Tech",
+          "snippet": "Agentic workflows, RAG, LangChain, Latin America remote USD."
+        }
+      ]
+    }
+  ]
+}

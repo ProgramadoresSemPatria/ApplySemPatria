@@ -1,0 +1,14 @@
+{
+  "name": "ats-ashby",
+  "description": "Ashby-hosted application form (jobs.ashbyhq.com). Label-based; Ashby uses dynamic ids.",
+  "match": { "domains": ["ashbyhq.com", "jobs.ashbyhq.com"] },
+  "steps": [
+    { "action": "sleep", "seconds": 3.0 },
+    { "action": "fill", "selector": "input[aria-label*='Name' i]", "profile_key": "full_name", "optional": true },
+    { "action": "fill", "selector": "input[type='email']", "profile_key": "email", "optional": true },
+    { "action": "fill", "selector": "input[aria-label*='Phone' i]", "profile_key": "phone", "optional": true },
+    { "action": "fill", "selector": "input[aria-label*='LinkedIn' i]", "profile_key": "linkedin_url", "optional": true },
+    { "action": "upload", "selector": "input[type=file]", "profile_key": "resume_path", "destructive": true, "optional": true },
+    { "action": "screenshot", "path": "runs/ashby-filled.png" }
+  ]
+}

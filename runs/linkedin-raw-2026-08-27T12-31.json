@@ -1,0 +1,166 @@
+{
+  "period_days": 7,
+  "queries": [
+    {
+      "query": "\"ai engineer\" + \"latam\"",
+      "role_keyword": "ai engineer",
+      "region": "latam",
+      "linkedin_url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22latam%22",
+        "sections": {
+          "search_results": "Feed post\n\nFLORENCIA MAYER\n\n20h • \n\n🔍 HIRING GTM Ai Engineer in LATAM only.\nAgentic workflows (Claude, OpenAI) n8n\nFull-time · Remote · Competitive salary + equity\n\nFeed post\n\nManuela Génova\n\n2h • \n\n🚀 We're Hiring AI Engineer 🚀 \nLLMs, RAG, AI agents\n📍 Remote | Full-Time | LATAM\n📩 manu@digitalhr.com.ar\n\nFeed post\n\nMuqadas khan\n\n5d • \n\n🚀 Hiring: ML Engineer | Remote LATAM\n💰 $84K–$120K USD\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/florenciabelenmayer/",
+              "text": "FLORENCIA MAYER"
+            },
+            {
+              "kind": "person",
+              "url": "/in/manuela-g%C3%A9nova/",
+              "text": "Manuela Génova"
+            },
+            {
+              "kind": "person",
+              "url": "/in/muqadas-khan-2a0a18397/",
+              "text": "Muqadas khan"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"ai engineer\" + \"worldwide\"",
+      "role_keyword": "ai engineer",
+      "region": "worldwide",
+      "linkedin_url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22worldwide%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22worldwide%22",
+        "sections": {
+          "search_results": "Feed post\n\nSameer Ray\n\n1h • \n\nOpen to remote, worldwide-eligible roles — Full-Stack & AI Engineer\nLangChain/LangGraph, RAG, Vector DBs\n#HiringRemote #AIEngineer\n\nFeed post\n\nParthasarathi RV\n\n1d • \n\nOpen to: Applied AI/GenAI Engineer worldwide remote or relocation\nRAG pipelines LangChain OpenAI\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/sameer-ray-5429a8199/",
+              "text": "Sameer Ray"
+            },
+            {
+              "kind": "person",
+              "url": "/in/iampartha/",
+              "text": "Parthasarathi RV"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agent engineer\" + \"latam\"",
+      "role_keyword": "agent engineer",
+      "region": "latam",
+      "linkedin_url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22latam%22",
+        "sections": {
+          "search_results": "Feed post\n\nConnect Tech+Talent\n\n6d • \n\n🛡️ Now Hiring: Senior AI Engineer - Agentic AI & Platform Assessment \n📍 LATAM / Nearshore (Remote - U.S. Business Hours)\nLLM Claude OpenAI agentic workflows MCP RAG\n📩 info@connecttechtalent.com\n\nFeed post\n\nVinay Singh\n\n5d • \n\nWe're Hiring Tech Talent in Mexico! 🇲🇽\nSecurity AI/ML Engineer GCP Vertex AI\nFullStack Engineer (AI/Backend) Python FastAPI\n📩 MexicoJobs@thegetch.com\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "company",
+              "url": "/company/connecttechandtalent/",
+              "text": "Connect Tech+Talent"
+            },
+            {
+              "kind": "person",
+              "url": "/in/vinay-singh-ab3453160/",
+              "text": "Vinay Singh"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agent engineer\" + \"worldwide\"",
+      "role_keyword": "agent engineer",
+      "region": "worldwide",
+      "linkedin_url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22worldwide%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agent+engineer%22+%2B+%22worldwide%22",
+        "sections": {
+          "search_results": "Feed post\n\nENDGAME\n\n4h • \n\nWelcome Staff Agentic Engineer Pavel Zaitsau\nproduction RAG system\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "company",
+              "url": "/company/endgame-agency/",
+              "text": "ENDGAME"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agentic engineer\" + \"latam\"",
+      "role_keyword": "agentic engineer",
+      "region": "latam",
+      "linkedin_url": "https://www.linkedin.com/search/results/content/?keywords=%22agentic+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agentic+engineer%22+%2B+%22latam%22",
+        "sections": {
+          "search_results": "Feed post\n\nConnect Tech+Talent\n\n6d • \n\n🛡️ Now Hiring: Senior AI Engineer - Agentic AI & Platform Assessment \n📍 LATAM / Nearshore\n📩 info@connecttechtalent.com\n\nFeed post\n\nSam Ingwell\n\n1d • \n\n🧠 Agentic AI Engineer | Consumer Brand | 6 months+ US REMOTE\n🌎 NEARSHORE / LATAM\n🧪 AI Quality Lead | AdTech | Remote, Mexico | 6 months+\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "company",
+              "url": "/in/connecttechandtalent/",
+              "text": "Connect Tech+Talent"
+            },
+            {
+              "kind": "person",
+              "url": "/in/sam-ingwell/",
+              "text": "Sam Ingwell"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "query": "\"agentic engineer\" + \"worldwide\"",
+      "role_keyword": "agentic engineer",
+      "region": "worldwide",
+      "linkedin_url": "https://www.linkedin.com/search/results/content/?keywords=%22agentic+engineer%22+%2B+%22worldwide%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+      "mcp_response": {
+        "url": "https://www.linkedin.com/search/results/content/?keywords=%22agentic+engineer%22+%2B+%22worldwide%22",
+        "sections": {
+          "search_results": "Feed post\n\nMihai Comșa\n\n1d • \n\nAgentic AI Engineer Capgemini Bucharest Hybrid\n\nFeed post\n\nThe Rational Desk\n\n2d • \n\nBraintrust opportunities worldwide\n5. Senior AI Engineer – LATAM https://lnkd.in/gqgXVXgy\n7. AI Platform Engineer – USA Remote\n16. Agentic AI Software Engineer\n\nAre these results helpful?"
+        },
+        "references": {
+          "search_results": [
+            {
+              "kind": "person",
+              "url": "/in/mihai-comsa88/",
+              "text": "Mihai Comșa"
+            },
+            {
+              "kind": "job",
+              "url": "/jobs/view/4459145703/",
+              "text": "job"
+            },
+            {
+              "kind": "company",
+              "url": "/company/the-rational-desk/",
+              "text": "The Rational Desk"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

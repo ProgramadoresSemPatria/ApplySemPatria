@@ -1,0 +1,26 @@
+{
+  "source": "browser_scroll",
+  "query": "\"ai engineer\" + \"latam\"",
+  "role_keyword": "ai engineer",
+  "region": "latam",
+  "url": "https://www.linkedin.com/search/results/content/?keywords=%22ai+engineer%22+%2B+%22latam%22&origin=FACETED_SEARCH&sortBy=%5B%22date_posted%22%5D&datePosted=%5B%22past-week%22%5D",
+  "period_days": 7,
+  "scroll_stats": {
+    "scrolls": 7,
+    "stale": 6,
+    "errors": [],
+    "auth_mode": "cookies",
+    "raw_posts": 1,
+    "activity_urls": 0
+  },
+  "posts_found": 1,
+  "roles_kept": 0,
+  "elapsed_sec": 12.4,
+  "sections": {
+    "search_results": "Feed post\n\nNo results found\n\nTry removing filters or rephrasing your search.\n\nEdit search\nRemove all filters\n\nAbout\n\nAccessibility\n\nHelp Center\n\nPrivacy & Terms\n\nAd Choices\n\nAdvertising\n\nBusiness Services\n\nGet the LinkedIn app\n\nMore\n\nLinkedIn Corporation © 2026"
+  },
+  "references": {
+    "search_results": []
+  },
+  "jobs": []
+}
