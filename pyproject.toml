@@ -12,6 +12,7 @@ asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: live network tests (excluded from default CI)",
     "playwright: browser tests using Patchright/Playwright",
+    "har: HAR replay browser tests (offline LinkedIn mock)",
     "llm_judge: optional LLM-as-judge (skipped without API key)",
 ]
 filterwarnings = ["ignore::DeprecationWarning"]

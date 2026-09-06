@@ -38,8 +38,20 @@ Catalog of behaviors we must preserve. Each scenario maps to automated tests in 
 |----|----------|-------------------|
 | LI-01 | Profile with top **Connect** | Would commit `connect`; no message branch |
 | LI-02 | Profile with **Message** only | Would commit `message` |
-| LI-03 | Profile **Pending** | Connect not offered; classify appropriately |
-| LI-04 | Already connected (More menu) | Skip connect; message path if available |
+| LI-03 | Profile **Pending** | classify → `follow_only` |
+| LI-04 | **Connect via More** menu | classify → `connect_more` |
+| LI-05 | Already connected (More only) | classify → `connected` |
+| LI-06 | Connected + Message button | classify → `message` (message preferred) |
+
+## HAR replay (`tests/fixtures/har/*.har`)
+
+| ID | Scenario | Expected |
+|----|----------|----------|
+| LI-HAR-01 | Replay connect HAR offline | Flow dry-run commits `connect` |
+| LI-HAR-02 | Replay message HAR offline | Flow dry-run commits `message` |
+| LI-HAR-03 | Classify all 6 profile types | Matches LI-01..06 |
+| LI-HAR-04 | Wrong URL with `not_found=abort` | Navigation fails (no live network) |
+| LI-HAR-05 | HAR files committed | Valid JSON, fixed port `18766`, ≥1 entry each |
 
 ## CLI / API (`ui_server.run_action`)
 

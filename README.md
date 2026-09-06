@@ -50,8 +50,9 @@ See `playbooks/` for channel-specific setup (Gmail, LinkedIn session, Himalayas,
 ```bash
 pip install -r requirements-dev.txt
 patchright install chromium
-./scripts/run_tests.sh all        # unit + browser/UI
-./scripts/run_tests.sh stable     # 5× unit + 3× browser (stability)
+./scripts/run_tests.sh all        # unit + browser (HAR + UI)
+./scripts/run_tests.sh stable     # 5× unit + 3× browser
+python scripts/generate_linkedin_hars.py  # after editing linkedin HTML fixtures
 ```
 
 Scenario catalog: `docs/testing/SCENARIOS.md`  

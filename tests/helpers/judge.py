@@ -49,8 +49,21 @@ def expect_api_action(body: dict[str, Any], action: str, job_key: str) -> JudgeV
     if body.get("action") != action:
         return JudgeVerdict(ok=False, reason=f"action {body.get('action')!r} != {action!r}")
     if body.get("job_key") != job_key:
-        return JudgeVerdict(ok=False, reason=f"job_key mismatch")
+        return JudgeVerdict(ok=False, reason="job_key mismatch")
     return JudgeVerdict(ok=True)
+
+
+def expect_flow_commit(result: dict[str, Any], kind: str) -> JudgeVerdict:
+    log = result.get("steps") or []
+    if result.get("commit_kind") == kind or any(e.get("commit_kind") == kind for e in log if e.get("committed")):
+        return JudgeVerdict(ok=True)
+    return JudgeVerdict(ok=False, reason=f"expected commit_kind={kind!r}, got {result!r}")
+
+
+def expect_classify(kind: str, expected: str) -> JudgeVerdict:
+    if kind == expected:
+        return JudgeVerdict(ok=True)
+    return JudgeVerdict(ok=False, reason=f"classify {kind!r} != {expected!r}")
 
 
 def optional_llm_judge(prompt: str, *, criteria: str) -> JudgeVerdict | None:
@@ -62,5 +75,4 @@ def optional_llm_judge(prompt: str, *, criteria: str) -> JudgeVerdict | None:
     api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return None
-    # Placeholder: real LLM call can be wired later; CI never depends on this.
     return JudgeVerdict(ok=True, reason="llm judge skipped (stub)")
