@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(SCRIPTS))
 
 from linkedin_posts_merge import (  # noqa: E402
@@ -28,9 +29,12 @@ from linkedin_posts_merge import (  # noqa: E402
 )
 
 
+from tests.helpers.example_configs import load_example_linkedin_config  # noqa: E402
+
+
 class LinkedInPostsMergeTests(unittest.TestCase):
     def test_build_queries_six_combinations(self):
-        cfg = json.loads((ROOT / "linkedin-posts-config.json").read_text())
+        cfg = load_example_linkedin_config()
         queries = build_queries(cfg)
         self.assertEqual(len(queries), 6)
         self.assertEqual(queries[0]["query"], '"ai engineer" + "latam"')
@@ -42,11 +46,11 @@ class LinkedInPostsMergeTests(unittest.TestCase):
     def test_period_to_recency_default_seven(self):
         cfg = {"recency_map": {"1": "past-24h", "7": "past-week"}}
         self.assertEqual(period_to_recency(7, cfg), "past-week")
-        cfg_full = json.loads((ROOT / "linkedin-posts-config.json").read_text())
+        cfg_full = load_example_linkedin_config()
         self.assertEqual(cfg_full.get("default_period_days"), 7)
 
     def test_post_to_job_hiring_post(self):
-        cfg = json.loads((ROOT / "linkedin-posts-config.json").read_text())
+        cfg = load_example_linkedin_config()
         post = {
             "text": "We're hiring an AI Engineer remote LATAM. USD 120k-150k. Apply: jobs@acme.com",
             "url": "https://www.linkedin.com/feed/update/urn:li:activity:123/",
@@ -119,7 +123,7 @@ class LinkedInPostsMergeTests(unittest.TestCase):
     def test_write_linkedin_run_markdown_recency(self):
         from datetime import datetime, timezone
 
-        cfg = json.loads((ROOT / "linkedin-posts-config.json").read_text())
+        cfg = load_example_linkedin_config()
         jobs = [
             {
                 "role": "Old",

@@ -1,5 +1,7 @@
 # ApplySemPatria / Jobsearch
 
+[![CI](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml)
+
 Local-first job discovery and application tooling (boards, LinkedIn posts, email/DM/form apply channels, applications UI).
 
 ## Quick start

@@ -4,7 +4,7 @@
 
 | Tier | Marker / path | Runs in CI | Tools | Stability |
 |------|---------------|------------|-------|-----------|
-| **Unit** | default (excludes integration, playwright, har) | Always | pytest, mocks | High |
+| **Unit** | default (excludes integration, playwright, har, browser) | Always | pytest, mocks | High |
 | **HAR validate** | `tests/test_har_fixtures.py` | Always (before browser) | JSON parse only | High |
 | **HAR replay** | `@pytest.mark.har`, `test_flow_linkedin_har.py` | Always | Patchright + committed `.har` | High — offline |
 | **HTML baseline** | `test_flow_linkedin_fixtures.py` | Always | Patchright + `file://` HTML | High |
@@ -34,8 +34,11 @@ python scripts/generate_linkedin_hars.py
 
 | Workflow | Trigger | Jobs |
 |----------|---------|------|
-| `.github/workflows/ci.yml` | `main` push/PR | Scaffold (always green) |
-| `.github/workflows/tests.yml` | `main`, `ci/tests` push/PR, manual | **unit** (verify-hars + 3× unit) → **browser** (3× playwright) |
+| `.github/workflows/ci.yml` | `main`, `ci/tests` push/PR, manual | **unit** → **browser** → **ci gate** |
+
+Badge: [![CI](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml)
+
+Observe: `gh run list --workflow=ci.yml` · `gh run watch`
 
 ### CI audit checklist
 

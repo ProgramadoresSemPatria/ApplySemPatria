@@ -8,7 +8,7 @@ PY="${PY:-python3}"
 TIER="${1:-all}"
 REPEATS="${REPEATS:-1}"
 
-UNIT_ARGS=(-m "not integration and not playwright and not har" --tb=short -q)
+UNIT_ARGS=(-m "not integration and not playwright and not har and not browser" --tb=short -q)
 PW_ARGS=(--tb=short -q)
 # file:// HTML baseline + HAR replay + UI e2e
 PW_PATHS=(

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
 from patchright.async_api import async_playwright
 
-# Not marked playwright — avoids pytest-playwright event-loop conflict.
-# Run via: pytest tests/test_flow_linkedin_fixtures.py
+pytestmark = [pytest.mark.browser]
 
 
 async def _connect_dry_run(html_uri: str) -> dict:
