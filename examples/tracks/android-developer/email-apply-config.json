@@ -1,0 +1,18 @@
+{
+  "sender_email": "you@example.com",
+  "sender_name": "Your Name",
+  "resume_path": "/absolute/path/to/your-resume.pdf",
+  "linkedin_url": "https://www.linkedin.com/in/your-handle/",
+  "location": "City, Country",
+  "subject_template": "Application for {role}",
+  "body_template_file": "templates/email-application.txt",
+  "gmail_credentials_path": "secrets/gmail-credentials.json",
+  "gmail_token_path": "state/gmail-token.json",
+  "sent_log_path": "state/email-applications.json",
+  "rate_limit_seconds": 45,
+  "skip_if_already_applied_in_applika": false,
+  "log_to_applika": false,
+  "email_apply_enabled": false,
+  "email_apply_mode": "manual",
+  "email_message_confirmed": false
+}

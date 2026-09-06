@@ -1,12 +1,40 @@
-# Secrets & local credentials
+# Secrets & credentials
 secrets/
-state/gmail-token.json
-secrets/gmail-app-password
 .env
 .env.*
+*.pem
+*.key
 
-# Runtime / personal apply state (rebuilt locally)
+# Local runtime state (apply progress, tokens, table window)
 state/
+
+# Job registry & discovery output (rebuilt on each machine)
+/registry/**
+!/registry/.gitkeep
+
+# Generated runs, tables, audits, raw collect JSON
+/runs/**
+!/runs/tables/
+/runs/tables/**
+!/runs/tables/README.md
+
+# Per-track personal data (copy from examples/tracks/<id>/)
+/tracks/**
+!/tracks/.gitkeep
+
+# Legacy root-level configs (prefer tracks/<id>/ after onboarding)
+/applicant-profile.json
+/profile.json
+/config.json
+/email-apply-config.json
+/linkedin-posts-config.json
+/google-jobs-config.json
+/form-answers.json
+
+# Resumes & attachments
+*.pdf
+*.docx
+*.doc
 
 # Python
 .venv/
@@ -15,6 +43,10 @@ __pycache__/
 *.pyo
 .pytest_cache/
 .mypy_cache/
+
+# Browser automation profiles
+patchright-profile/
+.playwright/
 
 # OS / editor
 .DS_Store
