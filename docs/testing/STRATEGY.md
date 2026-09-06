@@ -21,7 +21,9 @@ patchright install chromium
 ./scripts/run_tests.sh unit          # ~85 tests
 ./scripts/run_tests.sh playwright    # verify-hars + HTML + HAR + UI e2e
 ./scripts/run_tests.sh all           # unit + playwright
-./scripts/run_tests.sh stable        # 5× unit + 3× browser
+./scripts/run_tests.sh coverage         # unit tier + htmlcov/ + coverage.xml
+./scripts/run_tests.sh coverage-all     # unit + browser combined
+./scripts/run_tests.sh stable           # 5× unit + 3× browser
 ```
 
 Regenerate HAR after HTML fixture changes:
@@ -46,7 +48,7 @@ Observe: `gh run list --workflow=ci.yml` · `gh run watch`
 - [x] HAR files committed (`tests/fixtures/har/*.har`)
 - [x] Fixed mock port `18766` (HAR URL must match replay URL)
 - [x] `not_found=abort` on HAR replay — stray requests fail loudly
-- [x] Stability repeats: 3× unit, 3× browser on CI
+- [x] Coverage measured with `pytest-cov` (`./scripts/run_tests.sh coverage`); CI uploads `htmlcov/` artifact + Step Summary %
 - [x] Integration tests excluded via `-m "not integration …"`
 - [x] Patchright `install-deps` on Ubuntu for headless Chromium
 

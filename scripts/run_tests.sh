@@ -10,6 +10,12 @@ REPEATS="${REPEATS:-1}"
 
 UNIT_ARGS=(-m "not integration and not playwright and not har and not browser" --tb=short -q)
 PW_ARGS=(--tb=short -q)
+COV_ARGS=(
+  --cov=scripts
+  --cov-report=term-missing:skip-covered
+  --cov-report=html:htmlcov
+  --cov-report=xml:coverage.xml
+)
 # file:// HTML baseline + HAR replay + UI e2e
 PW_PATHS=(
   "tests/test_flow_linkedin_fixtures.py"
@@ -19,6 +25,36 @@ PW_PATHS=(
 
 run_unit() {
   "$PY" -m pytest tests/ "${UNIT_ARGS[@]}" "$@"
+}
+
+run_coverage_unit() {
+  echo "=== coverage (unit tier) ==="
+  "$PY" -m pytest tests/ "${UNIT_ARGS[@]}" "${COV_ARGS[@]}"
+}
+
+run_coverage_all() {
+  echo "=== coverage (unit + browser, combined) ==="
+  rm -f .coverage coverage.xml
+  "$PY" -m pytest tests/ "${UNIT_ARGS[@]}" --cov=scripts --cov-report=
+  "$PY" -m pytest "${PW_PATHS[@]}" --cov=scripts --cov-append --cov-report= "${PW_ARGS[@]}"
+  "$PY" -m coverage report --skip-covered
+  "$PY" -m coverage html
+  "$PY" -m coverage xml -o coverage.xml
+}
+
+print_coverage_summary() {
+  if [[ -f coverage.xml ]]; then
+    "$PY" - <<'PY'
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+root = ET.parse(Path("coverage.xml")).getroot()
+rate = float(root.attrib.get("line-rate", 0)) * 100
+lines = root.attrib.get("lines-valid", "?")
+covered = root.attrib.get("lines-covered", "?")
+print(f"Total line coverage: {rate:.1f}% ({covered}/{lines} lines)")
+PY
+  fi
 }
 
 verify_hars() {
@@ -48,6 +84,17 @@ case "$TIER" in
       run_unit
     done
     ;;
+  coverage)
+    run_coverage_unit
+    print_coverage_summary
+    echo "HTML report: htmlcov/index.html"
+    ;;
+  coverage-all)
+    verify_hars
+    run_coverage_all
+    print_coverage_summary
+    echo "HTML report: htmlcov/index.html"
+    ;;
   playwright|har)
     for i in $(seq 1 "$REPEATS"); do
       echo "=== browser run $i/$REPEATS ==="
@@ -63,7 +110,7 @@ case "$TIER" in
     run_playwright
     ;;
   *)
-    echo "Usage: $0 {unit|playwright|har|verify-hars|all|stable}" >&2
+    echo "Usage: $0 {unit|playwright|har|verify-hars|coverage|coverage-all|all|stable}" >&2
     exit 1
     ;;
 esac

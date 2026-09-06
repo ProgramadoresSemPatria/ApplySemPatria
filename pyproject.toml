@@ -18,6 +18,29 @@ markers = [
 ]
 filterwarnings = ["ignore::DeprecationWarning"]
 
+[tool.coverage.run]
+source = ["scripts"]
+branch = true
+parallel = true
+omit = [
+  "*/tests/*",
+  "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision = 1
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
 # Run without install:
 #   python3 ~/job-search/scripts/jobsearch.py tracks list
 #   python3 ~/job-search/scripts/jobsearch.py doctor
