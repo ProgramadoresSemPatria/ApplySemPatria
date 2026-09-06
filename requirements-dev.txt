@@ -1,0 +1,8 @@
+# Dev / test dependencies (install: pip install -r requirements-dev.txt)
+pytest>=8.0
+pytest-asyncio>=0.24
+pytest-playwright>=0.5
+pytest-repeat>=0.9
+
+# Browser for flow + UI e2e (also: patchright install chromium)
+patchright>=1.62.0

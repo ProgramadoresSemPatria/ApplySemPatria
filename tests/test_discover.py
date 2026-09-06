@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -147,6 +149,7 @@ class RegistryTests(unittest.TestCase):
 
 
 class CollectorIntegrationTests(unittest.TestCase):
+    pytestmark = pytest.mark.integration
     """Live network tests — verify real sources respond."""
 
     def test_remoteok_live(self):

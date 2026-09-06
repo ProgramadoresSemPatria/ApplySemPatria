@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI scaffold
+        run: echo "ApplySemPatria CI scaffold — full tests run on ci/tests branch (.github/workflows/tests.yml)"

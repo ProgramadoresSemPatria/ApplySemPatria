@@ -44,3 +44,17 @@ jobsearch onboarding        # first-run setup wizard
 ```
 
 See `playbooks/` for channel-specific setup (Gmail, LinkedIn session, Himalayas, etc.).
+
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+patchright install chromium
+./scripts/run_tests.sh all        # unit + browser/UI
+./scripts/run_tests.sh stable     # 5× unit + 3× browser (stability)
+```
+
+Scenario catalog: `docs/testing/SCENARIOS.md`  
+CI strategy: `docs/testing/STRATEGY.md`  
+
+GitHub Actions: `ci.yml` on `main` (scaffold); full suite on **`ci/tests`** branch via `tests.yml`.
