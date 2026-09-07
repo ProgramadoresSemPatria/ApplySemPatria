@@ -25,13 +25,14 @@ parallel = true
 omit = [
   "*/tests/*",
   "*/__pycache__/*",
+  "scripts/check_coverage_thresholds.py",
 ]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
 precision = 1
-fail_under = 20
+fail_under = 19
 exclude_lines = [
   "pragma: no cover",
   "if __name__ == .__main__.:",

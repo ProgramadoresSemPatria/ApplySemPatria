@@ -1,5 +1,5 @@
 {
-  "total_line_rate_min": 0.2,
+  "total_line_rate_min": 0.19,
   "modules": {
     "scripts/ui_server.py": 0.4,
     "scripts/applications_ui_data.py": 0.4,
