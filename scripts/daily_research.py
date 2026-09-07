@@ -13,7 +13,13 @@ SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
-from research_log import mark_research_day, today_local  # noqa: E402
+from research_log import (  # noqa: E402
+    finish_research_run,
+    mark_research_day,
+    set_research_step,
+    start_research_run,
+    today_local,
+)
 
 
 def _resolve_python() -> str:
@@ -43,97 +49,108 @@ def run_daily_research(
     ensure_table_dirs()
     steps: list[str] = []
     errors: list[str] = []
+    start_research_run(day)
 
-    if not skip_linkedin:
-        li_script = SCRIPTS / "linkedin-deep-collect.sh"
-        if li_script.is_file():
-            steps.append("linkedin_collect")
+    try:
+        if not skip_linkedin:
+            li_script = SCRIPTS / "linkedin-deep-collect.sh"
+            if li_script.is_file():
+                steps.append("linkedin_collect")
+                set_research_step("linkedin_collect")
+                proc = subprocess.run(
+                    [str(li_script), "--all-queries", "--merge", "--since", since],
+                    cwd=str(ROOT),
+                    capture_output=True,
+                    text=True,
+                )
+                if proc.returncode != 0:
+                    tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+                    errors.append("LinkedIn collect: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+            else:
+                errors.append("LinkedIn collect script missing — skipped")
+
+        track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
+        if not track_ids:
+            msg = "No tracks ready for discovery. Run jobsearch doctor."
+            finish_research_run(ok=False, message=msg)
+            return {
+                "ok": False,
+                "message": msg,
+                "day": day,
+            }
+
+        for tid in track_ids:
+            steps.append(f"discover:{tid}")
+            set_research_step("discover", detail=tid)
             proc = subprocess.run(
-                [str(li_script), "--all-queries", "--merge", "--since", since],
+                [PY, str(SCRIPTS / "discover.py"), "--since", since, "--track", tid],
                 cwd=str(ROOT),
                 capture_output=True,
                 text=True,
-                timeout=3600,
             )
             if proc.returncode != 0:
                 tail = (proc.stderr or proc.stdout or "").strip().splitlines()
-                errors.append("LinkedIn collect: " + (tail[-1] if tail else f"exit {proc.returncode}"))
-        else:
-            errors.append("LinkedIn collect script missing — skipped")
+                errors.append(f"Discover {tid}: " + (tail[-1] if tail else f"exit {proc.returncode}"))
 
-    track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
-    if not track_ids:
-        return {
-            "ok": False,
-            "message": "No tracks ready for discovery. Run jobsearch doctor.",
-            "day": day,
-        }
+        li_since, bd_since = load_window()
+        save_window(linkedin_since=li_since, board_since=bd_since)
+        out = applications_table_path()
 
-    for tid in track_ids:
-        steps.append(f"discover:{tid}")
+        steps.append("generate_table")
+        set_research_step("generate_table")
         proc = subprocess.run(
-            [PY, str(SCRIPTS / "discover.py"), "--since", since, "--track", tid],
+            [
+                PY,
+                str(SCRIPTS / "generate_applications.py"),
+                "--linkedin-since",
+                li_since.date().isoformat(),
+                "--board-since",
+                bd_since.date().isoformat(),
+                "--output",
+                str(out),
+            ],
             cwd=str(ROOT),
             capture_output=True,
             text=True,
-            timeout=600,
         )
         if proc.returncode != 0:
             tail = (proc.stderr or proc.stdout or "").strip().splitlines()
-            errors.append(f"Discover {tid}: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+            errors.append("Table: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+            msg = "\n".join(errors)
+            finish_research_run(ok=False, message=msg)
+            return {
+                "ok": False,
+                "message": msg,
+                "day": day,
+                "steps": steps,
+            }
 
-    li_since, bd_since = load_window()
-    save_window(li_since, bd_since)
-    out = applications_table_path()
+        job_count = 0
+        try:
+            import json
 
-    steps.append("generate_table")
-    proc = subprocess.run(
-        [
-            PY,
-            str(SCRIPTS / "generate_applications.py"),
-            "--linkedin-since",
-            li_since.date().isoformat(),
-            "--board-since",
-            bd_since.date().isoformat(),
-            "--output",
-            str(out),
-        ],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        timeout=300,
-    )
-    if proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
-        errors.append("Table: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+            snap = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
+            job_count = len(snap.get("jobs", []))
+        except (OSError, json.JSONDecodeError):
+            pass
+
+        mark_research_day(day, job_count=job_count, tracks=track_ids, since=since, steps=steps)
+        msg = f"Research complete for {day}: {job_count} roles in apply table."
+        if errors:
+            msg += "\nWarnings:\n" + "\n".join(errors)
+        finish_research_run(ok=True, message=msg)
         return {
-            "ok": False,
-            "message": "\n".join(errors),
+            "ok": True,
+            "message": msg,
             "day": day,
+            "job_count": job_count,
             "steps": steps,
+            "warnings": errors,
         }
-
-    job_count = 0
-    try:
-        import json
-
-        snap = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
-        job_count = len(snap.get("jobs", []))
-    except (OSError, json.JSONDecodeError):
-        pass
-
-    mark_research_day(day, job_count=job_count, tracks=track_ids, since=since, steps=steps)
-    msg = f"Research complete for {day}: {job_count} roles in apply table."
-    if errors:
-        msg += "\nWarnings:\n" + "\n".join(errors)
-    return {
-        "ok": True,
-        "message": msg,
-        "day": day,
-        "job_count": job_count,
-        "steps": steps,
-        "warnings": errors,
-    }
+    except Exception as exc:  # noqa: BLE001
+        msg = f"Research error: {exc}"
+        finish_research_run(ok=False, message=msg)
+        return {"ok": False, "message": msg, "day": day, "steps": steps}
 
 
 def main() -> int:

@@ -36,6 +36,13 @@ def test_meta_ui_approval(mock_ui_server):
     assert meta.get("today") == "2026-09-06"
 
 
+def test_research_status_endpoint(mock_ui_server_research_flow):
+    port, _captured = mock_ui_server_research_flow
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/research/status", timeout=5) as resp:
+        status = json.loads(resp.read().decode())
+    assert status.get("running") is False
+
+
 def test_action_dm_connect_mock(mock_ui_server):
     port, _captured = mock_ui_server
     jk = "ai-engineer|linkedin|acme ai|ai engineer"

@@ -204,6 +204,30 @@ Scenario: List header bulk button processes DM roles in the current filter
 
 ---
 
+## UI-14 — Research prompt (today pending) ✅
+
+**Automated:** `test_research_prompt_when_no_research_today`
+
+---
+
+## UI-15 — Past day while today pending ✅
+
+**Automated:** `test_select_past_day_while_today_pending`
+
+---
+
+## UI-16 — Research progress + completion ✅
+
+**Automated:** `test_research_button_shows_progress_and_completes`
+
+---
+
+## UI-17 — DM message already sent ✅
+
+**Automated:** `test_dm_message_pill_done_when_already_sent` · unit: `tests/test_dm_chat.py`
+
+---
+
 ## UI-11 — Manual DM mode toast hint ⬜
 
 ```gherkin

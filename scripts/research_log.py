@@ -12,6 +12,7 @@ SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
 TZ = ZoneInfo("America/Sao_Paulo")
 LOG_PATH = ROOT / "state" / "research-log.json"
+RUN_PATH = ROOT / "state" / "research-run.json"
 
 
 def today_local() -> str:
@@ -87,7 +88,85 @@ def research_status() -> dict[str, Any]:
             }
             for d in days
         ],
+        "run": research_run_status(),
     }
+
+
+def _default_run() -> dict[str, Any]:
+    return {"running": False, "version": 1}
+
+
+def load_research_run() -> dict[str, Any]:
+    if not RUN_PATH.exists():
+        return _default_run()
+    try:
+        data = json.loads(RUN_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return _default_run()
+    return data
+
+
+def _save_research_run(data: dict[str, Any]) -> None:
+    RUN_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RUN_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def start_research_run(day: str | None = None) -> None:
+    day = day or today_local()
+    now = datetime.now(TZ).isoformat()
+    _save_research_run(
+        {
+            "running": True,
+            "day": day,
+            "step": "starting",
+            "detail": "",
+            "started_at": now,
+            "updated_at": now,
+            "version": 1,
+        }
+    )
+
+
+def set_research_step(step: str, *, detail: str = "") -> None:
+    run = load_research_run()
+    if not run.get("running"):
+        return
+    run["step"] = step
+    if detail:
+        run["detail"] = detail
+    run["updated_at"] = datetime.now(TZ).isoformat()
+    _save_research_run(run)
+
+
+def finish_research_run(*, ok: bool, message: str = "") -> None:
+    run = load_research_run()
+    run["running"] = False
+    run["ok"] = ok
+    run["message"] = message
+    run["step"] = "done" if ok else "failed"
+    run["updated_at"] = datetime.now(TZ).isoformat()
+    _save_research_run(run)
+
+
+def research_run_status() -> dict[str, Any]:
+    run = load_research_run()
+    return {
+        "running": bool(run.get("running")),
+        "day": run.get("day"),
+        "step": run.get("step"),
+        "detail": run.get("detail") or "",
+        "started_at": run.get("started_at"),
+        "updated_at": run.get("updated_at"),
+        "ok": run.get("ok"),
+        "message": run.get("message") or "",
+    }
+
+
+def research_status_meta_only() -> dict[str, Any]:
+    """Meta fields without nested run progress (for lightweight polling)."""
+    status = research_status()
+    status.pop("run", None)
+    return status
 
 
 def remove_research_day(day: str) -> None:

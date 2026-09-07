@@ -389,6 +389,12 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             self._json(200, ui_meta_payload())
             return
 
+        if path.path == "/api/research/status":
+            from research_log import research_run_status  # noqa: E402
+
+            self._json(200, research_run_status())
+            return
+
         if path.path == "/api/research":
             self._json(200, ui_meta_payload())
             return
@@ -431,21 +437,39 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             result_holder: dict[str, Any] = {}
 
             def _worker() -> None:
-                from daily_research import run_daily_research  # noqa: E402
+                try:
+                    from daily_research import run_daily_research  # noqa: E402
 
-                result_holder["result"] = run_daily_research(
-                    track=track,
-                    since=since,
-                    skip_linkedin=skip_linkedin,
-                )
+                    result_holder["result"] = run_daily_research(
+                        track=track,
+                        since=since,
+                        skip_linkedin=skip_linkedin,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    result_holder["result"] = {
+                        "ok": False,
+                        "message": f"Research error: {exc}",
+                    }
 
             t = threading.Thread(target=_worker, daemon=True)
             t.start()
-            t.join(timeout=3900)
-            result = result_holder.get("result") or {
-                "ok": False,
-                "message": "Research failed to start or timed out.",
-            }
+            t.join()
+            result = result_holder.get("result")
+            if not result:
+                from research_log import research_run_status  # noqa: E402
+
+                run = research_run_status()
+                if run.get("running"):
+                    result = {
+                        "ok": False,
+                        "message": "Research stopped unexpectedly. Check server logs.",
+                    }
+                else:
+                    result = {
+                        "ok": bool(run.get("ok")),
+                        "message": run.get("message") or "Research finished.",
+                        "day": run.get("day"),
+                    }
             if result.get("ok"):
                 from applications_ui_data import load_snapshot, refresh_live_snapshot  # noqa: E402
 

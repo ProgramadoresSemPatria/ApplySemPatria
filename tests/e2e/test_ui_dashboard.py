@@ -53,6 +53,39 @@ def test_research_prompt_when_no_research_today(mock_ui_server_needs_research, p
     expect(page.locator("#runResearchBtn")).to_contain_text("Make a research today")
     expect(page.locator("#listContent")).to_be_hidden()
     expect(page.locator(".card")).to_have_count(0)
+    expect(page.locator('.day-btn.active')).to_have_attribute("data-day", "2026-09-07")
+    expect(page.locator('.day-btn[data-day="2026-09-07"] .meta')).to_contain_text("no research yet")
+
+
+def test_select_past_day_while_today_pending(mock_ui_server_needs_research, page: Page):
+    port, _captured = mock_ui_server_needs_research
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator('.day-btn[data-day="2026-09-06"]').click()
+    expect(page.locator("#researchPrompt")).to_be_hidden()
+    expect(page.locator("#listContent")).to_be_visible()
+    page.wait_for_selector(".card", timeout=10000)
+    expect(page.locator('.day-btn.active')).to_have_attribute("data-day", "2026-09-06")
+
+
+def test_research_button_shows_progress_and_completes(mock_ui_server_research_flow, page: Page):
+    port, captured = mock_ui_server_research_flow
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator("#runResearchBtn").click()
+    expect(page.locator("#runResearchBtn")).to_be_disabled()
+    expect(page.locator("#researchProgressText")).to_contain_text("LinkedIn", timeout=8000)
+    expect(page.locator("#listContent")).to_be_visible(timeout=15000)
+    expect(page.locator("#researchPrompt")).to_be_hidden()
+    expect(page.locator(".card")).to_have_count(1)
+    assert captured.get("last_research", {}).get("ok") is True
+
+
+def test_dm_message_pill_done_when_already_sent(mock_ui_server_dm_sent, page: Page):
+    port, _captured = mock_ui_server_dm_sent
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    msg_pill = page.locator('.step-pill[data-action="dm_message"]').first
+    msg_pill.wait_for(state="visible", timeout=10000)
+    expect(msg_pill).to_have_class(re.compile(r"done"))
+    expect(msg_pill.locator(".step-status")).to_contain_text("sent")
 
 
 def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):

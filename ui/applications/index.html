@@ -348,6 +348,12 @@
       font-size: 0.95rem;
     }
 
+    .research-prompt .research-progress {
+      color: var(--accent);
+      font-size: 0.88rem;
+      max-width: 480px;
+    }
+
     .research-run-btn {
       margin-top: 0.5rem;
       padding: 0.85rem 1.5rem;
@@ -786,6 +792,7 @@
         <div class="research-prompt" id="researchPrompt" hidden>
           <h3>No research for today yet</h3>
           <p id="researchPromptText">Run discovery to build today's apply list from LinkedIn posts and job boards. Past snapshot days stay available in the sidebar.</p>
+          <p class="research-progress" id="researchProgressText" hidden></p>
           <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
         </div>
         <div class="list-content" id="listContent">
@@ -857,8 +864,59 @@
     const toast = document.getElementById("toast");
     const serverStale = document.getElementById("serverStale");
     const researchPrompt = document.getElementById("researchPrompt");
+    const researchPromptText = document.getElementById("researchPromptText");
+    const researchProgressText = document.getElementById("researchProgressText");
     const listContent = document.getElementById("listContent");
     const runResearchBtn = document.getElementById("runResearchBtn");
+
+    const RESEARCH_STEP_LABELS = {
+      starting: "Starting research…",
+      linkedin_collect: "Collecting LinkedIn posts — can take 15–30+ minutes",
+      discover: "Discovering job boards",
+      generate_table: "Building today's apply table",
+    };
+
+    let researchPollTimer = null;
+
+    function formatResearchElapsed(iso) {
+      if (!iso) return "";
+      const sec = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+
+    function stopResearchPoll() {
+      if (researchPollTimer) {
+        clearInterval(researchPollTimer);
+        researchPollTimer = null;
+      }
+      researchProgressText.hidden = true;
+      researchProgressText.textContent = "";
+    }
+
+    async function pollResearchProgress(btn) {
+      try {
+        const res = await fetch("/api/research/status");
+        if (!res.ok) return;
+        const run = await res.json();
+        if (!run.running) return;
+        const step = RESEARCH_STEP_LABELS[run.step] || run.step || "Researching";
+        const detail = run.detail ? ` · ${run.detail}` : "";
+        const elapsed = formatResearchElapsed(run.started_at);
+        researchProgressText.hidden = false;
+        researchProgressText.textContent = `${step}${detail}${elapsed ? ` · ${elapsed}` : ""}`;
+        btn.textContent = elapsed ? `Researching · ${elapsed}` : "Researching…";
+      } catch {
+        /* ignore transient poll errors */
+      }
+    }
+
+    function startResearchPoll(btn) {
+      stopResearchPoll();
+      pollResearchProgress(btn);
+      researchPollTimer = setInterval(() => pollResearchProgress(btn), 500);
+    }
 
     function viewingTodayOrLive() {
       if (!activeDay || activeDay === "live") return true;
@@ -927,12 +985,16 @@
         const btn = document.createElement("button");
         btn.className = "day-btn";
         btn.dataset.day = d.day;
+        const metaText = d.pending
+          ? "no research yet"
+          : (d.generated_at ? new Date(d.generated_at).toLocaleTimeString() : "snapshot");
+        const countText = d.pending ? "—" : (d.job_count || "—");
         btn.innerHTML = `
           <div>
             <div class="date">${formatDay(d.day)}</div>
-            <div class="meta">${d.generated_at ? new Date(d.generated_at).toLocaleTimeString() : "snapshot"}</div>
+            <div class="meta">${metaText}</div>
           </div>
-          <span class="day-count">${d.job_count || "—"}</span>`;
+          <span class="day-count">${countText}</span>`;
         btn.onclick = () => selectDay(d.day, btn);
         dayList.appendChild(btn);
       });
@@ -1310,8 +1372,8 @@
     });
 
     document.getElementById("liveBtn").onclick = () => {
-      document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
       activeDay = serverMeta.today || "live";
+      highlightSidebarDay(activeDay);
       if (needsResearchPrompt()) {
         syncMainView();
         return;
@@ -1324,6 +1386,7 @@
       if (btn.disabled) return;
       btn.disabled = true;
       btn.textContent = "Researching…";
+      startResearchPoll(btn);
       try {
         const res = await fetch("/api/research", {
           method: "POST",
@@ -1348,6 +1411,7 @@
       } catch (e) {
         showToast(String(e), false);
       } finally {
+        stopResearchPoll();
         btn.disabled = false;
         btn.textContent = "Make a research today";
       }
@@ -1401,6 +1465,7 @@
       await loadDays();
       if (needsResearchPrompt()) {
         activeDay = serverMeta.today || "live";
+        highlightSidebarDay(activeDay);
         syncMainView();
         return;
       }

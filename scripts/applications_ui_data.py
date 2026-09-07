@@ -76,7 +76,7 @@ def _snapshot_path_for_md(md_path: Path) -> Path:
 
 
 def list_snapshot_days() -> list[dict[str, Any]]:
-    from research_log import list_research_days  # noqa: E402
+    from research_log import has_research, list_research_days, today_local  # noqa: E402
 
     APPLICATIONS_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     researched = set(list_research_days())
@@ -89,7 +89,7 @@ def list_snapshot_days() -> list[dict[str, Any]]:
         if day not in researched:
             continue
         js = _snapshot_path_for_md(md)
-        meta: dict[str, Any] = {"day": day, "md": str(md.name), "job_count": 0}
+        meta: dict[str, Any] = {"day": day, "md": str(md.name), "job_count": 0, "pending": False}
         if js.exists():
             try:
                 data = json.loads(js.read_text(encoding="utf-8"))
@@ -98,6 +98,14 @@ def list_snapshot_days() -> list[dict[str, Any]]:
             except (OSError, json.JSONDecodeError):
                 pass
         days[day] = meta
+
+    today = today_local()
+    if not has_research(today):
+        days.setdefault(
+            today,
+            {"day": today, "job_count": 0, "pending": True},
+        )
+
     return sorted(days.values(), key=lambda d: d["day"], reverse=True)
 
 
