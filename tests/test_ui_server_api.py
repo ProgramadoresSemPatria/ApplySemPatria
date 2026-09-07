@@ -28,14 +28,14 @@ def _post_json(url: str, payload: dict) -> tuple[int, dict]:
 
 
 def test_meta_ui_approval(mock_ui_server):
-    port = mock_ui_server
+    port, _captured = mock_ui_server
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=5) as resp:
         meta = json.loads(resp.read().decode())
     assert meta.get("ui_approval") is True
 
 
 def test_action_dm_connect_mock(mock_ui_server):
-    port = mock_ui_server
+    port, _captured = mock_ui_server
     jk = "ai-engineer|linkedin|acme ai|ai engineer"
     status, data = _post_json(
         f"http://127.0.0.1:{port}/api/action",

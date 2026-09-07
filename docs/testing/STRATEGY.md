@@ -49,6 +49,7 @@ Observe: `gh run list --workflow=ci.yml` · `gh run watch`
 - [x] Fixed mock port `18766` (HAR URL must match replay URL)
 - [x] `not_found=abort` on HAR replay — stray requests fail loudly
 - [x] Coverage measured with `pytest-cov` (`./scripts/run_tests.sh coverage`); CI uploads `htmlcov/` artifact + Step Summary %
+- [x] Coverage **regression gates**: `fail_under` in `pyproject.toml` + per-module floors in `coverage-thresholds.json` (see [COVERAGE.md](./COVERAGE.md))
 - [x] Integration tests excluded via `-m "not integration …"`
 - [x] Patchright `install-deps` on Ubuntu for headless Chromium
 

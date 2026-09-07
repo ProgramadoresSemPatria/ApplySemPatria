@@ -27,7 +27,7 @@ def linkedin_html_dir() -> Path:
 
 
 @pytest.fixture
-def mock_ui_server(monkeypatch) -> Generator[int, None, None]:
+def mock_ui_server(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """HTTP server with mocked action/snapshot handlers for UI e2e."""
     from tests.helpers.jobs import ui_snapshot
 
@@ -68,7 +68,7 @@ def mock_ui_server(monkeypatch) -> Generator[int, None, None]:
     thread.start()
     time.sleep(0.15)
     try:
-        yield port
+        yield port, captured
     finally:
         httpd.shutdown()
         captured.clear()

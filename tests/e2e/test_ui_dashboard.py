@@ -2,43 +2,45 @@
 
 from __future__ import annotations
 
-import json
+import re
 
 import pytest
+from playwright.sync_api import Page, expect
+
+from tests.helpers.ui_e2e import wait_for_mock_action
 
 pytestmark = pytest.mark.playwright
 
 
-def test_dashboard_loads_meta_and_cards(mock_ui_server, page):
-    port = mock_ui_server
-    page.goto(f"http://127.0.0.1:{port}/")
+def test_dashboard_loads_meta_and_cards(mock_ui_server, page: Page):
+    port, _captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.wait_for_selector(".card", timeout=10000)
-    assert page.locator("#serverStale").is_hidden()
-    assert "Acme AI" in page.locator(".card-company").first.inner_text()
+    expect(page.locator("#serverStale")).to_be_hidden()
+    expect(page.locator(".card-company").first).to_contain_text("Acme AI")
 
 
-def test_tap_connect_posts_action(mock_ui_server, page):
-    port = mock_ui_server
-    page.goto(f"http://127.0.0.1:{port}/")
-    page.wait_for_selector(".step-pill.clickable", timeout=10000)
+def test_tap_connect_posts_action(mock_ui_server, page: Page):
+    port, captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    pill = page.locator('.step-pill[data-action="dm_connect"]').first
+    pill.wait_for(state="visible", timeout=10000)
+    expect(pill).to_have_class(re.compile(r"clickable"))
 
-    with page.expect_request(lambda r: "/api/action" in r.url and r.method == "POST") as req_info:
-        page.locator('.step-pill[data-action="dm_connect"]').first.click()
+    pill.click()
+    action = wait_for_mock_action(captured, page)
 
-    req = req_info.value
-    body = json.loads(req.post_data or "{}")
-    assert body.get("action") == "dm_connect"
-    assert body.get("job_key")
+    assert action["action"] == "dm_connect"
+    assert action["job_key"]
 
 
-def test_card_survives_after_action(mock_ui_server, page):
-    port = mock_ui_server
-    page.goto(f"http://127.0.0.1:{port}/")
+def test_card_survives_after_action(mock_ui_server, page: Page):
+    port, captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.wait_for_selector(".card", timeout=10000)
     wrap = page.locator("#cardsWrap")
     scroll_before = wrap.evaluate("el => el.scrollTop")
     page.locator('.step-pill[data-action="dm_connect"]').first.click()
-    page.wait_for_timeout(800)
-    assert page.locator(".card").count() >= 1
-    scroll_after = wrap.evaluate("el => el.scrollTop")
-    assert scroll_after == scroll_before
+    wait_for_mock_action(captured, page)
+    expect(page.locator(".card")).not_to_have_count(0)
+    assert wrap.evaluate("el => el.scrollTop") == scroll_before

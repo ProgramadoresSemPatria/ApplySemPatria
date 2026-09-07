@@ -4,6 +4,8 @@ Catalog of behaviors we must preserve. Each scenario maps to automated tests in 
 
 ## UI dashboard (`ui/applications/index.html`)
 
+Full **Given / When / Then** e2e catalog: [UI_E2E_SCENARIOS.md](./UI_E2E_SCENARIOS.md)
+
 | ID | Scenario | Expected |
 |----|----------|----------|
 | UI-01 | Load `/api/meta` | `ui_approval: true`; no stale-server banner |

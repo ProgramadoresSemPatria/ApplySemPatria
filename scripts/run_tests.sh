@@ -57,6 +57,12 @@ PY
   fi
 }
 
+assert_coverage_thresholds() {
+  if [[ -f coverage.xml ]]; then
+    "$PY" scripts/check_coverage_thresholds.py coverage.xml
+  fi
+}
+
 verify_hars() {
   echo "=== verify HAR fixtures ==="
   for name in profile-connect profile-message profile-pending profile-connect-more profile-connected profile-connected-only; do
@@ -87,12 +93,14 @@ case "$TIER" in
   coverage)
     run_coverage_unit
     print_coverage_summary
+    assert_coverage_thresholds
     echo "HTML report: htmlcov/index.html"
     ;;
   coverage-all)
     verify_hars
     run_coverage_all
     print_coverage_summary
+    assert_coverage_thresholds
     echo "HTML report: htmlcov/index.html"
     ;;
   playwright|har)

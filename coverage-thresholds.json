@@ -1,0 +1,12 @@
+{
+  "total_line_rate_min": 0.2,
+  "modules": {
+    "scripts/ui_server.py": 0.4,
+    "scripts/applications_ui_data.py": 0.4,
+    "scripts/position_disposition.py": 0.8,
+    "scripts/dm_state.py": 0.6,
+    "scripts/application_channel.py": 0.7,
+    "scripts/table_format.py": 0.75,
+    "scripts/filters.py": 0.8
+  }
+}
