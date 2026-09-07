@@ -20,7 +20,21 @@ ROOT = SCRIPTS.parent
 UI_DIR = ROOT / "ui" / "applications"
 sys.path.insert(0, str(SCRIPTS))
 
-PY = sys.executable
+BROWSER_ACTIONS = frozenset({"dm_connect", "dm_check", "dm_message", "form_apply", "dm_process_all"})
+
+
+def _resolve_python() -> str:
+    override = os.environ.get("JOBSEARCH_PYTHON")
+    if override:
+        return override
+    for rel in (".venv/bin/python", ".venv-test/bin/python"):
+        candidate = ROOT / rel
+        if candidate.is_file():
+            return str(candidate)
+    return sys.executable
+
+
+PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
 UI_META = {"ui_approval": True, "version": 2}
 
@@ -31,15 +45,32 @@ def _ui_subprocess_env() -> dict[str, str]:
     return env
 
 
-def _run_apply_cmd(cmd: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        cmd,
+def _browser_deps_ok() -> tuple[bool, str]:
+    proc = subprocess.run(
+        [PY, "-c", "import patchright"],
         cwd=str(ROOT),
         capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return False, (
+            "Browser automation unavailable (patchright missing). "
+            f"Run: {ROOT / '.venv-test' / 'bin' / 'pip'} install -r requirements-dev.txt "
+            "&& patchright install chromium"
+        )
+    return True, ""
+
+
+def _run_apply_cmd(cmd: list[str], *, inherit_stdio: bool = False) -> subprocess.CompletedProcess[str]:
+    kwargs: dict[str, Any] = dict(
+        cwd=str(ROOT),
         text=True,
         timeout=600,
         env=_ui_subprocess_env(),
     )
+    if inherit_stdio:
+        return subprocess.run(cmd, stdout=None, stderr=None, **kwargs)
+    return subprocess.run(cmd, capture_output=True, **kwargs)
 
 
 def _find_job(job_key: str) -> dict[str, Any] | None:
@@ -144,8 +175,14 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
     else:
         return {"ok": False, "message": f"Unknown action: {action}"}
 
+    browser_action = action in ("form_apply", "dm_connect", "dm_check", "dm_message")
+    if browser_action:
+        ok_deps, dep_reason = _browser_deps_ok()
+        if not ok_deps:
+            return {"ok": False, "message": dep_reason}
+
     try:
-        proc = _run_apply_cmd(cmd)
+        proc = _run_apply_cmd(cmd, inherit_stdio=browser_action)
     except subprocess.TimeoutExpired:
         return {"ok": False, "message": "Action timed out (browser may still be open)."}
     except OSError as exc:
@@ -156,12 +193,92 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
     ok = proc.returncode == 0
     if action in ("form_apply",) and proc.returncode == 0:
         ok = True
+    if proc.stdout is None and proc.stderr is None:
+        ok = proc.returncode == 0
+        summary = [f"Finished (exit {proc.returncode})"]
     return {
         "ok": ok,
         "message": "\n".join(summary),
         "exit_code": proc.returncode,
         "action": action,
         "job_key": job_key,
+    }
+
+
+def _proc_summary(proc: subprocess.CompletedProcess[str], *, streamed: bool = False) -> tuple[bool, str]:
+    if streamed:
+        ok = proc.returncode == 0
+        msg = "Finished — see terminal for profile-by-profile output." if ok else (
+            f"Failed (exit {proc.returncode}) — see UI server terminal for details."
+        )
+        return ok, msg
+
+    out = (proc.stdout or "").strip().splitlines()
+    err = (proc.stderr or "").strip().splitlines()
+    if proc.returncode != 0:
+        combined = out + err
+        tail = combined[-8:] if combined else [f"exit {proc.returncode}"]
+    else:
+        tail = out[-3:] if out else err[-3:] if err else [f"exit {proc.returncode}"]
+    return proc.returncode == 0, "\n".join(tail)
+
+
+def run_bulk_dm_followup(*, track: str | None = None, limit: int = 0) -> dict[str, Any]:
+    """Check all pending DM connections, then send messages to accepted profiles."""
+    ok_deps, dep_reason = _browser_deps_ok()
+    if not ok_deps:
+        return {"ok": False, "message": dep_reason, "action": "dm_process_all"}
+
+    tid = track or "ai-engineer"
+    limit_args: list[str] = ["--limit", str(limit)] if limit > 0 else []
+
+    check_cmd = [
+        PY,
+        str(SCRIPTS / "dm_followup.py"),
+        "--track",
+        tid,
+        *limit_args,
+    ]
+    send_cmd = [
+        PY,
+        str(SCRIPTS / "dm_followup.py"),
+        "--send",
+        *UI_APPROVE,
+        "--force-send",
+        "--track",
+        tid,
+        *limit_args,
+    ]
+
+    phases: list[tuple[str, list[str]]] = [
+        ("check_connections", check_cmd),
+        ("send_messages", send_cmd),
+    ]
+    summaries: list[str] = []
+    ok = True
+
+    for label, cmd in phases:
+        try:
+            proc = _run_apply_cmd(cmd, inherit_stdio=True)
+        except subprocess.TimeoutExpired:
+            return {
+                "ok": False,
+                "message": f"Bulk DM follow-up timed out during {label.replace('_', ' ')}.",
+                "action": "dm_process_all",
+            }
+        except OSError as exc:
+            return {"ok": False, "message": str(exc), "action": "dm_process_all"}
+
+        phase_ok, phase_msg = _proc_summary(proc, streamed=True)
+        ok = ok and phase_ok
+        summaries.append(f"[{label}] {phase_msg}")
+
+    return {
+        "ok": ok,
+        "message": "\n\n".join(summaries),
+        "action": "dm_process_all",
+        "track": tid,
+        "limit": limit,
     }
 
 
@@ -273,6 +390,35 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
+
+        if path == "/api/bulk-action":
+            body = self._read_json()
+            action = str(body.get("action") or "")
+            if action != "dm_process_all":
+                self._json(400, {"ok": False, "message": f"Unknown bulk action: {action}"})
+                return
+            track = body.get("track")
+            limit = int(body.get("limit") or 0)
+
+            result_holder: dict[str, Any] = {}
+
+            def _worker() -> None:
+                result_holder["result"] = run_bulk_dm_followup(track=track, limit=limit)
+
+            t = threading.Thread(target=_worker, daemon=True)
+            t.start()
+            t.join(timeout=1200)
+            result = result_holder.get("result") or {
+                "ok": False,
+                "message": "Bulk action failed to start or timed out.",
+            }
+
+            from applications_ui_data import refresh_live_snapshot  # noqa: E402
+
+            result["snapshot"] = refresh_live_snapshot()
+            self._json(200, result)
+            return
+
         if path not in ("/api/action", "/api/disposition"):
             self.send_error(404)
             return

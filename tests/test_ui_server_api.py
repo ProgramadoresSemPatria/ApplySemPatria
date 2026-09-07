@@ -1,4 +1,4 @@
-"""UI server API tests — CLI-01..07, FE-06/07."""
+"""UI server API tests — CLI-01..08, FE-06/07."""
 
 from __future__ import annotations
 
@@ -122,3 +122,65 @@ def test_run_action_steps_disabled():
             result = run_action("dm_connect", "k")
     assert result["ok"] is False
     assert "disabled" in result["message"].lower()
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_bulk_dm_followup_invokes_check_then_send(mock_run):
+    mock_run.return_value = MagicMock(returncode=0, stdout="phase ok", stderr="")
+    from ui_server import run_bulk_dm_followup
+
+    result = run_bulk_dm_followup(track="ai-engineer", limit=0)
+
+    assert result["ok"] is True
+    assert result["action"] == "dm_process_all"
+    assert mock_run.call_count == 2
+
+    check_cmd = mock_run.call_args_list[0][0][0]
+    send_cmd = mock_run.call_args_list[1][0][0]
+
+    assert expect_action(check_cmd, must_include=["dm_followup.py", "--track", "ai-engineer"])
+    assert expect_action(
+        send_cmd,
+        must_include=["dm_followup.py", "--send", "--ui-approved", "--force-send", "--track", "ai-engineer"],
+    )
+    assert "--match" not in check_cmd
+    assert "--match" not in send_cmd
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_bulk_dm_followup_respects_limit(mock_run):
+    mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+    from ui_server import run_bulk_dm_followup
+
+    run_bulk_dm_followup(track="android-developer", limit=3)
+
+    for call in mock_run.call_args_list:
+        cmd = call[0][0]
+        assert expect_action(cmd, must_include=["--limit", "3", "--track", "android-developer"])
+
+
+def test_bulk_dm_followup_mock(mock_ui_server):
+    port, captured = mock_ui_server
+    status, data = _post_json(
+        f"http://127.0.0.1:{port}/api/bulk-action",
+        {"action": "dm_process_all", "track": "ai-engineer"},
+    )
+    assert status == 200
+    assert data.get("ok") is True
+    assert data.get("action") == "dm_process_all"
+    assert "snapshot" in data
+    assert captured["last_bulk_action"]["action"] == "dm_process_all"
+    assert captured["last_bulk_action"]["track"] == "ai-engineer"
+
+
+def test_resolve_python_prefers_project_venv(tmp_path, monkeypatch):
+    from ui_server import _resolve_python
+
+    venv_py = tmp_path / ".venv-test" / "bin" / "python"
+    venv_py.parent.mkdir(parents=True)
+    venv_py.write_text("#!/bin/sh\n")
+    monkeypatch.setattr("ui_server.ROOT", tmp_path)
+    monkeypatch.delenv("JOBSEARCH_PYTHON", raising=False)
+    assert _resolve_python() == str(venv_py)
+
+

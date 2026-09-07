@@ -1,4 +1,4 @@
-"""Applications dashboard Playwright e2e — UI-01..04."""
+"""Applications dashboard Playwright e2e — UI-01..05, UI-13."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.helpers.ui_e2e import wait_for_mock_action
+from tests.helpers.ui_e2e import wait_for_mock_action, wait_for_mock_bulk_action
 
 pytestmark = pytest.mark.playwright
 
@@ -44,3 +44,17 @@ def test_card_survives_after_action(mock_ui_server, page: Page):
     wait_for_mock_action(captured, page)
     expect(page.locator(".card")).not_to_have_count(0)
     assert wrap.evaluate("el => el.scrollTop") == scroll_before
+
+
+def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):
+    port, captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    bulk_btn = page.locator("#bulkDmBtn")
+    bulk_btn.wait_for(state="visible", timeout=10000)
+
+    bulk_btn.click()
+    bulk = wait_for_mock_bulk_action(captured, page)
+
+    assert bulk["action"] == "dm_process_all"
+    expect(page.locator("#bulkDmBtn")).not_to_be_disabled()
+

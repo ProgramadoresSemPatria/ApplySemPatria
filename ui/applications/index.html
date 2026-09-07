@@ -194,6 +194,23 @@
 
     .live-btn:hover { background: rgba(110, 231, 255, 0.08); }
 
+    .bulk-dm-btn {
+      margin-top: 0.65rem;
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(110, 231, 255, 0.35);
+      background: rgba(110, 231, 255, 0.06);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .bulk-dm-btn:hover:not(:disabled) { background: rgba(110, 231, 255, 0.12); }
+    .bulk-dm-btn:disabled { opacity: 0.55; cursor: wait; }
+    .bulk-dm-btn.loading { opacity: 0.7; }
+
     .server-stale {
       margin: 0 1.75rem;
       padding: 0.65rem 1rem;
@@ -680,6 +697,7 @@
       <div class="day-list" id="dayList"></div>
       <div class="sidebar-footer">
         <button class="live-btn" id="liveBtn">↻ Refresh live registry</button>
+        <button class="bulk-dm-btn" id="bulkDmBtn" type="button">⟳ Check connections &amp; send DMs</button>
       </div>
     </aside>
 
@@ -1159,6 +1177,38 @@
       activeDay = "live";
       loadSnapshot("live").catch(e => showToast(e.message, false));
     };
+
+    async function runBulkDmFollowup() {
+      const btn = document.getElementById("bulkDmBtn");
+      if (btn.classList.contains("loading")) return;
+      btn.classList.add("loading");
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/bulk-action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "dm_process_all" }),
+        });
+        const data = await res.json();
+        let msg = data.message || (data.ok ? "Done" : "Failed");
+        if (!data.ok && msg.includes("Manual DM mode") && !serverUiApproval) {
+          msg += " — restart the UI server: jobsearch ui";
+        }
+        showToast(msg, data.ok);
+        if (data.snapshot) {
+          applySnapshot(data.snapshot);
+        } else if (activeDay) {
+          await loadSnapshot(activeDay);
+        }
+      } catch (e) {
+        showToast(String(e), false);
+      } finally {
+        btn.classList.remove("loading");
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById("bulkDmBtn").onclick = runBulkDmFollowup;
 
     (async () => {
       await checkServerMeta();

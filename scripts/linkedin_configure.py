@@ -321,12 +321,12 @@ def linkedin_connect_allowed(
     from environment_setup import linkedin_cookies_ok  # noqa: WPS433
 
     cfg = load_linkedin_config_raw(track_id)
-    if not cfg.get("dm_apply_enabled", False):
+    approved = cli_force or ui_approved or os.environ.get("JOBSEARCH_UI_APPROVED") == "1"
+    if not cfg.get("dm_apply_enabled", False) and not approved:
         return False, (
             f"LinkedIn DM apply is disabled for {track_id}. "
             f"Enable: jobsearch configure linkedin --track {track_id}"
         )
-    approved = cli_force or ui_approved or os.environ.get("JOBSEARCH_UI_APPROVED") == "1"
     if cfg.get("dm_apply_mode") == "manual" and not approved:
         return False, (
             "Manual DM mode — use the applications UI to approve each connect/message, "

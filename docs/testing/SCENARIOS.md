@@ -18,6 +18,7 @@ Full **Given / When / Then** e2e catalog: [UI_E2E_SCENARIOS.md](./UI_E2E_SCENARI
 | UI-08 | Human review card | Steps hidden; hint shown |
 | UI-09 | Filter chips | Grid re-renders; matching cards only |
 | UI-10 | Stale server | Missing `/api/meta` shows warning banner |
+| UI-13 | Bulk DM follow-up | `POST /api/bulk-action` `{ action: "dm_process_all" }` runs check-all then send-all |
 
 ## Feature / domain logic
 
@@ -66,6 +67,7 @@ Full **Given / When / Then** e2e catalog: [UI_E2E_SCENARIOS.md](./UI_E2E_SCENARI
 | CLI-05 | Subprocess env | `JOBSEARCH_UI_APPROVED=1` set |
 | CLI-06 | Missing job | `{ ok: false, message: "Job not found" }` |
 | CLI-07 | Human review job | Steps disabled message |
+| CLI-08 | Bulk DM process all | `dm_followup.py` check (no `--match`) then `--send --ui-approved --force-send` |
 
 ## Judge criteria (automated)
 

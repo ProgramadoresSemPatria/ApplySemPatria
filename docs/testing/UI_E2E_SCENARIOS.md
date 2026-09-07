@@ -188,6 +188,22 @@ Scenario: UI-approved meta hides warning
 
 ---
 
+## UI-13 — Bulk check connections & send DMs ✅
+
+```gherkin
+Scenario: Sidebar bulk button processes all DM follow-ups
+  Given I open the applications dashboard at /
+  And the sidebar shows "Check connections & send DMs"
+  When I click #bulkDmBtn
+  Then the mock server records bulk action "dm_process_all"
+  And the button becomes enabled again after completion
+```
+
+**Automated:** `test_bulk_dm_button_triggers_process_all`  
+**Server:** `POST /api/bulk-action` → `run_bulk_dm_followup()` → two `dm_followup.py` phases (check all, then send all).
+
+---
+
 ## UI-11 — Manual DM mode toast hint ⬜
 
 ```gherkin
