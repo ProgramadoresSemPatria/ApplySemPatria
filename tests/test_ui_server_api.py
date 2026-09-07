@@ -139,7 +139,10 @@ def test_run_bulk_dm_followup_invokes_check_then_send(mock_run):
     from ui_server import run_bulk_dm_followup
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
-    result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
+    fake_entry = {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": keys[0]}
+    with patch("dm_followup.pending_profiles", return_value=[fake_entry]):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=[fake_entry]):
+            result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
 
     assert result["ok"] is True
     assert result["action"] == "dm_process_all"
@@ -158,6 +161,20 @@ def test_run_bulk_dm_followup_invokes_check_then_send(mock_run):
 
 
 @patch("ui_server._run_apply_cmd")
+def test_run_bulk_dm_followup_no_queue_skips_browser(mock_run):
+    from ui_server import run_bulk_dm_followup
+
+    keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
+    with patch("dm_followup.pending_profiles", return_value=[]):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=[]):
+            result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+
+    assert result["ok"] is False
+    assert "follow-ups" in result["message"].lower()
+    mock_run.assert_not_called()
+
+
+@patch("ui_server._run_apply_cmd")
 def test_run_bulk_dm_followup_empty_list_rejected(mock_run):
     from ui_server import run_bulk_dm_followup
 
@@ -172,7 +189,10 @@ def test_run_bulk_dm_followup_respects_limit(mock_run):
     mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
     from ui_server import run_bulk_dm_followup
 
-    run_bulk_dm_followup(track="android-developer", limit=3)
+    fake_entry = {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": "k"}
+    with patch("dm_followup.pending_profiles", return_value=[fake_entry]):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=[fake_entry]):
+            run_bulk_dm_followup(track="android-developer", limit=3)
 
     for call in mock_run.call_args_list:
         cmd = call[0][0]

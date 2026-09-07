@@ -89,6 +89,41 @@ def pending_profiles(state: dict[str, Any], *, include_sent: bool = False) -> li
     return out
 
 
+def filter_entries_by_job_keys(
+    entries: list[dict[str, Any]],
+    job_keys: list[str] | None,
+) -> list[dict[str, Any]]:
+    """Keep follow-up rows scoped to UI list job_keys (match key or recruiter profile)."""
+    if not job_keys:
+        return entries
+    allowed = {k.strip() for k in job_keys if k and k.strip()}
+    if not allowed:
+        return []
+
+    from generate_applications import dm_profile_url  # noqa: E402
+    from registry import job_key as registry_job_key, load_registry  # noqa: E402
+
+    allowed_profiles: set[str] = set()
+    for job in load_registry()["jobs"]:
+        if registry_job_key(job) in allowed:
+            prof = dm_profile_url(job)
+            if prof:
+                allowed_profiles.add(dm_state.normalize_profile_url(prof))
+
+    matched: list[dict[str, Any]] = []
+    seen_profiles: set[str] = set()
+    for entry in entries:
+        prof = dm_state.normalize_profile_url(entry.get("profile_url") or "")
+        entry_key = (entry.get("job_key") or "").strip()
+        if entry_key in allowed or (prof and prof in allowed_profiles):
+            if prof and prof in seen_profiles:
+                continue
+            if prof:
+                seen_profiles.add(prof)
+            matched.append(entry)
+    return matched
+
+
 async def run(
     entries: list[dict[str, Any]],
     *,
@@ -243,8 +278,7 @@ def main() -> int:
     if args.limit:
         entries = entries[: args.limit]
     if args.job_keys:
-        allowed = {k.strip() for k in args.job_keys.split(",") if k.strip()}
-        entries = [e for e in entries if e.get("job_key") in allowed]
+        entries = filter_entries_by_job_keys(entries, args.job_keys.split(","))
 
     if args.send:
         for entry in entries:

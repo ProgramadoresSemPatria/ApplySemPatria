@@ -228,6 +228,18 @@ Scenario: List header bulk button processes DM roles in the current filter
 
 ---
 
+## UI-18 — Bulk DM empty queue message ✅
+
+**Automated:** `test_bulk_dm_empty_queue_shows_follow_up_message`
+
+---
+
+## UI-19 — Bulk DM legacy profile key match ✅
+
+**Automated:** `test_bulk_dm_legacy_profile_key_runs_follow_up_phases` · unit: `tests/test_dm_followup.py`
+
+---
+
 ## UI-11 — Manual DM mode toast hint ⬜
 
 ```gherkin

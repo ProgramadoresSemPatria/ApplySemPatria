@@ -7,7 +7,7 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.helpers.ui_e2e import wait_for_mock_action, wait_for_mock_bulk_action
+from tests.helpers.ui_e2e import wait_for_mock_action, wait_for_mock_bulk_action, wait_for_toast_text
 
 pytestmark = pytest.mark.playwright
 
@@ -86,6 +86,27 @@ def test_dm_message_pill_done_when_already_sent(mock_ui_server_dm_sent, page: Pa
     msg_pill.wait_for(state="visible", timeout=10000)
     expect(msg_pill).to_have_class(re.compile(r"done"))
     expect(msg_pill.locator(".step-status")).to_contain_text("sent")
+
+
+def test_bulk_dm_empty_queue_shows_follow_up_message(mock_ui_server_bulk_dm_empty_queue, page: Page):
+    port, captured = mock_ui_server_bulk_dm_empty_queue
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator("#bulkDmBtn").click()
+    wait_for_toast_text(page, "follow-ups")
+    assert captured["apply_cmds"] == []
+
+
+def test_bulk_dm_legacy_profile_key_runs_follow_up_phases(mock_ui_server_bulk_dm_legacy_match, page: Page):
+    port, captured = mock_ui_server_bulk_dm_legacy_match
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator("#bulkDmBtn").click()
+    wait_for_toast_text(page, "check_connections")
+    assert len(captured["apply_cmds"]) == 2
+    for cmd in captured["apply_cmds"]:
+        assert any("dm_followup.py" in str(part) for part in cmd)
+    assert "--job-keys" in captured["apply_cmds"][0]
+    assert any("ai-engineer|" in str(part) for part in captured["apply_cmds"][0])
+    assert "--send" in captured["apply_cmds"][1]
 
 
 def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):

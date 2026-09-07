@@ -6,7 +6,14 @@ import time
 from typing import Any
 
 import pytest
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
+
+
+def wait_for_toast_text(page: Page, text: str, *, timeout_ms: int = 10_000) -> None:
+    """Wait until #toast is visible and contains ``text``."""
+    toast = page.locator("#toast.show")
+    toast.wait_for(state="visible", timeout=timeout_ms)
+    expect(toast).to_contain_text(text, timeout=timeout_ms)
 
 
 def wait_for_mock_action(

@@ -35,6 +35,7 @@ def _start_mock_ui_server(
     mock_research: bool = False,
     research_run_path: Path | None = None,
     snapshot_override: dict[str, Any] | None = None,
+    bulk_dm: str = "mock",
 ) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """HTTP server with mocked action/snapshot handlers for UI e2e."""
     from tests.helpers.jobs import ui_snapshot
@@ -42,7 +43,12 @@ def _start_mock_ui_server(
     job_key = "ai-engineer|linkedin|acme ai|ai engineer"
     snapshot = snapshot_override or ui_snapshot(job_key, day=today if has_research_today else last_research_day or today)
     research_snapshot = ui_snapshot(job_key, day=today)
-    captured: dict[str, Any] = {"last_action": None, "last_bulk_action": None, "last_research": None}
+    captured: dict[str, Any] = {
+        "last_action": None,
+        "last_bulk_action": None,
+        "last_research": None,
+        "apply_cmds": [],
+    }
 
     if research_run_path:
         monkeypatch.setattr("research_log.RUN_PATH", research_run_path)
@@ -111,9 +117,48 @@ def _start_mock_ui_server(
     import applications_ui_data
     import ui_server
 
+    def fake_run_apply_cmd(cmd, *, inherit_stdio=False):
+        captured["apply_cmds"].append(list(cmd))
+        return MagicMock(returncode=0, stdout="[DRY RUN] checking 1 profile(s)\nSummary: ok", stderr="")
+
     monkeypatch.setattr(ui_server, "run_action", fake_run_action)
-    monkeypatch.setattr(ui_server, "run_bulk_dm_followup", fake_run_bulk_dm_followup)
-    monkeypatch.setattr(ui_server, "_run_apply_cmd", lambda cmd: MagicMock(returncode=0, stdout="mock", stderr=""))
+    if bulk_dm == "mock":
+        monkeypatch.setattr(ui_server, "run_bulk_dm_followup", fake_run_bulk_dm_followup)
+        monkeypatch.setattr(ui_server, "_run_apply_cmd", fake_run_apply_cmd)
+    else:
+        import dm_state as dm_state_mod
+        from registry import job_key as registry_job_key
+        from tests.helpers.jobs import linkedin_dm_job
+
+        reg_job = linkedin_dm_job()
+        reg_jk = registry_job_key(reg_job)
+        snapshot = ui_snapshot(reg_jk, day=today if has_research_today else last_research_day or today)
+        research_snapshot = ui_snapshot(reg_jk, day=today)
+
+        profile = "https://www.linkedin.com/in/recruiter-test/"
+        prof_key = dm_state_mod.normalize_profile_url(profile)
+        if bulk_dm == "real":
+            dm_data = {
+                "profiles": {
+                    prof_key: {
+                        "company": "Acme AI",
+                        "role": "AI Engineer",
+                        "job_key": profile.rstrip("/"),  # legacy URL key — regression case
+                        "profile_url": profile,
+                        "connect_requested_at": "2026-09-07T12:00:00",
+                        "accepted_at": None,
+                        "message_sent_at": None,
+                    }
+                }
+            }
+        else:
+            dm_data = {"profiles": {}}
+
+        monkeypatch.setattr(dm_state_mod, "load", lambda: dm_data)
+        monkeypatch.setattr("registry.load_registry", lambda: {"jobs": [reg_job]})
+        monkeypatch.setattr(ui_server, "_browser_deps_ok", lambda: (True, ""))
+        monkeypatch.setattr(ui_server, "_run_apply_cmd", fake_run_apply_cmd)
+        monkeypatch.setattr(ui_server, "_find_job", lambda jk: reg_job if jk == reg_jk else None)
     monkeypatch.setattr(applications_ui_data, "refresh_live_snapshot", fake_refresh)
     monkeypatch.setattr(applications_ui_data, "list_snapshot_days", lambda: sidebar_days)
     monkeypatch.setattr(applications_ui_data, "load_snapshot", fake_load_snapshot)
@@ -214,4 +259,28 @@ def mock_ui_server_research_flow(monkeypatch, tmp_path) -> Generator[tuple[int, 
         last_research_day="2026-09-06",
         mock_research=True,
         research_run_path=run_path,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_bulk_dm_legacy_match(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Real bulk DM preflight: legacy profile-key entry must match list row."""
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        bulk_dm="real",
+    )
+
+
+@pytest.fixture
+def mock_ui_server_bulk_dm_empty_queue(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Real bulk DM preflight: empty follow-up queue surfaces a clear error."""
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        bulk_dm="real_empty",
     )

@@ -248,6 +248,31 @@ def run_bulk_dm_followup(
             "action": "dm_process_all",
         }
 
+    from dm_followup import filter_entries_by_job_keys, pending_profiles  # noqa: E402
+    import dm_state  # noqa: E402
+
+    pending = pending_profiles(dm_state.load())
+    scoped = filter_entries_by_job_keys(pending, keys if keys else None)
+    if keys and not scoped:
+        return {
+            "ok": False,
+            "message": (
+                f"No DM follow-ups in queue for this list ({len(keys)} roles). "
+                "Use per-card “Send connection” first — bulk only checks accepted connections and sends messages."
+            ),
+            "action": "dm_process_all",
+            "job_keys": keys,
+        }
+    if not keys and not pending:
+        return {
+            "ok": False,
+            "message": (
+                "No DM follow-ups in queue. Send connections from individual cards first, "
+                "then use bulk to check accepts and send messages."
+            ),
+            "action": "dm_process_all",
+        }
+
     tid = track or "ai-engineer"
     if keys:
         for jk in keys:
