@@ -36,13 +36,29 @@ def _resolve_python() -> str:
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_META = {"ui_approval": True, "version": 3}
+UI_VERSION = 4
+SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
+UI_META = {
+    "ui_approval": True,
+    "version": UI_VERSION,
+    "bulk_actions": list(SUPPORTED_BULK_ACTIONS),
+}
 
 
 def ui_meta_payload() -> dict[str, Any]:
     from research_log import research_status  # noqa: E402
 
     return {**UI_META, **research_status()}
+
+
+def server_supports_client(meta: dict[str, Any]) -> bool:
+    """True when meta from /api/meta matches what the bundled UI expects."""
+    if meta.get("ui_approval") is not True:
+        return False
+    if int(meta.get("version") or 0) < UI_VERSION:
+        return False
+    actions = set(meta.get("bulk_actions") or [])
+    return all(a in actions for a in SUPPORTED_BULK_ACTIONS)
 
 
 def _ui_subprocess_env() -> dict[str, str]:
@@ -235,7 +251,7 @@ def run_bulk_dm_followup(
     limit: int = 0,
     job_keys: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Check pending DM connections, then send messages (optionally scoped to job_keys)."""
+    """Full DM pipeline for list rows: connect → check accepts → send messages."""
     ok_deps, dep_reason = _browser_deps_ok()
     if not ok_deps:
         return {"ok": False, "message": dep_reason, "action": "dm_process_all"}
@@ -245,31 +261,6 @@ def run_bulk_dm_followup(
         return {
             "ok": False,
             "message": "No DM roles in the current list to process.",
-            "action": "dm_process_all",
-        }
-
-    from dm_followup import filter_entries_by_job_keys, pending_profiles  # noqa: E402
-    import dm_state  # noqa: E402
-
-    pending = pending_profiles(dm_state.load())
-    scoped = filter_entries_by_job_keys(pending, keys if keys else None)
-    if keys and not scoped:
-        return {
-            "ok": False,
-            "message": (
-                f"No DM follow-ups in queue for this list ({len(keys)} roles). "
-                "Use per-card “Send connection” first — bulk only checks accepted connections and sends messages."
-            ),
-            "action": "dm_process_all",
-            "job_keys": keys,
-        }
-    if not keys and not pending:
-        return {
-            "ok": False,
-            "message": (
-                "No DM follow-ups in queue. Send connections from individual cards first, "
-                "then use bulk to check accepts and send messages."
-            ),
             "action": "dm_process_all",
         }
 
@@ -284,6 +275,17 @@ def run_bulk_dm_followup(
     limit_args: list[str] = ["--limit", str(limit)] if limit > 0 else []
     key_args: list[str] = ["--job-keys", ",".join(keys)] if keys else []
 
+    connect_cmd = [
+        PY,
+        str(SCRIPTS / "dm_apply.py"),
+        "--send",
+        *UI_APPROVE,
+        "--force-send",
+        "--track",
+        tid,
+        *limit_args,
+        *key_args,
+    ]
     check_cmd = [
         PY,
         str(SCRIPTS / "dm_followup.py"),
@@ -305,6 +307,7 @@ def run_bulk_dm_followup(
     ]
 
     phases: list[tuple[str, list[str]]] = [
+        ("send_connections", connect_cmd),
         ("check_connections", check_cmd),
         ("send_messages", send_cmd),
     ]
@@ -317,7 +320,7 @@ def run_bulk_dm_followup(
         except subprocess.TimeoutExpired:
             return {
                 "ok": False,
-                "message": f"Bulk DM follow-up timed out during {label.replace('_', ' ')}.",
+                "message": f"Bulk DM timed out during {label.replace('_', ' ')}.",
                 "action": "dm_process_all",
             }
         except OSError as exc:
@@ -327,13 +330,130 @@ def run_bulk_dm_followup(
         ok = ok and phase_ok
         summaries.append(f"[{label}] {phase_msg}")
 
+    scope = f"{len(keys)} role(s)" if keys else "all DM candidates"
     return {
         "ok": ok,
-        "message": "\n\n".join(summaries),
+        "message": "\n\n".join(summaries) + f"\n\nProcessed list scope: {scope}",
         "action": "dm_process_all",
         "track": tid,
         "limit": limit,
         "job_keys": keys,
+    }
+
+
+def run_bulk_email_apply(
+    *,
+    track: str | None = None,
+    limit: int = 0,
+    job_keys: list[str] | None = None,
+) -> dict[str, Any]:
+    """Send email applications for list rows with apply email (optionally scoped to job_keys)."""
+    keys = [k for k in (job_keys or []) if k]
+    if job_keys is not None and not keys:
+        return {
+            "ok": False,
+            "message": "No email-apply roles in the current list.",
+            "action": "email_process_all",
+        }
+
+    from apply_email import apply_email_for_job  # noqa: E402
+    from email_apply import load_config, load_sent_log, pending_send_candidates  # noqa: E402
+    from gmail_configure import email_send_allowed  # noqa: E402
+
+    tid = track or "ai-engineer"
+    if keys:
+        for jk in keys:
+            job = _find_job(jk)
+            if job and job.get("track"):
+                tid = job["track"]
+                break
+
+    cfg = load_config(tid)
+    sent_path = ROOT / cfg["sent_log_path"]
+    sent_log = load_sent_log(sent_path)
+
+    scoped_jobs = [_find_job(jk) for jk in keys] if keys else []
+    scoped_jobs = [j for j in scoped_jobs if j]
+    if keys and not [j for j in scoped_jobs if apply_email_for_job(j)]:
+        return {
+            "ok": False,
+            "message": "No roles with apply email in this list.",
+            "action": "email_process_all",
+            "job_keys": keys,
+        }
+
+    pending = pending_send_candidates(
+        track_id=tid,
+        job_keys=keys if keys else None,
+        sent_log=sent_log,
+    )
+    role_count = len(keys) if keys else len(pending)
+    unique_count = len(pending)
+    if not pending:
+        if keys:
+            return {
+                "ok": False,
+                "message": (
+                    f"No pending email applications in this list ({len(keys)} role(s) — already sent)."
+                ),
+                "action": "email_process_all",
+                "job_keys": keys,
+                "pending_roles": len(keys),
+                "unique_emails": 0,
+            }
+        return {
+            "ok": False,
+            "message": "No pending email applications in queue.",
+            "action": "email_process_all",
+            "unique_emails": 0,
+        }
+
+    allowed, reason = email_send_allowed(tid, cli_force=True, ui_approved=True)
+    if not allowed:
+        return {"ok": False, "message": reason, "action": "email_process_all"}
+
+    limit_args: list[str] = ["--limit", str(limit)] if limit > 0 else []
+    key_args: list[str] = ["--job-keys", ",".join(keys)] if keys else []
+
+    cmd = [
+        PY,
+        str(SCRIPTS / "email_apply.py"),
+        "--send",
+        *UI_APPROVE,
+        "--smtp",
+        "--force-send",
+        "--track",
+        tid,
+        *limit_args,
+        *key_args,
+    ]
+
+    try:
+        proc = _run_apply_cmd(cmd, inherit_stdio=False)
+    except subprocess.TimeoutExpired:
+        return {
+            "ok": False,
+            "message": "Bulk email apply timed out.",
+            "action": "email_process_all",
+        }
+    except OSError as exc:
+        return {"ok": False, "message": str(exc), "action": "email_process_all"}
+
+    ok, msg = _proc_summary(proc)
+    if ok and unique_count:
+        scope = f"{role_count} role(s)" if keys else f"{unique_count} candidate(s)"
+        if keys and unique_count < role_count:
+            scope = f"{role_count} role(s) · {unique_count} unique address(es)"
+        msg = f"{msg}\n\nQueued: {scope}"
+    return {
+        "ok": ok,
+        "message": msg,
+        "action": "email_process_all",
+        "track": tid,
+        "limit": limit,
+        "job_keys": keys,
+        "pending_roles": role_count,
+        "unique_emails": unique_count,
     }
 
 
@@ -506,7 +626,7 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
         if path == "/api/bulk-action":
             body = self._read_json()
             action = str(body.get("action") or "")
-            if action != "dm_process_all":
+            if action not in SUPPORTED_BULK_ACTIONS:
                 self._json(400, {"ok": False, "message": f"Unknown bulk action: {action}"})
                 return
             track = body.get("track")
@@ -522,11 +642,18 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             result_holder: dict[str, Any] = {}
 
             def _worker() -> None:
-                result_holder["result"] = run_bulk_dm_followup(
-                    track=track,
-                    limit=limit,
-                    job_keys=job_keys,
-                )
+                if action == "dm_process_all":
+                    result_holder["result"] = run_bulk_dm_followup(
+                        track=track,
+                        limit=limit,
+                        job_keys=job_keys,
+                    )
+                else:
+                    result_holder["result"] = run_bulk_email_apply(
+                        track=track,
+                        limit=limit,
+                        job_keys=job_keys,
+                    )
 
             t = threading.Thread(target=_worker, daemon=True)
             t.start()
@@ -605,6 +732,7 @@ def serve(*, port: int = 8765, open_browser: str | None = "safari") -> int:
     url = f"http://127.0.0.1:{port}/"
     httpd = ThreadingHTTPServer(("127.0.0.1", port), ApplicationsUIHandler)
     print(f"Applications UI → {url}")
+    print(f"UI API v{UI_VERSION} — bulk actions: {', '.join(SUPPORTED_BULK_ACTIONS)}")
     print("Press Ctrl+C to stop.")
 
     if open_browser:

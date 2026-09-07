@@ -117,9 +117,14 @@ def collect_candidates(
     limit: int,
     actionable_only: bool = False,
     track_id: str | None = None,
+    job_keys: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     registry = load_registry()
     jobs = filter_jobs_by_track(registry["jobs"], track_id or "all")
+
+    if job_keys:
+        allowed = {k.strip() for k in job_keys if k and k.strip()}
+        jobs = [j for j in jobs if job_key(j) in allowed]
 
     if table_only:
         from linkedin_posts_merge import sort_jobs_by_recency  # noqa: E402
@@ -322,6 +327,11 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--track", default=None, help="Only jobs for this track id")
     parser.add_argument(
+        "--job-keys",
+        default="",
+        help="Comma-separated job_keys — limit connect/message to these list rows",
+    )
+    parser.add_argument(
         "--force-send",
         action="store_true",
         help="Override manual UI mode and send from CLI",
@@ -344,8 +354,13 @@ def main() -> int:
             print(f"ERROR: {reason}")
             return 1
 
+    key_list = [k.strip() for k in args.job_keys.split(",") if k.strip()] if args.job_keys else None
     candidates = collect_candidates(
-        table_only=args.table_only, limit=0, actionable_only=args.actionable, track_id=args.track
+        table_only=args.table_only,
+        limit=0,
+        actionable_only=args.actionable,
+        track_id=args.track,
+        job_keys=key_list,
     )
     if args.match:
         needle = args.match.casefold()

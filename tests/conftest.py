@@ -36,6 +36,7 @@ def _start_mock_ui_server(
     research_run_path: Path | None = None,
     snapshot_override: dict[str, Any] | None = None,
     bulk_dm: str = "mock",
+    meta_override: dict[str, Any] | None = None,
 ) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """HTTP server with mocked action/snapshot handlers for UI e2e."""
     from tests.helpers.jobs import ui_snapshot
@@ -68,6 +69,21 @@ def _start_mock_ui_server(
             "ok": True,
             "message": "mock bulk ok",
             "action": "dm_process_all",
+            "track": track,
+            "limit": limit,
+        }
+
+    def fake_run_bulk_email_apply(*, track=None, limit=0, job_keys=None):
+        captured["last_bulk_action"] = {
+            "action": "email_process_all",
+            "track": track,
+            "limit": limit,
+            "job_keys": job_keys or [],
+        }
+        return {
+            "ok": True,
+            "message": "mock bulk email ok",
+            "action": "email_process_all",
             "track": track,
             "limit": limit,
         }
@@ -124,6 +140,7 @@ def _start_mock_ui_server(
     monkeypatch.setattr(ui_server, "run_action", fake_run_action)
     if bulk_dm == "mock":
         monkeypatch.setattr(ui_server, "run_bulk_dm_followup", fake_run_bulk_dm_followup)
+        monkeypatch.setattr(ui_server, "run_bulk_email_apply", fake_run_bulk_email_apply)
         monkeypatch.setattr(ui_server, "_run_apply_cmd", fake_run_apply_cmd)
     else:
         import dm_state as dm_state_mod
@@ -132,8 +149,11 @@ def _start_mock_ui_server(
 
         reg_job = linkedin_dm_job()
         reg_jk = registry_job_key(reg_job)
-        snapshot = ui_snapshot(reg_jk, day=today if has_research_today else last_research_day or today)
-        research_snapshot = ui_snapshot(reg_jk, day=today)
+        if snapshot_override is None:
+            snapshot = ui_snapshot(reg_jk, day=today if has_research_today else last_research_day or today)
+            research_snapshot = ui_snapshot(reg_jk, day=today)
+        else:
+            research_snapshot = snapshot_override
 
         profile = "https://www.linkedin.com/in/recruiter-test/"
         prof_key = dm_state_mod.normalize_profile_url(profile)
@@ -170,12 +190,11 @@ def _start_mock_ui_server(
         return {"ok": True, "message": "mock disposition", "job_key": jk}
 
     monkeypatch.setattr(ui_server, "set_disposition", fake_set_disposition)
-    monkeypatch.setattr(
-        ui_server,
-        "ui_meta_payload",
-        lambda: {
-            "ui_approval": True,
-            "version": 3,
+    from ui_server import UI_META
+
+    def fake_meta_payload():
+        base = {
+            **UI_META,
             "today": today,
             "has_research_today": has_research_today,
             "last_research_day": last_research_day,
@@ -189,8 +208,12 @@ def _start_mock_ui_server(
             ]
             if last_research_day
             else [],
-        },
-    )
+        }
+        if meta_override:
+            base.update(meta_override)
+        return base
+
+    monkeypatch.setattr(ui_server, "ui_meta_payload", fake_meta_payload)
 
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), ui_server.ApplicationsUIHandler)
     port = httpd.server_address[1]
@@ -202,6 +225,69 @@ def _start_mock_ui_server(
     finally:
         httpd.shutdown()
         captured.clear()
+
+
+@pytest.fixture
+def mock_ui_server_stale_meta(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Simulates an old UI server process missing bulk email support."""
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        meta_override={
+            "ui_approval": True,
+            "version": 3,
+            "bulk_actions": ["dm_process_all"],
+        },
+    )
+
+
+@pytest.fixture
+def mock_ui_server_duplicate_email(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Two pending email rows sharing one apply address."""
+    from tests.helpers.jobs import ui_snapshot_duplicate_email
+
+    snapshot = ui_snapshot_duplicate_email(day="2026-09-06")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_email_sent(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Dashboard with email already sent on the card."""
+    from tests.helpers.jobs import ui_snapshot_with_email
+
+    job_key = "ai-engineer|linkedin|acme ai|ai engineer"
+    snapshot = ui_snapshot_with_email(job_key, day="2026-09-06", email_done=True)
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_email(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Dashboard with a pending email-apply role in the list."""
+    from tests.helpers.jobs import ui_snapshot_with_email
+
+    job_key = "ai-engineer|linkedin|acme ai|ai engineer"
+    snapshot = ui_snapshot_with_email(job_key, day="2026-09-06")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+    )
 
 
 @pytest.fixture
@@ -263,6 +349,21 @@ def mock_ui_server_research_flow(monkeypatch, tmp_path) -> Generator[tuple[int, 
 
 
 @pytest.fixture
+def mock_ui_server_multi_dm(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Two DM cards with no prior connect — bulk must pass both job_keys from the list."""
+    from tests.helpers.jobs import ui_snapshot_multi_dm
+
+    snapshot = ui_snapshot_multi_dm(day="2026-09-06")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
 def mock_ui_server_bulk_dm_legacy_match(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """Real bulk DM preflight: legacy profile-key entry must match list row."""
     yield from _start_mock_ui_server(
@@ -276,7 +377,7 @@ def mock_ui_server_bulk_dm_legacy_match(monkeypatch) -> Generator[tuple[int, dic
 
 @pytest.fixture
 def mock_ui_server_bulk_dm_empty_queue(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
-    """Real bulk DM preflight: empty follow-up queue surfaces a clear error."""
+    """Real bulk DM: empty follow-up queue still runs connect → check → send."""
     yield from _start_mock_ui_server(
         monkeypatch,
         today="2026-09-06",

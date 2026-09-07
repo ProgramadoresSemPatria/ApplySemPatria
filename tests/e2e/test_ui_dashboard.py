@@ -88,25 +88,41 @@ def test_dm_message_pill_done_when_already_sent(mock_ui_server_dm_sent, page: Pa
     expect(msg_pill.locator(".step-status")).to_contain_text("sent")
 
 
-def test_bulk_dm_empty_queue_shows_follow_up_message(mock_ui_server_bulk_dm_empty_queue, page: Page):
+def test_bulk_dm_empty_queue_still_runs_full_pipeline(mock_ui_server_bulk_dm_empty_queue, page: Page):
     port, captured = mock_ui_server_bulk_dm_empty_queue
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.locator("#bulkDmBtn").click()
-    wait_for_toast_text(page, "follow-ups")
-    assert captured["apply_cmds"] == []
+    wait_for_toast_text(page, "send_connections")
+    assert len(captured["apply_cmds"]) == 3
+    assert any("dm_apply.py" in str(part) for part in captured["apply_cmds"][0])
+    assert any("dm_followup.py" in str(part) for part in captured["apply_cmds"][1])
+    assert "--send" in captured["apply_cmds"][2]
 
 
-def test_bulk_dm_legacy_profile_key_runs_follow_up_phases(mock_ui_server_bulk_dm_legacy_match, page: Page):
+def test_bulk_dm_legacy_profile_key_runs_full_pipeline(mock_ui_server_bulk_dm_legacy_match, page: Page):
     port, captured = mock_ui_server_bulk_dm_legacy_match
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.locator("#bulkDmBtn").click()
-    wait_for_toast_text(page, "check_connections")
-    assert len(captured["apply_cmds"]) == 2
-    for cmd in captured["apply_cmds"]:
+    wait_for_toast_text(page, "send_connections")
+    assert len(captured["apply_cmds"]) == 3
+    assert any("dm_apply.py" in str(part) for part in captured["apply_cmds"][0])
+    for cmd in captured["apply_cmds"][1:]:
         assert any("dm_followup.py" in str(part) for part in cmd)
-    assert "--job-keys" in captured["apply_cmds"][0]
-    assert any("ai-engineer|" in str(part) for part in captured["apply_cmds"][0])
-    assert "--send" in captured["apply_cmds"][1]
+    assert "--job-keys" in captured["apply_cmds"][1]
+    assert "--send" in captured["apply_cmds"][2]
+
+
+def test_bulk_dm_button_passes_all_dm_job_keys(mock_ui_server_multi_dm, page: Page):
+    port, captured = mock_ui_server_multi_dm
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator("#bulkDmBtn")).to_contain_text("Connect · check · send DMs")
+    page.locator("#bulkDmBtn").click()
+    bulk = wait_for_mock_bulk_action(captured, page)
+    assert bulk["action"] == "dm_process_all"
+    assert len(bulk["job_keys"]) == 2
+    joined = " ".join(bulk["job_keys"])
+    assert "ai engineer a" in joined
+    assert "ai engineer b" in joined
 
 
 def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):
@@ -121,4 +137,63 @@ def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):
     assert bulk["action"] == "dm_process_all"
     assert bulk["job_keys"] == ["ai-engineer|linkedin|acme ai|ai engineer"]
     expect(page.locator("#bulkDmBtn")).not_to_be_disabled()
+
+
+def test_bulk_email_button_triggers_process_all(mock_ui_server_email, page: Page):
+    port, captured = mock_ui_server_email
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator(".list-header #bulkEmailBtn")).to_be_visible()
+    expect(page.locator("#bulkEmailBtn")).to_be_enabled()
+    page.locator("#bulkEmailBtn").click()
+    bulk = wait_for_mock_bulk_action(captured, page)
+
+    assert bulk["action"] == "email_process_all"
+    assert bulk["job_keys"] == ["ai-engineer|linkedin|acme ai|ai engineer"]
+    expect(page.locator("#bulkEmailBtn")).not_to_be_disabled()
+
+
+def test_bulk_email_button_disabled_without_email_roles(mock_ui_server, page: Page):
+    port, _captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator("#bulkEmailBtn")).to_be_disabled()
+    expect(page.locator("#bulkEmailBtn")).not_to_have_class(re.compile(r"\bdone\b"))
+
+
+def test_bulk_email_button_shows_done_when_all_sent(mock_ui_server_email_sent, page: Page):
+    port, _captured = mock_ui_server_email_sent
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    btn = page.locator("#bulkEmailBtn")
+    expect(btn).to_be_disabled()
+    expect(btn).to_have_class(re.compile(r"\bdone\b"))
+    expect(btn.locator(".bulk-btn-icon")).to_have_text("✓")
+    expect(btn.locator(".bulk-btn-status")).to_have_text("sent")
+
+
+def test_stale_server_banner_when_meta_missing_bulk_email(mock_ui_server_stale_meta, page: Page):
+    port, _captured = mock_ui_server_stale_meta
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator("#serverStale")).to_be_visible()
+    expect(page.locator("#serverStale")).to_contain_text("outdated")
+    expect(page.locator("#bulkEmailBtn")).to_be_disabled()
+    expect(page.locator("#bulkDmBtn")).to_be_disabled()
+
+
+def test_bulk_email_button_shows_unique_address_count(mock_ui_server_duplicate_email, page: Page):
+    port, _captured = mock_ui_server_duplicate_email
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    btn = page.locator("#bulkEmailBtn")
+    expect(btn).to_be_enabled()
+    expect(btn.locator(".bulk-btn-label")).to_contain_text("2 roles · 1 address")
+    expect(btn).to_have_attribute("title", re.compile(r"1 unique address"))
+
+
+def test_bulk_dm_button_still_works_after_email_changes(mock_ui_server, page: Page):
+    port, captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator("#bulkDmBtn")).to_be_enabled()
+    expect(page.locator("#serverStale")).to_be_hidden()
+    page.locator("#bulkDmBtn").click()
+    bulk = wait_for_mock_bulk_action(captured, page)
+    assert bulk["action"] == "dm_process_all"
+    expect(page.locator("#bulkDmBtn")).not_to_have_class(re.compile(r"\bloading\b"))
 

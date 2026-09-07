@@ -49,9 +49,47 @@ def save_sent_log(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def sent_recipient_emails(sent_log: dict[str, Any]) -> set[str]:
+    return {
+        (entry.get("to") or "").strip().lower()
+        for entry in sent_log.get("sent", [])
+        if entry.get("to")
+    }
+
+
 def already_sent(job: dict[str, Any], sent_log: dict[str, Any]) -> bool:
     key = job_key(job)
-    return any(entry.get("job_key") == key for entry in sent_log.get("sent", []))
+    if any(entry.get("job_key") == key for entry in sent_log.get("sent", [])):
+        return True
+    email = (apply_email_for_job(job) or "").strip().lower()
+    return bool(email and email in sent_recipient_emails(sent_log))
+
+
+def pending_send_candidates(
+    *,
+    track_id: str | None = None,
+    job_keys: list[str] | None = None,
+    sent_log: dict[str, Any] | None = None,
+    track_from_config: str | None = None,
+) -> list[dict[str, Any]]:
+    """Unique-email candidates that would actually be sent (matches --send filtering)."""
+    tid = track_id or track_from_config or "ai-engineer"
+    cfg = load_config(tid)
+    log = sent_log if sent_log is not None else load_sent_log(ROOT / cfg["sent_log_path"])
+    key_list = [k.strip() for k in (job_keys or []) if k and k.strip()] or None
+    candidates = collect_candidates(
+        table_only=False,
+        limit=0,
+        track_id=tid,
+        job_keys=key_list,
+    )
+    sent_emails = sent_recipient_emails(log)
+    return [
+        job
+        for job in candidates
+        if not already_sent(job, log)
+        and (apply_email_for_job(job) or "").strip().lower() not in sent_emails
+    ]
 
 
 def is_applied_skip(job: dict[str, Any]) -> bool:
@@ -159,10 +197,15 @@ def collect_candidates(
     limit: int,
     company_filters: list[str] | None = None,
     track_id: str | None = None,
+    job_keys: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     registry = load_registry()
     jobs = registry["jobs"]
     jobs = filter_jobs_by_track(jobs, track_id or "all")
+
+    if job_keys:
+        allowed = {k.strip() for k in job_keys if k and k.strip()}
+        jobs = [j for j in jobs if job_key(j) in allowed]
 
     if table_only:
         from linkedin_posts_merge import sort_jobs_by_recency  # noqa: E402
@@ -232,6 +275,11 @@ def main() -> int:
     )
     parser.add_argument("--track", default=None, help="Only jobs for this track id")
     parser.add_argument(
+        "--job-keys",
+        default="",
+        help="Comma-separated job_keys — limit email apply to these list rows",
+    )
+    parser.add_argument(
         "--test-to",
         metavar="EMAIL",
         help="Send one test message to this address (uses sample AI Engineer role)",
@@ -281,12 +329,21 @@ def main() -> int:
         print(f"SENT test email (id={msg_id})")
         return 0
 
+    key_list = [k.strip() for k in args.job_keys.split(",") if k.strip()] if args.job_keys else None
     candidates = collect_candidates(
-        table_only=args.table_only, limit=0, company_filters=args.company, track_id=args.track
+        table_only=args.table_only,
+        limit=0,
+        company_filters=args.company,
+        track_id=args.track,
+        job_keys=key_list,
     )
-    sent_emails = {e.get("to") for e in sent_log.get("sent", [])}
+    sent_emails = sent_recipient_emails(sent_log)
     if not args.force:
-        candidates = [j for j in candidates if apply_email_for_job(j) not in sent_emails]
+        candidates = [
+            j
+            for j in candidates
+            if (apply_email_for_job(j) or "").strip().lower() not in sent_emails
+        ]
     if args.limit:
         candidates = candidates[: args.limit]
 

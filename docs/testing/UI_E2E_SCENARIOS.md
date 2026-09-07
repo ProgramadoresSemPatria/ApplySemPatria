@@ -188,7 +188,9 @@ Scenario: UI-approved meta hides warning
 
 ---
 
-## UI-13 — Bulk check connections & send DMs ✅
+## UI-13 — Bulk DM full pipeline (connect · check · send) ✅
+
+**Automated:** `test_bulk_dm_button_triggers_process_all`, `test_bulk_dm_button_passes_all_dm_job_keys`, `tests/test_bulk_dm_regression.py`
 
 ```gherkin
 Scenario: List header bulk button processes DM roles in the current filter
@@ -200,7 +202,7 @@ Scenario: List header bulk button processes DM roles in the current filter
 ```
 
 **Automated:** `test_bulk_dm_button_triggers_process_all`  
-**Server:** `POST /api/bulk-action` → `run_bulk_dm_followup()` → two `dm_followup.py` phases (check all, then send all).
+**Server:** `POST /api/bulk-action` → `run_bulk_dm_followup()` → three phases: `dm_apply.py` connect → `dm_followup.py` check → `dm_followup.py` send.
 
 ---
 
@@ -228,15 +230,23 @@ Scenario: List header bulk button processes DM roles in the current filter
 
 ---
 
-## UI-18 — Bulk DM empty queue message ✅
+## UI-18 — Bulk DM full pipeline when queue empty ✅
 
-**Automated:** `test_bulk_dm_empty_queue_shows_follow_up_message`
+**Automated:** `test_bulk_dm_empty_queue_still_runs_full_pipeline`
 
 ---
 
 ## UI-19 — Bulk DM legacy profile key match ✅
 
-**Automated:** `test_bulk_dm_legacy_profile_key_runs_follow_up_phases` · unit: `tests/test_dm_followup.py`
+**Automated:** `test_bulk_dm_legacy_profile_key_runs_full_pipeline` · unit: `tests/test_dm_followup.py`
+
+---
+
+## UI-20 — Bulk email candidature ✅
+
+**Automated:** `test_bulk_email_button_triggers_process_all`, `test_bulk_email_button_disabled_without_email_roles`, `test_bulk_email_button_shows_done_when_all_sent`, `test_stale_server_banner_when_meta_missing_bulk_email`, `tests/test_ui_client_contract.py`, `test_bulk_email_routing_uses_real_handler`  
+**Server:** `POST /api/bulk-action` with `action: email_process_all` → `run_bulk_email_apply()` → `email_apply.py --send --smtp --job-keys …`  
+**UI:** `#bulkEmailBtn` beside bulk DM; disabled when no pending email roles; shows green ✓ + “sent” when all email roles in list are done; refreshes snapshot without scroll jump via `applySnapshot()`.
 
 ---
 

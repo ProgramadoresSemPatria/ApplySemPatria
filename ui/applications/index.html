@@ -304,7 +304,10 @@
       font-size: 0.95rem;
     }
 
-    .bulk-dm-btn {
+    .bulk-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
       flex-shrink: 0;
       padding: 0.55rem 0.9rem;
       border-radius: 10px;
@@ -316,11 +319,50 @@
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s, opacity 0.15s;
+    }
+    .bulk-action-btn:hover:not(:disabled) { background: rgba(110, 231, 255, 0.12); }
+    .bulk-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .bulk-action-btn.loading { opacity: 0.7; cursor: wait; }
+
+    .bulk-action-btn.done:disabled {
+      opacity: 1;
+      cursor: default;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .bulk-action-btn.done .bulk-btn-icon {
+      color: var(--green);
+      font-weight: 700;
+    }
+    .bulk-action-btn.done .bulk-btn-status {
+      opacity: 0.85;
+      font-size: 0.68rem;
+      color: var(--muted);
       white-space: nowrap;
     }
-    .bulk-dm-btn:hover:not(:disabled) { background: rgba(110, 231, 255, 0.12); }
-    .bulk-dm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .bulk-dm-btn.loading { opacity: 0.7; cursor: wait; }
+
+    .bulk-action-btn .bulk-btn-icon {
+      flex-shrink: 0;
+      width: 1.1rem;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .bulk-action-btn .bulk-btn-label { white-space: nowrap; }
+    .bulk-action-btn .bulk-btn-status { display: none; }
+    .bulk-action-btn.done .bulk-btn-status { display: inline; }
+
+    .list-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-shrink: 0;
+    }
+
+    .bulk-email-btn {
+      border-color: rgba(110, 231, 255, 0.45);
+    }
+    .bulk-email-btn:hover:not(:disabled) { background: rgba(110, 231, 255, 0.14); }
 
     .research-prompt {
       flex: 1;
@@ -785,7 +827,7 @@
         </div>
       </div>
       <div class="server-stale" id="serverStale" hidden>
-        UI server is outdated — card taps cannot approve connects. Restart:
+        UI server is outdated — bulk email, card taps, and other actions may fail. Restart:
         <code>jobsearch ui</code> (or stop the old process on port 8765).
       </div>
       <div class="cards-wrap" id="cardsWrap">
@@ -798,7 +840,14 @@
         <div class="list-content" id="listContent">
           <div class="list-header">
             <h2 id="viewTitle">Applications <span id="viewSubtitle"></span></h2>
-            <button class="bulk-dm-btn" id="bulkDmBtn" type="button">⟳ Check connections &amp; send DMs</button>
+            <div class="list-header-actions">
+              <button class="bulk-action-btn bulk-dm-btn" id="bulkDmBtn" type="button">⟳ Connect · check · send DMs</button>
+              <button class="bulk-action-btn bulk-email-btn" id="bulkEmailBtn" type="button">
+                <span class="bulk-btn-icon" id="bulkEmailBtnIcon">✉</span>
+                <span class="bulk-btn-label">Send email candidature</span>
+                <span class="bulk-btn-status">sent</span>
+              </button>
+            </div>
           </div>
           <div class="cards-grid" id="cardsGrid"></div>
           <div class="empty" id="emptyState" hidden>
@@ -819,6 +868,24 @@
     let searchQuery = "";
     let serverUiApproval = false;
     let serverMeta = { today: "", has_research_today: false, last_research_day: null };
+
+    const UI_CLIENT_VERSION = 4;
+    const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
+
+    function serverSupportsClient(meta) {
+      if (meta.ui_approval !== true) return false;
+      if ((meta.version || 0) < UI_CLIENT_VERSION) return false;
+      const actions = new Set(meta.bulk_actions || []);
+      return REQUIRED_BULK_ACTIONS.every(a => actions.has(a));
+    }
+
+    function bulkActionStaleHint(msg) {
+      if (msg.includes("Unknown bulk action")) {
+        serverStale.hidden = false;
+        return msg + " — restart the UI server: jobsearch ui";
+      }
+      return msg;
+    }
 
     const DISPOSITION_OVERRIDES = [
       { id: "auto", label: "Reset to automatic" },
@@ -956,7 +1023,7 @@
         }
         const meta = await res.json();
         serverMeta = meta;
-        serverUiApproval = meta.ui_approval === true;
+        serverUiApproval = serverSupportsClient(meta);
         serverStale.hidden = serverUiApproval;
       } catch {
         serverUiApproval = false;
@@ -1069,6 +1136,119 @@
       );
     }
 
+    function dmJobsNeedingConnect() {
+      return dmJobsInList().filter(j => {
+        const s = j.actions?.dm_connect || {};
+        return s.available && !s.done && !s.in_progress;
+      });
+    }
+
+    function dmJobsInFollowUp() {
+      return dmJobsInList().filter(j => {
+        const connect = j.actions?.dm_connect || {};
+        const msg = j.actions?.dm_message || {};
+        return (connect.in_progress || connect.done) && msg.available && !msg.done;
+      });
+    }
+
+    function dmUniqueProfiles(jobs) {
+      const profiles = new Set();
+      jobs.forEach(j => {
+        const p = (j.profile_url || "").trim().toLowerCase().replace(/\/$/, "");
+        if (p) profiles.add(p);
+      });
+      return profiles;
+    }
+
+    function dmBulkActionTitle(dmJobs) {
+      if (!dmJobs.length) return "No direct-message roles in this list";
+      const needConnect = dmJobsNeedingConnect().length;
+      const followUp = dmJobsInFollowUp().length;
+      const unique = dmUniqueProfiles(dmJobs).size;
+      let title = `Connect (if needed), check accepts, and send DMs for ${dmJobs.length} role(s)`;
+      if (unique < dmJobs.length) title += ` · ${unique} unique profile(s)`;
+      if (needConnect || followUp) title += ` — ${needConnect} new connection(s), ${followUp} follow-up(s)`;
+      return title;
+    }
+
+    function emailRolesInList() {
+      return filteredJobs().filter(j =>
+        j.application_steps_enabled !== false && hasFormat(j, "email")
+      );
+    }
+
+    function emailJobsInList() {
+      return emailRolesInList().filter(j => !(j.actions?.email?.done));
+    }
+
+    function jobApplyEmail(job) {
+      return (job.apply_email || "").trim().toLowerCase();
+    }
+
+    function uniqueApplyEmails(jobs) {
+      const emails = new Set();
+      jobs.forEach(j => {
+        const email = jobApplyEmail(j);
+        if (email) emails.add(email);
+      });
+      return emails;
+    }
+
+    function emailBulkActionLabel(pending) {
+      const unique = uniqueApplyEmails(pending);
+      if (pending.length === 0) return "Send email candidature";
+      if (unique.size === pending.length) {
+        return `Send email candidature (${pending.length})`;
+      }
+      return `Send email candidature (${pending.length} roles · ${unique.size} address${unique.size === 1 ? "" : "es"})`;
+    }
+
+    function emailBulkActionTitle(pending) {
+      const unique = uniqueApplyEmails(pending);
+      if (pending.length === 0) return "No pending email-apply roles in this list";
+      if (unique.size === pending.length) {
+        return `Send email applications for ${pending.length} role(s) in this list`;
+      }
+      return `Send ${unique.size} email(s) for ${pending.length} role(s) sharing ${unique.size} unique address(es)`;
+    }
+
+    function updateBulkEmailBtn() {
+      const emailBtn = document.getElementById("bulkEmailBtn");
+      const pending = emailJobsInList();
+      const allEmail = emailRolesInList();
+      const icon = emailBtn.querySelector(".bulk-btn-icon");
+      const label = emailBtn.querySelector(".bulk-btn-label");
+      emailBtn.classList.remove("done");
+
+      if (!serverUiApproval) {
+        emailBtn.disabled = true;
+        if (icon) icon.textContent = "✉";
+        if (label) label.textContent = "Send email candidature";
+        emailBtn.title = "Restart the UI server (jobsearch ui) — server is outdated";
+        return;
+      }
+
+      if (pending.length > 0) {
+        emailBtn.disabled = false;
+        if (icon) icon.textContent = "✉";
+        if (label) label.textContent = emailBulkActionLabel(pending);
+        emailBtn.title = emailBulkActionTitle(pending);
+        return;
+      }
+
+      emailBtn.disabled = true;
+      if (allEmail.length > 0) {
+        emailBtn.classList.add("done");
+        if (icon) icon.textContent = "✓";
+        if (label) label.textContent = "Send email candidature";
+        emailBtn.title = `All ${allEmail.length} email application(s) in this list were sent`;
+      } else {
+        if (icon) icon.textContent = "✉";
+        if (label) label.textContent = "Send email candidature";
+        emailBtn.title = "No email-apply roles in this list";
+      }
+    }
+
     function listDayLabel() {
       if (!activeDay) return "";
       return activeDay === "live" ? "live" : activeDay;
@@ -1078,11 +1258,12 @@
       const jobs = filteredJobs();
       viewSubtitle.textContent = `· ${jobs.length} roles · ${listDayLabel()}`;
       const dmJobs = dmJobsInList();
-      const btn = document.getElementById("bulkDmBtn");
-      btn.disabled = dmJobs.length === 0;
-      btn.title = dmJobs.length === 0
-        ? "No direct-message roles in this list"
-        : `Check connections and send DMs for ${dmJobs.length} role(s) in this list`;
+      const dmBtn = document.getElementById("bulkDmBtn");
+      dmBtn.disabled = dmJobs.length === 0 || !serverUiApproval;
+      dmBtn.title = !serverUiApproval
+        ? "Restart the UI server (jobsearch ui) — server is outdated"
+        : dmBulkActionTitle(dmJobs);
+      updateBulkEmailBtn();
     }
 
     const ACTION_ORDER = ["email", "form", "dm_connect", "dm_check", "dm_message"];
@@ -1444,6 +1625,7 @@
         if (!data.ok && msg.includes("Manual DM mode") && !serverUiApproval) {
           msg += " — restart the UI server: jobsearch ui";
         }
+        msg = bulkActionStaleHint(msg);
         showToast(msg, data.ok);
         if (data.snapshot) {
           applySnapshot(data.snapshot);
@@ -1459,6 +1641,49 @@
     }
 
     document.getElementById("bulkDmBtn").onclick = runBulkDmFollowup;
+
+    async function runBulkEmailApply() {
+      const btn = document.getElementById("bulkEmailBtn");
+      const emailJobs = emailJobsInList();
+      if (!emailJobs.length) {
+        if (emailRolesInList().length) {
+          showToast("All email applications in this list were already sent.", false);
+        } else {
+          showToast("No email-apply roles in this list.", false);
+        }
+        return;
+      }
+      if (btn.classList.contains("loading")) return;
+      btn.classList.add("loading");
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/bulk-action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "email_process_all",
+            job_keys: emailJobs.map(j => j.job_key),
+            section_filter: sectionFilter,
+          }),
+        });
+        const data = await res.json();
+        let msg = data.message || (data.ok ? "Done" : "Failed");
+        msg = bulkActionStaleHint(msg);
+        showToast(msg, data.ok);
+        if (data.snapshot) {
+          applySnapshot(data.snapshot);
+        } else if (activeDay) {
+          await loadSnapshot(activeDay);
+        }
+      } catch (e) {
+        showToast(String(e), false);
+      } finally {
+        btn.classList.remove("loading");
+        updateListHeader();
+      }
+    }
+
+    document.getElementById("bulkEmailBtn").onclick = runBulkEmailApply;
 
     (async () => {
       await checkServerMeta();
