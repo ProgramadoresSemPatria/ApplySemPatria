@@ -43,4 +43,5 @@ def test_server_supports_client_rejects_old_meta():
     from ui_server import server_supports_client
 
     assert server_supports_client({"ui_approval": True, "version": 3, "bulk_actions": ["dm_process_all"]}) is False
-    assert server_supports_client({"ui_approval": True, "version": 4, "bulk_actions": ["dm_process_all"]}) is False
+    assert server_supports_client({"ui_approval": True, "version": 4, "bulk_actions": ["dm_process_all", "email_process_all"]}) is False
+    assert server_supports_client({"ui_approval": True, "version": 5, "bulk_actions": ["dm_process_all"]}) is False

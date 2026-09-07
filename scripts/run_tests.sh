@@ -4,7 +4,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PY="${PY:-python3}"
+PY="${PY:-}"
+if [[ -z "$PY" ]]; then
+  if [[ -x "$ROOT/.venv-test/bin/python" ]]; then
+    PY="$ROOT/.venv-test/bin/python"
+  elif [[ -x "$ROOT/.venv/bin/python" ]]; then
+    PY="$ROOT/.venv/bin/python"
+  else
+    PY="python3"
+  fi
+fi
 TIER="${1:-all}"
 REPEATS="${REPEATS:-1}"
 

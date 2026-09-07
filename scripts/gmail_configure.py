@@ -41,6 +41,7 @@ def load_email_config_raw(track_id: str) -> dict[str, Any]:
         "email_apply_enabled": False,
         "email_apply_mode": "manual",
         "email_message_confirmed": False,
+        "sent_log_path": "state/email-applications.json",
     }
     for key, val in defaults.items():
         cfg.setdefault(key, val)

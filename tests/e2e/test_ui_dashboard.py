@@ -197,3 +197,19 @@ def test_bulk_dm_button_still_works_after_email_changes(mock_ui_server, page: Pa
     assert bulk["action"] == "dm_process_all"
     expect(page.locator("#bulkDmBtn")).not_to_have_class(re.compile(r"\bloading\b"))
 
+
+def test_config_link_navigates_to_settings(mock_ui_server, page: Page):
+    port, _captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator('a.config-link[href="settings.html"]').click()
+    page.wait_for_url(re.compile(r"/settings\.html"), timeout=10000)
+    expect(page.locator("h2")).to_contain_text("Setup")
+    expect(page.locator("section#pipeline")).to_be_visible()
+
+
+def test_settings_page_loads_config(mock_ui_server, page: Page):
+    port, _captured = mock_ui_server
+    page.goto(f"http://127.0.0.1:{port}/settings.html", wait_until="networkidle")
+    expect(page.locator("#profile")).to_be_visible(timeout=10000)
+    expect(page.locator("#full_name")).to_be_visible()
+

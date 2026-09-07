@@ -8,6 +8,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "tracks.json"
+EXAMPLES_TRACKS = ROOT / "examples" / "tracks"
 LEGACY_PROFILE = ROOT / "applicant-profile.json"
 LEGACY_BOARD = ROOT / "config.json"
 LEGACY_LINKEDIN = ROOT / "linkedin-posts-config.json"
@@ -72,54 +73,87 @@ def track_path(track_id: str | None, key: str) -> Path:
     return ROOT / rel
 
 
+def example_track_path(track_id: str | None, key: str) -> Path | None:
+    """Committed example config for CI / fresh clones (tracks/ is gitignored locally)."""
+    rel = track_meta(track_id).get(key, "")
+    if not rel.startswith("tracks/"):
+        return None
+    candidate = EXAMPLES_TRACKS / rel.removeprefix("tracks/")
+    return candidate if candidate.is_file() else None
+
+
+def _load_track_json(track_id: str | None, key: str, *, legacy: Path | None = None) -> dict | list:
+    path = track_path(track_id, key)
+    if path.exists():
+        return _load_json(path, {})
+    if legacy and legacy.exists():
+        return _load_json(legacy, {})
+    example = example_track_path(track_id, key)
+    if example:
+        return _load_json(example, {})
+    return _load_json(path, {})
+
+
 def track_label(track_id: str | None = None) -> str:
     return track_meta(track_id).get("label") or resolve_track(track_id)
 
 
 def load_profile(track_id: str | None = None) -> dict[str, Any]:
-    path = track_path(track_id, "profile_path")
-    if not path.exists() and LEGACY_PROFILE.exists():
-        return _load_json(LEGACY_PROFILE, {})
-    return _load_json(path, {})
+    return _load_track_json(track_id, "profile_path", legacy=LEGACY_PROFILE)
 
 
 def load_board_config(track_id: str | None = None) -> dict[str, Any]:
-    path = track_path(track_id, "board_config_path")
-    if not path.exists() and LEGACY_BOARD.exists():
-        return _load_json(LEGACY_BOARD, {})
-    return _load_json(path, {})
+    return _load_track_json(track_id, "board_config_path", legacy=LEGACY_BOARD)
 
 
 def load_linkedin_config(track_id: str | None = None) -> dict[str, Any]:
-    path = track_path(track_id, "linkedin_config_path")
-    if not path.exists() and LEGACY_LINKEDIN.exists():
-        return _load_json(LEGACY_LINKEDIN, {})
-    return _load_json(path, {})
+    return _load_track_json(track_id, "linkedin_config_path", legacy=LEGACY_LINKEDIN)
 
 
 def load_google_config(track_id: str | None = None) -> dict[str, Any]:
-    path = track_path(track_id, "google_config_path")
-    if not path.exists() and LEGACY_GOOGLE.exists():
-        return _load_json(LEGACY_GOOGLE, {})
-    return _load_json(path, {})
+    return _load_track_json(track_id, "google_config_path", legacy=LEGACY_GOOGLE)
 
 
 def load_email_config(track_id: str | None = None) -> dict[str, Any]:
-    path = track_path(track_id, "email_config_path")
-    if not path.exists() and LEGACY_EMAIL.exists():
-        return _load_json(LEGACY_EMAIL, {})
-    return _load_json(path, {})
+    return _load_track_json(track_id, "email_config_path", legacy=LEGACY_EMAIL)
 
 
 def load_form_answers(track_id: str | None = None) -> dict[str, Any]:
-    path = track_path(track_id, "form_answers_path")
-    if not path.exists() and LEGACY_FORM.exists():
-        return _load_json(LEGACY_FORM, {})
-    return _load_json(path, {})
+    return _load_track_json(track_id, "form_answers_path", legacy=LEGACY_FORM)
 
 
 def save_profile(track_id: str | None, data: dict[str, Any]) -> None:
     path = track_path(track_id, "profile_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_board_config(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "board_config_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_linkedin_config(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "linkedin_config_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_google_config(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "google_config_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_email_config(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "email_config_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_form_answers(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "form_answers_path")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

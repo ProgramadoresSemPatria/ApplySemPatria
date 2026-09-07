@@ -49,11 +49,12 @@ LINKEDIN_STATE_PATH = ROOT / "state" / "linkedin-last-run.json"
 LOGIN_SCRIPT = SCRIPTS / "linkedin-login.sh"
 JOB_SEARCH_CONFIG = ROOT / "config.json"
 
-HIRING_HINTS = re.compile(
-    r"(?:\b(hiring|we'?re hiring|open role|open positions?|join us|apply now|looking for|job alert|"
-    r"contratando|buscamos|estamos contratando)\b|#hiring\b)",
-    re.IGNORECASE,
+from post_intent import (  # noqa: E402
+    HIRING_HINTS,
+    classify_linkedin_post_filter,
+    should_ingest_linkedin_post,
 )
+from post_intent_classify import make_llm_classify_fn  # noqa: E402
 APPLY_EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 APPLY_URL = re.compile(r"https?://[^\s\)\]\"']+")
 FEED_UPDATE_RE = re.compile(
@@ -832,10 +833,16 @@ def post_to_job(
         if is_blacklisted_url(match.group(0))[0]:
             return None
 
-    if text and not HIRING_HINTS.search(text):
-        role_kw = query_meta.get("role_keyword", "")
-        if not _role_keyword_in_text(text, role_kw):
-            return None
+    llm_fn = make_llm_classify_fn(cfg) if cfg.get("llm_intent_classify_enabled") else None
+    author_headline = _pick_str(post, "author_headline", "headline") or ""
+    ingest, ingest_reason = should_ingest_linkedin_post(
+        text,
+        author_headline=author_headline or None,
+        cfg=cfg,
+        llm_classify=llm_fn,
+    )
+    if not ingest:
+        return None
 
     salary_usd = None
     if text:
@@ -887,15 +894,21 @@ def post_to_job(
     if post.get("discovery_index") is not None:
         job["discovery_index"] = post["discovery_index"]
 
+    post_intent = "hiring" if ingest_reason.startswith(("hiring", "llm_hiring")) else "ambiguous"
     if cfg.get("require_usd_salary", False):
         evaluate_job(job, job_search_config)
+        job["post_intent"] = post_intent
     else:
-        if salary_usd:
-            job["filter_result"] = "eligible"
-            job["skip_reason"] = None
-        else:
-            job["filter_result"] = cfg.get("posts_default_filter_result", "needs_review")
-            job["skip_reason"] = "no_usd_salary_in_post"
+        filt = classify_linkedin_post_filter(
+            text,
+            salary_usd,
+            cfg,
+            author_headline=author_headline or None,
+            post_intent=post_intent,
+        )
+        job["filter_result"] = filt.filter_result
+        job["skip_reason"] = filt.skip_reason
+        job["post_intent"] = filt.post_intent
 
     return job
 

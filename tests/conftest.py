@@ -190,6 +190,41 @@ def _start_mock_ui_server(
         return {"ok": True, "message": "mock disposition", "job_key": jk}
 
     monkeypatch.setattr(ui_server, "set_disposition", fake_set_disposition)
+
+    import config_ui_data
+
+    def fake_save_config_section(track_id, section, payload):
+        if section not in ("profile", "linkedin", "email", "board", "google", "form_answers"):
+            raise ValueError(f"Unknown config section: {section}")
+        captured.setdefault("config_saves", []).append(
+            {"track": track_id, "section": section, "payload": payload}
+        )
+        bundle = config_ui_data.load_config_bundle(track_id)
+        if section == "profile":
+            for group, fields in payload.items():
+                if isinstance(fields, dict) and group in bundle.get("profile", {}):
+                    bundle["profile"][group].update(fields)
+        elif section == "linkedin":
+            bundle["linkedin"].update(payload)
+        elif section == "email":
+            bundle["email"].update(payload)
+        elif section == "board":
+            if "filters" in payload:
+                bundle["board"]["filters"].update(payload["filters"])
+            if "sources" in payload:
+                for name, scfg in payload["sources"].items():
+                    if name in bundle["board"]["sources"]:
+                        bundle["board"]["sources"][name].update(scfg)
+        elif section == "google":
+            bundle["google"].update(payload)
+        elif section == "form_answers":
+            if "rules" in payload:
+                bundle["form_answers"]["rules"] = payload["rules"]
+                bundle["form_answers"]["rules_count"] = len(payload["rules"])
+        return bundle
+
+    monkeypatch.setattr(config_ui_data, "save_config_section", fake_save_config_section)
+
     from ui_server import UI_META
 
     def fake_meta_payload():

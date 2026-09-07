@@ -63,6 +63,31 @@ class LinkedInPostsMergeTests(unittest.TestCase):
         self.assertEqual(job["filter_result"], "eligible")
         self.assertEqual(job["apply_channel"], "email")
         self.assertEqual(job["location_note"], "LATAM")
+        self.assertEqual(job.get("post_intent"), "hiring")
+
+    def test_post_to_job_rejects_job_seeker(self):
+        cfg = load_example_linkedin_config()
+        post = {
+            "text": "Open to remote AI Engineer roles. #OpenToWork looking for opportunities myself.",
+            "url": "https://www.linkedin.com/feed/update/urn:li:activity:456/",
+            "author": {"name": "Sameer Ray"},
+        }
+        meta = {"query": '"ai engineer" + "latam"', "role_keyword": "ai engineer", "region": "latam"}
+        job = post_to_job(post, meta, cfg, {})
+        self.assertIsNone(job)
+
+    def test_post_to_job_hiring_no_salary_needs_review(self):
+        cfg = load_example_linkedin_config()
+        post = {
+            "text": "We're hiring an AI Engineer — remote LATAM friendly. DM me to apply.",
+            "url": "https://www.linkedin.com/feed/update/urn:li:activity:789/",
+            "author": {"name": "Recruiter"},
+        }
+        meta = {"query": '"ai engineer" + "latam"', "role_keyword": "ai engineer", "region": "latam"}
+        job = post_to_job(post, meta, cfg, {})
+        self.assertIsNotNone(job)
+        self.assertEqual(job["filter_result"], "needs_review")
+        self.assertEqual(job.get("post_intent"), "hiring")
 
     def test_merge_payload_writes_run(self):
         payload = {

@@ -19,6 +19,8 @@
   },
   "require_usd_salary": false,
   "posts_default_filter_result": "needs_review",
+  "llm_intent_classify_enabled": false,
+  "llm_intent_model": "gpt-4o-mini",
   "table_sort": "date_posted",
   "search_sort": "date_posted",
   "dm_apply_enabled": true,

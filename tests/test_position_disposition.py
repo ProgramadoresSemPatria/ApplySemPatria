@@ -39,6 +39,18 @@ def test_needs_review_auto_no_steps():
     assert application_steps_enabled(job) is False
 
 
+def test_skipped_job_seeker_auto_not_real():
+    job = {
+        "role": "AI Engineer",
+        "filter_result": "skipped",
+        "skip_reason": "job_seeker_post",
+        "post_intent": "job_seeker",
+    }
+    assert auto_disposition_for_job(job) == DISPOSITION_NOT_REAL
+    assert application_steps_enabled(job) is False
+    assert include_in_apply_table(job) is False
+
+
 def test_skipped_auto_not_real():
     job = {"role": "Annotator", "filter_result": "skipped"}
     assert auto_disposition_for_job(job) == DISPOSITION_NOT_REAL

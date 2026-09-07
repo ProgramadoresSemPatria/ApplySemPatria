@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jobsearch · Configuration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #07080d;
+      --bg-elevated: #0e1018;
+      --surface: rgba(22, 25, 38, 0.72);
+      --surface-hover: rgba(32, 36, 54, 0.9);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.14);
+      --text: #eef0f6;
+      --muted: #8b92a8;
+      --accent: #6ee7ff;
+      --accent-2: #a78bfa;
+      --green: #34d399;
+      --green-bg: rgba(52, 211, 153, 0.12);
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --radius: 16px;
+      --sidebar-w: 280px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(110, 231, 255, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(167, 139, 250, 0.12), transparent),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(52, 211, 153, 0.06), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: rgba(10, 12, 20, 0.85);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0 0.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #07080d;
+    }
+
+    .brand h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; }
+    .brand p { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      background: var(--surface);
+      border-color: var(--border);
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, rgba(110, 231, 255, 0.12), rgba(167, 139, 250, 0.1));
+      border-color: rgba(110, 231, 255, 0.35);
+    }
+
+    .sidebar-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      padding: 0 0.5rem;
+      margin: 1rem 0 0.65rem;
+    }
+
+    .section-nav {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .section-nav a {
+      display: block;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .section-nav a:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .main {
+      padding: 1.5rem 2rem 3rem;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .page-header p {
+      color: var(--muted);
+      margin-top: 0.35rem;
+      font-size: 0.92rem;
+    }
+
+    .track-select-wrap {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .track-select-wrap label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    select, input[type="text"], input[type="email"], input[type="number"], textarea {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input:focus, textarea:focus {
+      border-color: rgba(110, 231, 255, 0.4);
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .panel {
+      background: rgba(14, 16, 24, 0.75);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.35rem 1.5rem;
+      margin-bottom: 1.25rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .panel h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel .subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 1.15rem;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    .field label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .toggle-row:last-child { border-bottom: none; }
+
+    .toggle-row span {
+      font-size: 0.88rem;
+    }
+
+    .toggle-row small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 2px;
+    }
+
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: var(--text);
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .switch input:checked + .slider {
+      background: rgba(110, 231, 255, 0.35);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(20px);
+      background: var(--accent);
+    }
+
+    .preview-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px dashed var(--border-bright);
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      color: var(--muted);
+    }
+
+    .flag-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .flag-pill {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+    }
+
+    .save-btn {
+      margin-top: 1rem;
+      padding: 0.65rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(110, 231, 255, 0.35);
+      background: rgba(110, 231, 255, 0.1);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .save-btn:hover { background: rgba(110, 231, 255, 0.18); }
+    .save-btn:disabled { opacity: 0.5; cursor: wait; }
+
+    .rules-meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .rules-editor {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.75rem;
+      min-height: 200px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: 0.85rem 1.15rem;
+      border-radius: 12px;
+      background: rgba(14, 16, 24, 0.95);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      font-size: 0.85rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .loading {
+      color: var(--muted);
+      padding: 3rem;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⚙</div>
+        <div>
+          <h1>Configuration</h1>
+          <p id="trackLabel">Loading…</p>
+        </div>
+      </div>
+      <a href="index.html" class="nav-link">← Applications dashboard</a>
+      <div class="sidebar-label">Sections</div>
+      <nav class="section-nav" id="sectionNav">
+        <a href="#pipeline">Pipeline flags</a>
+        <a href="#profile">Profile &amp; identity</a>
+        <a href="#messages">Message templates</a>
+        <a href="#answers">Form answers</a>
+        <a href="#linkedin">LinkedIn discovery</a>
+        <a href="#dm">LinkedIn DM</a>
+        <a href="#email">Email apply</a>
+        <a href="#board">Job boards</a>
+        <a href="#google">Google jobs</a>
+        <a href="#form-rules">Form rules bank</a>
+      </nav>
+    </aside>
+
+    <main class="main" id="mainContent">
+      <div class="loading">Loading configuration…</div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let config = null;
+    let activeTrack = null;
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 3200);
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    }
+
+    function toggleRow(id, label, hint, checked) {
+      return `<div class="toggle-row">
+        <span>${esc(label)}${hint ? `<small>${esc(hint)}</small>` : ""}</span>
+        <label class="switch"><input type="checkbox" id="${id}" ${checked ? "checked" : ""} /><span class="slider"></span></label>
+      </div>`;
+    }
+
+    function field(id, label, value, type = "text", full = false) {
+      const cls = full ? "field full" : "field";
+      if (type === "textarea") {
+        return `<div class="${cls}"><label for="${id}">${esc(label)}</label><textarea id="${id}">${esc(value)}</textarea></div>`;
+      }
+      return `<div class="${cls}"><label for="${id}">${esc(label)}</label><input type="${type}" id="${id}" value="${esc(value)}" /></div>`;
+    }
+
+    function renderPage() {
+      if (!config) return;
+      const c = config;
+      document.getElementById("trackLabel").textContent = c.track_label || c.track_id;
+
+      document.getElementById("mainContent").innerHTML = `
+        <header class="page-header">
+          <h2>Setup &amp; preferences</h2>
+          <p>View and update discovery filters, apply channels, message templates, and form-answer rules.</p>
+          <div class="track-select-wrap">
+            <label for="trackSelect">Track</label>
+            <select id="trackSelect" style="max-width: 280px;">
+              ${(c.tracks || []).map(t => `<option value="${esc(t.id)}" ${t.id === c.track_id ? "selected" : ""}>${esc(t.label)}</option>`).join("")}
+            </select>
+          </div>
+        </header>
+
+        <section class="panel" id="pipeline">
+          <h3>Pipeline flags</h3>
+          <p class="subtitle">Active classification rules (Phase 1–3)</p>
+          <div class="flag-pills">
+            ${Object.entries(c.flags || {}).map(([k, v]) => `<span class="flag-pill">${esc(k.replace(/_/g, " "))}: ${v ? "on" : "off"}</span>`).join("")}
+          </div>
+          <p class="subtitle">Job-seeker posts are rejected at ingest. Hiring hint required. No-salary hiring posts → human review only.</p>
+        </section>
+
+        <section class="panel" id="profile">
+          <h3>Profile &amp; identity</h3>
+          <p class="subtitle">Used across email, forms, and LinkedIn</p>
+          <div class="field-grid">
+            ${field("full_name", "Full name", c.profile.identity.full_name)}
+            ${field("email", "Email", c.profile.identity.email, "email")}
+            ${field("phone", "Phone", c.profile.identity.phone)}
+            ${field("location", "Location", c.profile.identity.location)}
+            ${field("current_title", "Current title", c.profile.identity.current_title)}
+            ${field("linkedin_url", "LinkedIn URL", c.profile.identity.linkedin_url)}
+            ${field("github_url", "GitHub URL", c.profile.identity.github_url)}
+            ${field("resume_path", "Resume path", c.profile.identity.resume_path, "text", true)}
+          </div>
+          <button class="save-btn" data-section="profile" data-group="identity">Save profile</button>
+        </section>
+
+        <section class="panel" id="messages">
+          <h3>Message templates</h3>
+          <p class="subtitle">LinkedIn DM and email copy · use {role} placeholder</p>
+          <div class="field-grid">
+            ${field("dm_message_template", "DM message template", c.profile.templates.dm_message_template, "textarea", true)}
+            ${field("form_link_message_template", "Form-link follow-up", c.profile.templates.form_link_message_template, "textarea", true)}
+            ${field("cover_letter_default", "Email / cover default", c.profile.templates.cover_letter_default, "textarea", true)}
+          </div>
+          <p class="subtitle" style="margin-top:1rem;">Live preview (sample role)</p>
+          <div class="preview-box" id="dmPreview">${esc((c.previews?.dm_message?.body) || "")}</div>
+          <button class="save-btn" data-section="profile" data-group="templates">Save templates</button>
+        </section>
+
+        <section class="panel" id="answers">
+          <h3>Stored form answers</h3>
+          <p class="subtitle">Profile keys matched by form-answers.json rules — no LLM cost on repeat forms</p>
+          <div class="field-grid">
+            ${Object.entries(c.profile.answers || {}).map(([k, v]) => field(k, k.replace(/_/g, " "), v, "textarea", true)).join("")}
+          </div>
+          <button class="save-btn" data-section="profile" data-group="answers">Save answers</button>
+        </section>
+
+        <section class="panel" id="linkedin">
+          <h3>LinkedIn discovery</h3>
+          <p class="subtitle">Post search roles, salary policy, LLM borderline classifier</p>
+          ${field("roles_csv", "Roles (comma-separated)", (c.linkedin.roles || []).join(", "), "text", true)}
+          ${field("region_suffixes_csv", "Regions", (c.linkedin.region_suffixes || []).join(", "), "text", true)}
+          <div style="margin-top:1rem;">
+            ${toggleRow("require_usd_salary", "Require USD salary for eligible", "Board-style strict filter", c.linkedin.require_usd_salary)}
+            ${toggleRow("llm_intent_classify_enabled", "LLM intent classifier", "OpenAI for ambiguous posts (needs OPENAI_API_KEY)", c.linkedin.llm_intent_classify_enabled)}
+          </div>
+          <div class="field-grid" style="margin-top:1rem;">
+            ${field("posts_default_filter_result", "Default when no salary", c.linkedin.posts_default_filter_result)}
+            ${field("llm_intent_model", "LLM model", c.linkedin.llm_intent_model)}
+            ${field("default_period_days", "Default period (days)", c.linkedin.default_period_days, "number")}
+            ${field("default_max_pages", "Max search pages", c.linkedin.default_max_pages, "number")}
+          </div>
+          <button class="save-btn" data-section="linkedin">Save LinkedIn discovery</button>
+        </section>
+
+        <section class="panel" id="dm">
+          <h3>LinkedIn DM apply</h3>
+          <p class="subtitle">Connect → message workflow</p>
+          ${toggleRow("dm_apply_enabled", "DM apply enabled", "Allow automated connect/message", c.linkedin.dm_apply_enabled)}
+          ${toggleRow("dm_message_confirmed", "DM template confirmed", "Safety gate before send", c.linkedin.dm_message_confirmed)}
+          ${toggleRow("form_link_message_enabled", "Form-link follow-up message", "After applying via external link", c.linkedin.form_link_message_enabled)}
+          ${toggleRow("form_link_message_confirmed", "Form-link template confirmed", "", c.linkedin.form_link_message_confirmed)}
+          <div class="field-grid" style="margin-top:1rem;">
+            <div class="field"><label for="dm_apply_mode">Apply mode</label>
+              <select id="dm_apply_mode">
+                <option value="manual" ${c.linkedin.dm_apply_mode === "manual" ? "selected" : ""}>Manual (UI approval)</option>
+                <option value="automatic" ${c.linkedin.dm_apply_mode === "automatic" ? "selected" : ""}>Automatic</option>
+              </select>
+            </div>
+          </div>
+          <button class="save-btn" data-section="linkedin-dm">Save DM preferences</button>
+        </section>
+
+        <section class="panel" id="email">
+          <h3>Email apply</h3>
+          <p class="subtitle">Gmail SMTP candidatures</p>
+          ${toggleRow("email_apply_enabled", "Email apply enabled", "", c.email.email_apply_enabled)}
+          ${toggleRow("email_message_confirmed", "Email template confirmed", "", c.email.email_message_confirmed)}
+          ${toggleRow("skip_if_already_applied_in_applika", "Skip if in Applika", "", c.email.skip_if_already_applied_in_applika)}
+          ${toggleRow("log_to_applika", "Log sends to Applika", "", c.email.log_to_applika)}
+          <div class="field-grid" style="margin-top:1rem;">
+            ${field("sender_name", "Sender name", c.email.sender_name)}
+            ${field("sender_email", "Sender email", c.email.sender_email, "email")}
+            ${field("subject_template", "Subject template", c.email.subject_template)}
+            ${field("body_template_file", "Body template file", c.email.body_template_file)}
+            ${field("rate_limit_seconds", "Rate limit (seconds)", c.email.rate_limit_seconds, "number")}
+            <div class="field"><label for="email_apply_mode">Apply mode</label>
+              <select id="email_apply_mode">
+                <option value="manual" ${c.email.email_apply_mode === "manual" ? "selected" : ""}>Manual</option>
+                <option value="automatic" ${c.email.email_apply_mode === "automatic" ? "selected" : ""}>Automatic</option>
+              </select>
+            </div>
+          </div>
+          <button class="save-btn" data-section="email">Save email config</button>
+        </section>
+
+        <section class="panel" id="board">
+          <h3>Job board discovery</h3>
+          <p class="subtitle">RemoteOK, Himalayas, etc.</p>
+          ${toggleRow("board_require_usd", "Require USD salary", "", c.board.filters?.require_usd_salary)}
+          ${toggleRow("board_skip_eu", "Skip EU-only", "", c.board.filters?.skip_eu_only)}
+          ${toggleRow("board_skip_us", "Skip US-only", "", c.board.filters?.skip_us_only)}
+          ${field("himalayas_max_age_days", "Himalayas max age (days)", c.board.himalayas_max_age_days, "number")}
+          <p class="subtitle" style="margin-top:1rem;">Sources</p>
+          ${Object.entries(c.board.sources || {}).map(([name, sc]) =>
+            toggleRow(`src_${name}`, name, "", sc.enabled)
+          ).join("")}
+          <button class="save-btn" data-section="board">Save board config</button>
+        </section>
+
+        <section class="panel" id="google">
+          <h3>Google jobs discovery</h3>
+          <div class="field-grid">
+            ${toggleRow("google_require_usd", "Require USD salary", "", c.google.require_usd_salary)}
+            ${field("google_period", "Default period (days)", c.google.default_period_days, "number")}
+            ${field("google_keywords_csv", "Profile match keywords", (c.google.profile_match_keywords || []).join(", "), "text", true)}
+          </div>
+          <button class="save-btn" data-section="google">Save Google config</button>
+        </section>
+
+        <section class="panel" id="form-rules">
+          <h3>Form rules bank</h3>
+          <p class="rules-meta">${c.form_answers.rules_count} rules · first match wins</p>
+          <textarea class="rules-editor" id="rulesJson">${esc(JSON.stringify(c.form_answers.rules || [], null, 2))}</textarea>
+          <button class="save-btn" data-section="form_answers">Save form rules</button>
+        </section>
+      `;
+
+      document.getElementById("trackSelect").addEventListener("change", (e) => {
+        activeTrack = e.target.value;
+        loadConfig(activeTrack);
+      });
+
+      document.querySelectorAll(".save-btn").forEach(btn => {
+        btn.addEventListener("click", () => saveSection(btn.dataset.section, btn.dataset.group));
+      });
+    }
+
+    function collectProfileGroup(group) {
+      const keys = group === "identity"
+        ? ["full_name","email","phone","location","current_title","linkedin_url","github_url","resume_path"]
+        : group === "templates"
+        ? ["dm_message_template","form_link_message_template","cover_letter_default"]
+        : Object.keys(config.profile.answers || {});
+      const out = {};
+      keys.forEach(k => {
+        const el = document.getElementById(k);
+        if (el) out[k] = el.value;
+      });
+      return { [group]: out };
+    }
+
+    function collectPayload(section, group) {
+      if (section === "profile") return collectProfileGroup(group);
+      if (section === "linkedin") {
+        return {
+          roles: (document.getElementById("roles_csv").value || "").split(",").map(s => s.trim()).filter(Boolean),
+          region_suffixes: (document.getElementById("region_suffixes_csv").value || "").split(",").map(s => s.trim()).filter(Boolean),
+          require_usd_salary: document.getElementById("require_usd_salary").checked,
+          posts_default_filter_result: document.getElementById("posts_default_filter_result").value,
+          llm_intent_classify_enabled: document.getElementById("llm_intent_classify_enabled").checked,
+          llm_intent_model: document.getElementById("llm_intent_model").value,
+          default_period_days: parseInt(document.getElementById("default_period_days").value, 10),
+          default_max_pages: parseInt(document.getElementById("default_max_pages").value, 10),
+        };
+      }
+      if (section === "linkedin-dm") {
+        return {
+          dm_apply_enabled: document.getElementById("dm_apply_enabled").checked,
+          dm_apply_mode: document.getElementById("dm_apply_mode").value,
+          dm_message_confirmed: document.getElementById("dm_message_confirmed").checked,
+          form_link_message_enabled: document.getElementById("form_link_message_enabled").checked,
+          form_link_message_confirmed: document.getElementById("form_link_message_confirmed").checked,
+        };
+      }
+      if (section === "email") {
+        return {
+          email_apply_enabled: document.getElementById("email_apply_enabled").checked,
+          email_apply_mode: document.getElementById("email_apply_mode").value,
+          email_message_confirmed: document.getElementById("email_message_confirmed").checked,
+          sender_name: document.getElementById("sender_name").value,
+          sender_email: document.getElementById("sender_email").value,
+          subject_template: document.getElementById("subject_template").value,
+          body_template_file: document.getElementById("body_template_file").value,
+          rate_limit_seconds: parseInt(document.getElementById("rate_limit_seconds").value, 10),
+          skip_if_already_applied_in_applika: document.getElementById("skip_if_already_applied_in_applika").checked,
+          log_to_applika: document.getElementById("log_to_applika").checked,
+        };
+      }
+      if (section === "board") {
+        const sources = {};
+        Object.keys(config.board.sources || {}).forEach(name => {
+          const el = document.getElementById(`src_${name}`);
+          if (el) sources[name] = { enabled: el.checked };
+        });
+        return {
+          filters: {
+            require_usd_salary: document.getElementById("board_require_usd").checked,
+            skip_eu_only: document.getElementById("board_skip_eu").checked,
+            skip_us_only: document.getElementById("board_skip_us").checked,
+          },
+          sources,
+          himalayas_max_age_days: parseInt(document.getElementById("himalayas_max_age_days").value, 10),
+        };
+      }
+      if (section === "google") {
+        return {
+          require_usd_salary: document.getElementById("google_require_usd").checked,
+          default_period_days: parseInt(document.getElementById("google_period").value, 10),
+          profile_match_keywords: (document.getElementById("google_keywords_csv").value || "").split(",").map(s => s.trim()).filter(Boolean),
+        };
+      }
+      if (section === "form_answers") {
+        return { rules: JSON.parse(document.getElementById("rulesJson").value || "[]") };
+      }
+      return {};
+    }
+
+    async function saveSection(section, group) {
+      const apiSection = section === "linkedin-dm" ? "linkedin" : section;
+      let payload = collectPayload(section, group);
+      if (section === "linkedin-dm") {
+        const base = collectPayload("linkedin");
+        payload = { ...base, ...payload };
+      }
+      const btn = document.querySelector(`.save-btn[data-section="${section}"]`);
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ track: activeTrack || config.track_id, section: apiSection, payload }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.message || "Save failed");
+        config = data.config;
+        renderPage();
+        toast(data.message || "Saved");
+      } catch (err) {
+        toast(err.message || "Save failed");
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function loadConfig(track) {
+      const q = track ? `?track=${encodeURIComponent(track)}` : "";
+      const res = await fetch(`/api/config${q}`);
+      const data = await res.json();
+      if (!data.ok) {
+        document.getElementById("mainContent").innerHTML = `<div class="loading">${esc(data.message || "Failed to load")}</div>`;
+        return;
+      }
+      config = data.config;
+      activeTrack = config.track_id;
+      renderPage();
+    }
+
+    loadConfig(null);
+  </script>
+</body>
+</html>

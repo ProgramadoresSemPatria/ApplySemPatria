@@ -117,6 +117,12 @@ def recruiter_profile_url(job: dict[str, Any]) -> str | None:
 
 def needs_recruiter_connect(job: dict[str, Any]) -> bool:
     """True when we should connect with the recruiter on LinkedIn."""
+    if job.get("post_intent") == "job_seeker" or job.get("filter_result") == "skipped":
+        text = job.get("description_snippet") or job.get("description") or ""
+        from post_intent import is_job_seeker_post  # noqa: WPS433
+
+        if job.get("skip_reason") == "job_seeker_post" or is_job_seeker_post(text):
+            return False
     if not is_linkedin_post(job):
         return classify_channel(job) == CHANNEL_DM
     prof = recruiter_profile_url(job)

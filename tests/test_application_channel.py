@@ -33,6 +33,18 @@ def _form_linkedin_job(**overrides):
     return job
 
 
+def test_job_seeker_skips_recruiter_connect():
+    job = _form_linkedin_job(
+        description_snippet="Open to work as AI Engineer. Looking for opportunities. #OpenToWork",
+        filter_result="skipped",
+        skip_reason="job_seeker_post",
+        post_intent="job_seeker",
+        apply_url=None,
+        url="https://www.linkedin.com/in/seeker-person/recent-activity/all/",
+    )
+    assert needs_recruiter_connect(job) is False
+
+
 def test_form_linkedin_post_has_both_formats():
     job = _form_linkedin_job()
     assert classify_channel(job) == "url"

@@ -36,7 +36,7 @@ def _resolve_python() -> str:
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_VERSION = 4
+UI_VERSION = 5
 SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
 UI_META = {
     "ui_approval": True,
@@ -558,6 +558,18 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             self._json(200, snap)
             return
 
+        if path.path == "/api/config":
+            from config_ui_data import load_config_bundle  # noqa: E402
+
+            track = (qs.get("track") or [None])[0]
+            try:
+                bundle = load_config_bundle(track)
+            except ValueError as exc:
+                self._json(400, {"ok": False, "message": str(exc)})
+                return
+            self._json(200, {"ok": True, "config": bundle})
+            return
+
         if path.path in ("/", "/index.html"):
             self._serve_file(UI_DIR / "index.html")
             return
@@ -667,6 +679,24 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
 
             result["snapshot"] = refresh_live_snapshot()
             self._json(200, result)
+            return
+
+        if path == "/api/config":
+            body = self._read_json()
+            section = str(body.get("section") or "")
+            track = body.get("track")
+            payload = body.get("payload")
+            if not section or not isinstance(payload, dict):
+                self._json(400, {"ok": False, "message": "section and payload required"})
+                return
+            from config_ui_data import save_config_section  # noqa: E402
+
+            try:
+                bundle = save_config_section(track, section, payload)
+            except ValueError as exc:
+                self._json(400, {"ok": False, "message": str(exc)})
+                return
+            self._json(200, {"ok": True, "message": f"Saved {section}.", "config": bundle})
             return
 
         if path not in ("/api/action", "/api/disposition"):

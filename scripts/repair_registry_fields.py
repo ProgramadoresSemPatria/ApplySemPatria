@@ -21,8 +21,11 @@ from linkedin_posts_merge import (  # noqa: E402
     resolve_apply_url_from_text,
     split_apply_email,
 )
+from post_intent import classify_linkedin_post_filter, classify_post_intent  # noqa: E402
+from post_intent_classify import classify_post_llm  # noqa: E402
 from registry import load_registry, save_registry  # noqa: E402
 from table_format import normalize_company_display  # noqa: E402
+from track_store import load_linkedin_config, resolve_track  # noqa: E402
 
 
 def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
@@ -66,12 +69,8 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
             if not dry_run:
                 job["salary_usd"] = new_salary
                 job["currency"] = "USD" if new_salary else None
-                if new_salary and job.get("filter_result") == "needs_review":
-                    job["filter_result"] = "eligible"
-                    job["skip_reason"] = None
-                elif not new_salary and job.get("filter_result") == "eligible":
-                    job["filter_result"] = "needs_review"
-                    job["skip_reason"] = "no_usd_salary_in_post"
+
+        salary_for_filter = job.get("salary_usd") or new_salary
 
         url = (job.get("url") or "").strip()
         if is_posts_permalink(url) and not permalink_matches_author(url, cleaned):
@@ -119,6 +118,26 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
                 else:
                     job["url"] = fallback_linkedin_post_search_url(cleaned, role)
                     job["url_source"] = "apply_url_split"
+
+        tid = job.get("track") or resolve_track(None)
+        li_cfg = load_linkedin_config(tid)
+        intent = classify_post_intent(snippet)
+        if li_cfg.get("llm_intent_classify_enabled") and intent == "ambiguous":
+            llm = classify_post_llm(snippet, cfg=li_cfg)
+            if llm:
+                intent = llm
+        filt = classify_linkedin_post_filter(snippet, salary_for_filter, li_cfg, post_intent=intent)
+        if (
+            job.get("filter_result") != filt.filter_result
+            or job.get("post_intent") != filt.post_intent
+            or job.get("skip_reason") != filt.skip_reason
+        ):
+            stats.setdefault("filter_reclassified", 0)
+            stats["filter_reclassified"] += 1
+            if not dry_run:
+                job["filter_result"] = filt.filter_result
+                job["skip_reason"] = filt.skip_reason
+                job["post_intent"] = filt.post_intent
 
     if not dry_run:
         save_registry(registry)

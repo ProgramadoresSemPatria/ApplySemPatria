@@ -279,6 +279,49 @@ Scenario: Live button reloads live snapshot
 
 ---
 
+## UI-14 — Config icon opens settings ✅
+
+```gherkin
+Scenario: Gear icon on dashboard navigates to settings
+  Given I open the applications dashboard at /
+  When I click the configuration link in the sidebar brand
+  Then I land on settings.html
+  And I see the "Setup" page heading
+  And the pipeline flags section is visible
+```
+
+**Automated:** `test_config_link_navigates_to_settings` (dashboard) · `test_settings_all_sections_visible` (settings)
+
+---
+
+## UI-15 — Settings loads all config sections ✅
+
+```gherkin
+Scenario: Settings page renders every configuration panel
+  Given I open settings.html
+  When the config API loads
+  Then sections pipeline, profile, messages, linkedin, dm, email, board, google, and form-rules are visible
+  And the track selector lists at least one track
+```
+
+**Automated:** `tests/e2e/test_ui_settings.py`
+
+---
+
+## UI-16 — Save LinkedIn toggle from settings ✅
+
+```gherkin
+Scenario: Toggling LLM classifier and saving posts to config API
+  Given I open settings.html
+  When I enable "LLM intent classifier" and click Save LinkedIn discovery
+  Then the mock server records a config save for section linkedin
+  And the toggle remains checked after reload
+```
+
+**Automated:** `test_settings_save_linkedin_toggle_records_api`
+
+---
+
 ## Mapping to coverage (Python backend)
 
 | Scenario group | Primary modules measured in `scripts/` |
