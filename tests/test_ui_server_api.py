@@ -32,6 +32,8 @@ def test_meta_ui_approval(mock_ui_server):
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=5) as resp:
         meta = json.loads(resp.read().decode())
     assert meta.get("ui_approval") is True
+    assert meta.get("has_research_today") is True
+    assert meta.get("today") == "2026-09-06"
 
 
 def test_action_dm_connect_mock(mock_ui_server):
@@ -129,22 +131,33 @@ def test_run_bulk_dm_followup_invokes_check_then_send(mock_run):
     mock_run.return_value = MagicMock(returncode=0, stdout="phase ok", stderr="")
     from ui_server import run_bulk_dm_followup
 
-    result = run_bulk_dm_followup(track="ai-engineer", limit=0)
+    keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
+    result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
 
     assert result["ok"] is True
     assert result["action"] == "dm_process_all"
+    assert result["job_keys"] == keys
     assert mock_run.call_count == 2
 
     check_cmd = mock_run.call_args_list[0][0][0]
     send_cmd = mock_run.call_args_list[1][0][0]
 
-    assert expect_action(check_cmd, must_include=["dm_followup.py", "--track", "ai-engineer"])
+    assert expect_action(check_cmd, must_include=["dm_followup.py", "--track", "ai-engineer", "--job-keys"])
     assert expect_action(
         send_cmd,
-        must_include=["dm_followup.py", "--send", "--ui-approved", "--force-send", "--track", "ai-engineer"],
+        must_include=["dm_followup.py", "--send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
     )
-    assert "--match" not in check_cmd
-    assert "--match" not in send_cmd
+    assert keys[0] in check_cmd[check_cmd.index("--job-keys") + 1]
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_bulk_dm_followup_empty_list_rejected(mock_run):
+    from ui_server import run_bulk_dm_followup
+
+    result = run_bulk_dm_followup(job_keys=[])
+    assert result["ok"] is False
+    assert "current list" in result["message"].lower()
+    mock_run.assert_not_called()
 
 
 @patch("ui_server._run_apply_cmd")
@@ -161,16 +174,17 @@ def test_run_bulk_dm_followup_respects_limit(mock_run):
 
 def test_bulk_dm_followup_mock(mock_ui_server):
     port, captured = mock_ui_server
+    jk = "ai-engineer|linkedin|acme ai|ai engineer"
     status, data = _post_json(
         f"http://127.0.0.1:{port}/api/bulk-action",
-        {"action": "dm_process_all", "track": "ai-engineer"},
+        {"action": "dm_process_all", "track": "ai-engineer", "job_keys": [jk]},
     )
     assert status == 200
     assert data.get("ok") is True
     assert data.get("action") == "dm_process_all"
     assert "snapshot" in data
     assert captured["last_bulk_action"]["action"] == "dm_process_all"
-    assert captured["last_bulk_action"]["track"] == "ai-engineer"
+    assert captured["last_bulk_action"]["job_keys"] == [jk]
 
 
 def test_resolve_python_prefers_project_venv(tmp_path, monkeypatch):

@@ -32,6 +32,11 @@ def applications_table_path(
     return APPLICATIONS_TABLES_DIR / f"applications-{when.strftime('%Y-%m-%d')}-{suffix}.md"
 
 
+def applications_table_for_day(day: str, *, suffix: str = "full") -> Path:
+    """Path for a specific ISO date (YYYY-MM-DD), not necessarily today."""
+    return APPLICATIONS_TABLES_DIR / f"applications-{day}-{suffix}.md"
+
+
 def latest_applications_table(*, suffix: str = "full") -> Path | None:
     """Most recent applications table file, or None."""
     ensure_table_dirs()

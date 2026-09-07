@@ -46,15 +46,25 @@ def test_card_survives_after_action(mock_ui_server, page: Page):
     assert wrap.evaluate("el => el.scrollTop") == scroll_before
 
 
+def test_research_prompt_when_no_research_today(mock_ui_server_needs_research, page: Page):
+    port, _captured = mock_ui_server_needs_research
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator("#researchPrompt")).to_be_visible()
+    expect(page.locator("#runResearchBtn")).to_contain_text("Make a research today")
+    expect(page.locator("#listContent")).to_be_hidden()
+    expect(page.locator(".card")).to_have_count(0)
+
+
 def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):
     port, captured = mock_ui_server
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
-    bulk_btn = page.locator("#bulkDmBtn")
-    bulk_btn.wait_for(state="visible", timeout=10000)
-
+    expect(page.locator(".list-header #viewTitle")).to_contain_text("Applications")
+    expect(page.locator(".list-header #bulkDmBtn")).to_be_visible()
+    bulk_btn = page.locator(".list-header #bulkDmBtn")
     bulk_btn.click()
     bulk = wait_for_mock_bulk_action(captured, page)
 
     assert bulk["action"] == "dm_process_all"
+    assert bulk["job_keys"] == ["ai-engineer|linkedin|acme ai|ai engineer"]
     expect(page.locator("#bulkDmBtn")).not_to_be_disabled()
 

@@ -212,6 +212,11 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--track", default=None, help="Profile track for message template")
     parser.add_argument(
+        "--job-keys",
+        default="",
+        help="Comma-separated job_keys — limit follow-up to these list rows",
+    )
+    parser.add_argument(
         "--force-send",
         action="store_true",
         help="Override manual UI mode and send from CLI",
@@ -237,6 +242,9 @@ def main() -> int:
         entries = [e for e in entries if needle in (e.get("company") or "").casefold()]
     if args.limit:
         entries = entries[: args.limit]
+    if args.job_keys:
+        allowed = {k.strip() for k in args.job_keys.split(",") if k.strip()}
+        entries = [e for e in entries if e.get("job_key") in allowed]
 
     if args.send:
         for entry in entries:

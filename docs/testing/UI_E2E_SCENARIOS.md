@@ -191,12 +191,12 @@ Scenario: UI-approved meta hides warning
 ## UI-13 — Bulk check connections & send DMs ✅
 
 ```gherkin
-Scenario: Sidebar bulk button processes all DM follow-ups
+Scenario: List header bulk button processes DM roles in the current filter
   Given I open the applications dashboard at /
-  And the sidebar shows "Check connections & send DMs"
-  When I click #bulkDmBtn
-  Then the mock server records bulk action "dm_process_all"
-  And the button becomes enabled again after completion
+  And the list header shows "Applications" with the filtered role count
+  And the bulk button sits to the right of the list title
+  When I click #bulkDmBtn in the list header
+  Then the mock server records bulk action "dm_process_all" with job_keys for visible DM roles
 ```
 
 **Automated:** `test_bulk_dm_button_triggers_process_all`  

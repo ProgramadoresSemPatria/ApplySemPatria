@@ -18,7 +18,7 @@ Full **Given / When / Then** e2e catalog: [UI_E2E_SCENARIOS.md](./UI_E2E_SCENARI
 | UI-08 | Human review card | Steps hidden; hint shown |
 | UI-09 | Filter chips | Grid re-renders; matching cards only |
 | UI-10 | Stale server | Missing `/api/meta` shows warning banner |
-| UI-13 | Bulk DM follow-up | `POST /api/bulk-action` `{ action: "dm_process_all" }` runs check-all then send-all |
+| UI-13 | Bulk DM follow-up | `POST /api/bulk-action` with `job_keys` from filtered list runs check-then-send for those roles only |
 
 ## Feature / domain logic
 

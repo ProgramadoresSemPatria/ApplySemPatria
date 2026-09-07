@@ -194,23 +194,6 @@
 
     .live-btn:hover { background: rgba(110, 231, 255, 0.08); }
 
-    .bulk-dm-btn {
-      margin-top: 0.65rem;
-      width: 100%;
-      padding: 0.55rem 0.75rem;
-      border-radius: 10px;
-      border: 1px solid rgba(110, 231, 255, 0.35);
-      background: rgba(110, 231, 255, 0.06);
-      color: var(--text);
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, opacity 0.15s;
-    }
-    .bulk-dm-btn:hover:not(:disabled) { background: rgba(110, 231, 255, 0.12); }
-    .bulk-dm-btn:disabled { opacity: 0.55; cursor: wait; }
-    .bulk-dm-btn.loading { opacity: 0.7; }
-
     .server-stale {
       margin: 0 1.75rem;
       padding: 0.65rem 1rem;
@@ -241,20 +224,9 @@
       gap: 1rem;
     }
 
-    .toolbar h2 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .toolbar h2 span { color: var(--muted); font-weight: 500; font-size: 0.95rem; }
-
     .search {
       flex: 1;
       min-width: 220px;
-      max-width: 360px;
       position: relative;
     }
 
@@ -287,6 +259,7 @@
       display: flex;
       gap: 0.4rem;
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
     .chip {
@@ -307,6 +280,96 @@
       border-color: rgba(110, 231, 255, 0.35);
       background: rgba(110, 231, 255, 0.08);
     }
+
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .list-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      min-width: 0;
+    }
+
+    .list-header h2 span {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .bulk-dm-btn {
+      flex-shrink: 0;
+      padding: 0.55rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid rgba(110, 231, 255, 0.35);
+      background: rgba(110, 231, 255, 0.06);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .bulk-dm-btn:hover:not(:disabled) { background: rgba(110, 231, 255, 0.12); }
+    .bulk-dm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .bulk-dm-btn.loading { opacity: 0.7; cursor: wait; }
+
+    .research-prompt {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 3rem 1.75rem;
+      text-align: center;
+    }
+
+    .research-prompt[hidden] { display: none !important; }
+
+    .research-prompt h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .research-prompt p {
+      color: var(--muted);
+      max-width: 420px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .research-run-btn {
+      margin-top: 0.5rem;
+      padding: 0.85rem 1.5rem;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #07080d;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .research-run-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .research-run-btn:disabled { opacity: 0.55; cursor: wait; }
+
+    .list-content[hidden] { display: none !important; }
 
     .cards-wrap {
       flex: 1;
@@ -697,13 +760,11 @@
       <div class="day-list" id="dayList"></div>
       <div class="sidebar-footer">
         <button class="live-btn" id="liveBtn">↻ Refresh live registry</button>
-        <button class="bulk-dm-btn" id="bulkDmBtn" type="button">⟳ Check connections &amp; send DMs</button>
       </div>
     </aside>
 
     <main class="main">
       <div class="toolbar">
-        <h2 id="viewTitle">Applications <span id="viewSubtitle"></span></h2>
         <div class="search">
           <input type="search" id="searchInput" placeholder="Search role or company…" />
         </div>
@@ -722,10 +783,21 @@
         <code>jobsearch ui</code> (or stop the old process on port 8765).
       </div>
       <div class="cards-wrap" id="cardsWrap">
-        <div class="cards-grid" id="cardsGrid"></div>
-        <div class="empty" id="emptyState" hidden>
-          <h3>No roles for this day</h3>
-          <p>Run <code>jobsearch table</code> to generate a snapshot.</p>
+        <div class="research-prompt" id="researchPrompt" hidden>
+          <h3>No research for today yet</h3>
+          <p id="researchPromptText">Run discovery to build today's apply list from LinkedIn posts and job boards. Past snapshot days stay available in the sidebar.</p>
+          <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
+        </div>
+        <div class="list-content" id="listContent">
+          <div class="list-header">
+            <h2 id="viewTitle">Applications <span id="viewSubtitle"></span></h2>
+            <button class="bulk-dm-btn" id="bulkDmBtn" type="button">⟳ Check connections &amp; send DMs</button>
+          </div>
+          <div class="cards-grid" id="cardsGrid"></div>
+          <div class="empty" id="emptyState" hidden>
+            <h3>No roles for this day</h3>
+            <p>Run <code>jobsearch table</code> to generate a snapshot.</p>
+          </div>
         </div>
       </div>
     </main>
@@ -739,6 +811,7 @@
     let sectionFilter = "all";
     let searchQuery = "";
     let serverUiApproval = false;
+    let serverMeta = { today: "", has_research_today: false, last_research_day: null };
 
     const DISPOSITION_OVERRIDES = [
       { id: "auto", label: "Reset to automatic" },
@@ -783,6 +856,37 @@
     const viewSubtitle = document.getElementById("viewSubtitle");
     const toast = document.getElementById("toast");
     const serverStale = document.getElementById("serverStale");
+    const researchPrompt = document.getElementById("researchPrompt");
+    const listContent = document.getElementById("listContent");
+    const runResearchBtn = document.getElementById("runResearchBtn");
+
+    function viewingTodayOrLive() {
+      if (!activeDay || activeDay === "live") return true;
+      if (!serverMeta.today) return activeDay === "live";
+      return activeDay === serverMeta.today;
+    }
+
+    function needsResearchPrompt() {
+      return !serverMeta.has_research_today && viewingTodayOrLive();
+    }
+
+    function showResearchView() {
+      researchPrompt.hidden = false;
+      listContent.hidden = true;
+    }
+
+    function showListView() {
+      researchPrompt.hidden = true;
+      listContent.hidden = false;
+    }
+
+    function syncMainView() {
+      if (needsResearchPrompt()) {
+        showResearchView();
+      } else {
+        showListView();
+      }
+    }
 
     async function checkServerMeta() {
       try {
@@ -793,6 +897,7 @@
           return;
         }
         const meta = await res.json();
+        serverMeta = meta;
         serverUiApproval = meta.ui_approval === true;
         serverStale.hidden = serverUiApproval;
       } catch {
@@ -818,10 +923,9 @@
       const data = await res.json();
       dayList.innerHTML = "";
       const days = data.days || [];
-      if (!days.length) return;
-      days.forEach((d, i) => {
+      days.forEach((d) => {
         const btn = document.createElement("button");
-        btn.className = "day-btn" + (i === 0 ? " active" : "");
+        btn.className = "day-btn";
         btn.dataset.day = d.day;
         btn.innerHTML = `
           <div>
@@ -831,7 +935,12 @@
           <span class="day-count">${d.job_count || "—"}</span>`;
         btn.onclick = () => selectDay(d.day, btn);
         dayList.appendChild(btn);
-        if (i === 0) activeDay = d.day;
+      });
+    }
+
+    function highlightSidebarDay(day) {
+      document.querySelectorAll(".day-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.day === day);
       });
     }
 
@@ -839,13 +948,18 @@
       const res = await fetch("/api/snapshot?day=" + encodeURIComponent(day));
       if (!res.ok) throw new Error("Snapshot not found");
       snapshot = await res.json();
-      viewSubtitle.textContent = `· ${snapshot.jobs.length} roles · ${day === "live" ? "live" : day}`;
+      updateListHeader();
       renderCards();
+      syncMainView();
     }
 
     function selectDay(day, btn) {
       activeDay = day;
-      document.querySelectorAll(".day-btn").forEach(b => b.classList.toggle("active", b === btn));
+      highlightSidebarDay(day);
+      if (needsResearchPrompt()) {
+        syncMainView();
+        return;
+      }
       loadSnapshot(day).catch(e => showToast(e.message, false));
     }
 
@@ -885,6 +999,28 @@
         }
         return true;
       });
+    }
+
+    function dmJobsInList() {
+      return filteredJobs().filter(j =>
+        j.application_steps_enabled !== false && hasFormat(j, "direct_message")
+      );
+    }
+
+    function listDayLabel() {
+      if (!activeDay) return "";
+      return activeDay === "live" ? "live" : activeDay;
+    }
+
+    function updateListHeader() {
+      const jobs = filteredJobs();
+      viewSubtitle.textContent = `· ${jobs.length} roles · ${listDayLabel()}`;
+      const dmJobs = dmJobsInList();
+      const btn = document.getElementById("bulkDmBtn");
+      btn.disabled = dmJobs.length === 0;
+      btn.title = dmJobs.length === 0
+        ? "No direct-message roles in this list"
+        : `Check connections and send DMs for ${dmJobs.length} role(s) in this list`;
     }
 
     const ACTION_ORDER = ["email", "form", "dm_connect", "dm_check", "dm_message"];
@@ -1081,6 +1217,7 @@
 
     function renderCards() {
       closeAllMenus();
+      updateListHeader();
       const scrollTop = cardsWrap.scrollTop;
       const jobs = filteredJobs();
       cardsGrid.innerHTML = "";
@@ -1174,12 +1311,57 @@
 
     document.getElementById("liveBtn").onclick = () => {
       document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
-      activeDay = "live";
+      activeDay = serverMeta.today || "live";
+      if (needsResearchPrompt()) {
+        syncMainView();
+        return;
+      }
       loadSnapshot("live").catch(e => showToast(e.message, false));
     };
 
+    async function runResearchToday() {
+      const btn = runResearchBtn;
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = "Researching…";
+      try {
+        const res = await fetch("/api/research", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ since: "7d" }),
+        });
+        const data = await res.json();
+        showToast(data.message || (data.ok ? "Research done" : "Failed"), data.ok);
+        if (data.ok) {
+          serverMeta.has_research_today = true;
+          serverMeta.today = data.day || serverMeta.today;
+          await loadDays();
+          activeDay = data.day || serverMeta.today;
+          highlightSidebarDay(activeDay);
+          if (data.snapshot) {
+            applySnapshot(data.snapshot);
+          } else {
+            await loadSnapshot(activeDay);
+          }
+          syncMainView();
+        }
+      } catch (e) {
+        showToast(String(e), false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Make a research today";
+      }
+    }
+
+    runResearchBtn.onclick = runResearchToday;
+
     async function runBulkDmFollowup() {
       const btn = document.getElementById("bulkDmBtn");
+      const dmJobs = dmJobsInList();
+      if (!dmJobs.length) {
+        showToast("No direct-message roles in this list.", false);
+        return;
+      }
       if (btn.classList.contains("loading")) return;
       btn.classList.add("loading");
       btn.disabled = true;
@@ -1187,7 +1369,11 @@
         const res = await fetch("/api/bulk-action", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "dm_process_all" }),
+          body: JSON.stringify({
+            action: "dm_process_all",
+            job_keys: dmJobs.map(j => j.job_key),
+            section_filter: sectionFilter,
+          }),
         });
         const data = await res.json();
         let msg = data.message || (data.ok ? "Done" : "Failed");
@@ -1204,7 +1390,7 @@
         showToast(String(e), false);
       } finally {
         btn.classList.remove("loading");
-        btn.disabled = false;
+        updateListHeader();
       }
     }
 
@@ -1213,7 +1399,19 @@
     (async () => {
       await checkServerMeta();
       await loadDays();
-      if (activeDay) await loadSnapshot(activeDay);
+      if (needsResearchPrompt()) {
+        activeDay = serverMeta.today || "live";
+        syncMainView();
+        return;
+      }
+      const day = serverMeta.has_research_today ? serverMeta.today : "live";
+      activeDay = day;
+      highlightSidebarDay(day);
+      try {
+        await loadSnapshot(day);
+      } catch (e) {
+        showToast(String(e.message || e), false);
+      }
     })();
   </script>
 </body>

@@ -36,7 +36,13 @@ def _resolve_python() -> str:
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_META = {"ui_approval": True, "version": 2}
+UI_META = {"ui_approval": True, "version": 3}
+
+
+def ui_meta_payload() -> dict[str, Any]:
+    from research_log import research_status  # noqa: E402
+
+    return {**UI_META, **research_status()}
 
 
 def _ui_subprocess_env() -> dict[str, str]:
@@ -223,14 +229,35 @@ def _proc_summary(proc: subprocess.CompletedProcess[str], *, streamed: bool = Fa
     return proc.returncode == 0, "\n".join(tail)
 
 
-def run_bulk_dm_followup(*, track: str | None = None, limit: int = 0) -> dict[str, Any]:
-    """Check all pending DM connections, then send messages to accepted profiles."""
+def run_bulk_dm_followup(
+    *,
+    track: str | None = None,
+    limit: int = 0,
+    job_keys: list[str] | None = None,
+) -> dict[str, Any]:
+    """Check pending DM connections, then send messages (optionally scoped to job_keys)."""
     ok_deps, dep_reason = _browser_deps_ok()
     if not ok_deps:
         return {"ok": False, "message": dep_reason, "action": "dm_process_all"}
 
+    keys = [k for k in (job_keys or []) if k]
+    if job_keys is not None and not keys:
+        return {
+            "ok": False,
+            "message": "No DM roles in the current list to process.",
+            "action": "dm_process_all",
+        }
+
     tid = track or "ai-engineer"
+    if keys:
+        for jk in keys:
+            job = _find_job(jk)
+            if job and job.get("track"):
+                tid = job["track"]
+                break
+
     limit_args: list[str] = ["--limit", str(limit)] if limit > 0 else []
+    key_args: list[str] = ["--job-keys", ",".join(keys)] if keys else []
 
     check_cmd = [
         PY,
@@ -238,6 +265,7 @@ def run_bulk_dm_followup(*, track: str | None = None, limit: int = 0) -> dict[st
         "--track",
         tid,
         *limit_args,
+        *key_args,
     ]
     send_cmd = [
         PY,
@@ -248,6 +276,7 @@ def run_bulk_dm_followup(*, track: str | None = None, limit: int = 0) -> dict[st
         "--track",
         tid,
         *limit_args,
+        *key_args,
     ]
 
     phases: list[tuple[str, list[str]]] = [
@@ -279,6 +308,7 @@ def run_bulk_dm_followup(*, track: str | None = None, limit: int = 0) -> dict[st
         "action": "dm_process_all",
         "track": tid,
         "limit": limit,
+        "job_keys": keys,
     }
 
 
@@ -352,14 +382,15 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             from applications_ui_data import list_snapshot_days  # noqa: E402
 
             days = list_snapshot_days()
-            if not days:
-                live = {"day": "live", "label": "Live registry", "job_count": 0}
-                days = [live]
             self._json(200, {"days": days})
             return
 
         if path.path == "/api/meta":
-            self._json(200, UI_META)
+            self._json(200, ui_meta_payload())
+            return
+
+        if path.path == "/api/research":
+            self._json(200, ui_meta_payload())
             return
 
         if path.path == "/api/snapshot":
@@ -391,6 +422,38 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
 
+        if path == "/api/research":
+            body = self._read_json()
+            track = body.get("track")
+            since = str(body.get("since") or "7d")
+            skip_linkedin = bool(body.get("skip_linkedin"))
+
+            result_holder: dict[str, Any] = {}
+
+            def _worker() -> None:
+                from daily_research import run_daily_research  # noqa: E402
+
+                result_holder["result"] = run_daily_research(
+                    track=track,
+                    since=since,
+                    skip_linkedin=skip_linkedin,
+                )
+
+            t = threading.Thread(target=_worker, daemon=True)
+            t.start()
+            t.join(timeout=3900)
+            result = result_holder.get("result") or {
+                "ok": False,
+                "message": "Research failed to start or timed out.",
+            }
+            if result.get("ok"):
+                from applications_ui_data import load_snapshot, refresh_live_snapshot  # noqa: E402
+
+                day = result.get("day")
+                result["snapshot"] = load_snapshot(day) if day else refresh_live_snapshot()
+            self._json(200 if result.get("ok") else 500, result)
+            return
+
         if path == "/api/bulk-action":
             body = self._read_json()
             action = str(body.get("action") or "")
@@ -399,11 +462,22 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                 return
             track = body.get("track")
             limit = int(body.get("limit") or 0)
+            raw_keys = body.get("job_keys")
+            job_keys: list[str] | None = None
+            if raw_keys is not None:
+                if not isinstance(raw_keys, list):
+                    self._json(400, {"ok": False, "message": "job_keys must be an array"})
+                    return
+                job_keys = [str(k) for k in raw_keys if k]
 
             result_holder: dict[str, Any] = {}
 
             def _worker() -> None:
-                result_holder["result"] = run_bulk_dm_followup(track=track, limit=limit)
+                result_holder["result"] = run_bulk_dm_followup(
+                    track=track,
+                    limit=limit,
+                    job_keys=job_keys,
+                )
 
             t = threading.Thread(target=_worker, daemon=True)
             t.start()

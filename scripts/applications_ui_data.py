@@ -76,13 +76,18 @@ def _snapshot_path_for_md(md_path: Path) -> Path:
 
 
 def list_snapshot_days() -> list[dict[str, Any]]:
+    from research_log import list_research_days  # noqa: E402
+
     APPLICATIONS_TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    researched = set(list_research_days())
     days: dict[str, dict[str, Any]] = {}
     for md in sorted(APPLICATIONS_TABLES_DIR.glob("applications-*-full.md")):
         m = re.match(r"applications-(\d{4}-\d{2}-\d{2})-full\.md$", md.name)
         if not m:
             continue
         day = m.group(1)
+        if day not in researched:
+            continue
         js = _snapshot_path_for_md(md)
         meta: dict[str, Any] = {"day": day, "md": str(md.name), "job_count": 0}
         if js.exists():
