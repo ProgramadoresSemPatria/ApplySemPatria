@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import copy
+from pathlib import Path
 from typing import Any
 
 from track_store import (  # noqa: E402
     list_track_ids,
     load_board_config,
+    load_chameleon_config,
     load_email_config,
     load_form_answers,
     load_google_config,
@@ -16,6 +18,7 @@ from track_store import (  # noqa: E402
     load_profile,
     resolve_track,
     save_board_config,
+    save_chameleon_config,
     save_email_config,
     save_form_answers,
     save_google_config,
@@ -125,6 +128,7 @@ def load_config_bundle(track_id: str | None = None) -> dict[str, Any]:
     board = load_board_config(tid)
     google = load_google_config(tid)
     form = load_form_answers(tid)
+    chameleon = load_chameleon_config(tid)
 
     linkedin.setdefault("llm_intent_classify_enabled", False)
     linkedin.setdefault("llm_intent_model", "gpt-4o-mini")
@@ -205,6 +209,15 @@ def load_config_bundle(track_id: str | None = None) -> dict[str, Any]:
             "rules_count": len(form.get("rules") or []),
             "rules": form.get("rules") or [],
             "model_note": form.get("_doc", ""),
+        },
+        "chameleon": {
+            "enabled": bool(chameleon.get("enabled", True)),
+            "download_dir": chameleon.get("download_dir") or "~/Downloads",
+            "headline_separator": chameleon.get("headline_separator") or " | ",
+            "headline_max_chars": int(chameleon.get("headline_max_chars") or 280),
+            "headline_paragraph_index": int(chameleon.get("headline_paragraph_index") or 1),
+            "tech_lexicon": chameleon.get("tech_lexicon") or [],
+            "masters": chameleon.get("masters") or [],
         },
         "previews": previews,
         "flags": {
@@ -295,6 +308,43 @@ def save_config_section(track_id: str | None, section: str, payload: dict[str, A
         if "rules" in payload and isinstance(payload["rules"], list):
             data["rules"] = payload["rules"]
         save_form_answers(tid, data)
+    elif section == "chameleon":
+        cfg = load_chameleon_config(tid)
+        if "enabled" in payload:
+            cfg["enabled"] = bool(payload["enabled"])
+        for key in ("download_dir", "headline_separator"):
+            if key in payload:
+                cfg[key] = str(payload[key] or "").strip()
+        for key in ("headline_max_chars", "headline_paragraph_index"):
+            if key in payload:
+                cfg[key] = int(payload[key])
+        if "tech_lexicon" in payload and isinstance(payload["tech_lexicon"], list):
+            cfg["tech_lexicon"] = [str(v).strip() for v in payload["tech_lexicon"] if str(v).strip()]
+        if "masters" in payload and isinstance(payload["masters"], list):
+            masters: list[dict[str, Any]] = []
+            for item in payload["masters"]:
+                if not isinstance(item, dict):
+                    continue
+                path = str(item.get("path") or "").strip()
+                if not path:
+                    continue
+                masters.append(
+                    {
+                        "id": str(item.get("id") or f"master-{len(masters) + 1}").strip(),
+                        "label": str(item.get("label") or "Master CV").strip(),
+                        "path": path,
+                        "format": str(item.get("format") or Path(path).suffix.lstrip(".")).strip().lower(),
+                        "default": bool(item.get("default")),
+                        "keywords": [str(k).strip() for k in (item.get("keywords") or []) if str(k).strip()],
+                    }
+                )
+            if masters and not any(m.get("default") for m in masters):
+                masters[0]["default"] = True
+            cfg["masters"] = masters
+        save_chameleon_config(tid, cfg)
+        from resume_chameleon import sync_master_keywords  # noqa: WPS433
+
+        sync_master_keywords(tid)
     else:
         raise ValueError(f"Unknown config section: {section}")
 

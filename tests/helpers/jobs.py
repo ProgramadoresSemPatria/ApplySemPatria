@@ -29,7 +29,7 @@ def linkedin_dm_job(
     }
 
 
-def ui_snapshot(job_key: str, *, day: str = "2026-09-06", actions: dict[str, Any] | None = None) -> dict[str, Any]:
+def ui_snapshot(job_key: str, *, day: str = "2026-09-06", actions: dict[str, Any] | None = None, chameleon: dict[str, Any] | None = None) -> dict[str, Any]:
     actions = actions or {
         "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
         "form": {"available": True, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
@@ -68,6 +68,14 @@ def ui_snapshot(job_key: str, *, day: str = "2026-09-06", actions: dict[str, Any
                 "apply_email": "recruiter@acme.ai" if actions.get("email", {}).get("available") else "",
                 "profile_url": "https://www.linkedin.com/in/recruiter-test/",
                 "actions": actions,
+                "chameleon": chameleon
+                or {
+                    "ready": False,
+                    "generated": False,
+                    "download_url": "",
+                    "role_keywords": [],
+                    "role_keywords_count": 0,
+                },
             }
         ],
     }

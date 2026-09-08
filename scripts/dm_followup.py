@@ -89,6 +89,19 @@ def pending_profiles(state: dict[str, Any], *, include_sent: bool = False) -> li
     return out
 
 
+def filter_entries_by_status(
+    entries: list[dict[str, Any]],
+    *,
+    phase: str | None,
+) -> list[dict[str, Any]]:
+    """Restrict follow-up rows to connect checks or message sends."""
+    if phase == "check":
+        return [e for e in entries if dm_state.status_of(e) == dm_state.STATUS_CONNECT_PENDING]
+    if phase == "send":
+        return [e for e in entries if dm_state.status_of(e) == dm_state.STATUS_ACCEPTED_MSG_PENDING]
+    return entries
+
+
 def filter_entries_by_job_keys(
     entries: list[dict[str, Any]],
     job_keys: list[str] | None,
@@ -247,6 +260,12 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--track", default=None, help="Profile track for message template")
     parser.add_argument(
+        "--phase",
+        choices=("check", "send"),
+        default="",
+        help="check = only connect_pending profiles; send = only accepted_msg_pending",
+    )
+    parser.add_argument(
         "--job-keys",
         default="",
         help="Comma-separated job_keys — limit follow-up to these list rows",
@@ -272,13 +291,16 @@ def main() -> int:
 
     state = dm_state.load()
     entries = pending_profiles(state, include_sent=args.audit_sent)
-    if args.match:
-        needle = args.match.casefold()
-        entries = [e for e in entries if needle in (e.get("company") or "").casefold()]
-    if args.limit:
-        entries = entries[: args.limit]
     if args.job_keys:
         entries = filter_entries_by_job_keys(entries, args.job_keys.split(","))
+    elif args.match:
+        needle = args.match.casefold()
+        entries = [e for e in entries if needle in (e.get("company") or "").casefold()]
+    phase = (args.phase or "").strip().lower()
+    if phase:
+        entries = filter_entries_by_status(entries, phase=phase)
+    if args.limit:
+        entries = entries[: args.limit]
 
     if args.send:
         for entry in entries:

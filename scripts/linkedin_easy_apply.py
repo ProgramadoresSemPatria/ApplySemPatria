@@ -65,10 +65,21 @@ async def modal_locator(page):
     for sel in MODAL_SELECTORS:
         loc = page.locator(sel)
         if await loc.count() > 0:
-            return loc.first
-    dialog = page.locator("div[role='dialog']")
+            candidate = loc.first
+            try:
+                if await candidate.is_visible():
+                    return candidate
+            except Exception:  # noqa: BLE001
+                continue
+    dialog = page.locator("div[role='dialog']").filter(
+        has=page.locator(".jobs-easy-apply-content, .jobs-easy-apply-modal, [data-test-modal-id='easy-apply-modal']")
+    )
     if await dialog.count() > 0:
-        return dialog.first
+        try:
+            if await dialog.first.is_visible():
+                return dialog.first
+        except Exception:  # noqa: BLE001
+            pass
     return None
 
 
@@ -184,13 +195,14 @@ async def fill_current_step(
 
 
 async def open_easy_apply_modal(page, job_url: str, profile: dict[str, Any], *, send: bool) -> dict[str, Any]:
+    from linkedin_ui import click_easy_apply_button  # noqa: WPS433
+
     recipe = resolve_recipe(job_url, name="linkedin-easy-apply-open")
     if recipe is None:
         recipe = resolve_recipe(job_url)
     if recipe is None or recipe.get("name") != "linkedin-easy-apply-open":
         raise RuntimeError("linkedin-easy-apply-open flow recipe missing under flows/")
 
-    # On static fixtures the modal may already be open — click is optional.
     result = await run_recipe(
         page,
         recipe,
@@ -199,16 +211,12 @@ async def open_easy_apply_modal(page, job_url: str, profile: dict[str, Any], *, 
         send=send,
     )
     if not await modal_visible(page):
-        # Fixture pages: modal present but Easy Apply click not needed
-        btn = page.get_by_role("button", name=re.compile(r"^Easy Apply", re.I))
-        if await btn.count() > 0:
-            try:
-                await btn.first.click(timeout=8000)
-                await asyncio.sleep(1.5)
-            except Exception:  # noqa: BLE001
-                pass
+        click = await click_easy_apply_button(page)
+        result = {**result, "fallback_click": click}
     if not await modal_visible(page):
-        raise RuntimeError("Easy Apply modal did not open")
+        raise RuntimeError(
+            "Easy Apply modal did not open — check that the job still has Easy Apply and you are signed in."
+        )
     return result
 
 
@@ -292,11 +300,13 @@ async def run_apply(
     *,
     answers: dict[str, str],
     hold: int,
+    hold_on_error: int,
     submit: bool,
     visual: bool,
     company: str = "",
     role: str = "",
     track_id: str | None = None,
+    job_key: str = "",
 ) -> dict[str, Any]:
     if not is_linkedin_job_url(job_url):
         raise ValueError("URL must be a linkedin.com/jobs/view/ listing")
@@ -329,19 +339,44 @@ async def run_apply(
                 print(f"wizard steps: {len(wizard['log'])} · submitted={wizard.get('submitted')}")
 
         if submit and wizard.get("submitted") and wizard.get("confirmed"):
-            log_submission(job_url, page.url, company=company, role=role, confirmed=True)
+            log_submission(
+                job_url,
+                page.url,
+                company=company,
+                role=role,
+                confirmed=True,
+                job_key=job_key,
+            )
             print("✓ Easy Apply submitted + logged")
             from table_refresh import refresh_applications_table  # noqa: E402
 
             refresh_applications_table()
         elif submit and wizard.get("submitted"):
-            log_submission(job_url, page.url, company=company, role=role, confirmed=False)
+            log_submission(
+                job_url,
+                page.url,
+                company=company,
+                role=role,
+                confirmed=False,
+                job_key=job_key,
+            )
             print("⚠ Submit clicked — verify confirmation in the browser")
+            from table_refresh import refresh_applications_table  # noqa: E402
+
+            refresh_applications_table()
         elif not submit:
             print("DRY-RUN: filled wizard steps; pass --submit to send application")
 
         print(f"\nholding browser open {hold}s…")
         await asyncio.sleep(hold)
+    except Exception as exc:  # noqa: BLE001
+        summary["ok"] = False
+        summary["message"] = str(exc)[:240]
+        print(f"ERROR: {summary['message']}")
+        if visual and hold_on_error > 0:
+            print(f"\nholding browser open {hold_on_error}s for review…")
+            await asyncio.sleep(hold_on_error)
+        raise
     finally:
         await browser.close()
         await pw.stop()
@@ -370,6 +405,8 @@ def main() -> int:
     p_apply = sub.add_parser("apply", help="Open Easy Apply and walk the wizard")
     add_common(p_apply)
     p_apply.add_argument("--submit", action="store_true", help="Click Submit application on final step")
+    p_apply.add_argument("--job-key", default="", help="Registry job key for UI status tracking")
+    p_apply.add_argument("--hold-on-error", type=int, default=15, help="Seconds to keep browser open after failure")
 
     p_dry = sub.add_parser("dry-run", help="Fill steps without submitting")
     add_common(p_dry)
@@ -388,11 +425,13 @@ def main() -> int:
             args.url,
             answers=answers,
             hold=args.hold,
+            hold_on_error=getattr(args, "hold_on_error", 15),
             submit=submit,
             visual=args.visual,
             company=args.company,
             role=args.role,
             track_id=args.track,
+            job_key=getattr(args, "job_key", "") or "",
         )
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))

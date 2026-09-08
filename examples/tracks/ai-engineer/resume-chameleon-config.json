@@ -1,0 +1,28 @@
+{
+  "enabled": true,
+  "output_format": "pdf",
+  "download_dir": "~/Downloads",
+  "cache_dir": "state/chameleon",
+  "headline_separator": " | ",
+  "headline_max_chars_per_line": 95,
+  "headline_max_lines": 2,
+  "headline_max_skills": 18,
+  "headline_paragraph_index": 1,
+  "pdf_skills_y_min": 65.0,
+  "pdf_skills_y_max": 95.0,
+  "pdf_headline_font_size": 11.5,
+  "pdf_font_path": "/System/Library/Fonts/Supplemental/Tahoma.ttf",
+  "pdf_headline_min_font_size": 8.0,
+  "tech_lexicon": [],
+  "masters": [
+    {
+      "id": "ai-engineer",
+      "label": "AI Engineer",
+      "pdf_path": "/absolute/path/to/your-master.pdf",
+      "docx_path": "/absolute/path/to/your-master.docx",
+      "path": "/absolute/path/to/your-master.pdf",
+      "default": true,
+      "keywords": []
+    }
+  ]
+}

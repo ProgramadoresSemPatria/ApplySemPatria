@@ -416,7 +416,7 @@ async def try_submit(page) -> dict[str, Any]:
 
 
 def log_submission(url: str, resolved_url: str, *, company: str = "", role: str = "",
-                   confirmed: bool = False) -> None:
+                   confirmed: bool = False, job_key: str = "") -> None:
     from datetime import datetime
     from zoneinfo import ZoneInfo
     path = ROOT / "state" / "url-applications.json"
@@ -425,14 +425,18 @@ def log_submission(url: str, resolved_url: str, *, company: str = "", role: str 
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         data = {"submitted": []}
-    data.setdefault("submitted", []).append({
+    entry: dict[str, Any] = {
         "url": url,
         "resolved_url": resolved_url,
         "company": company,
         "role": role,
         "confirmed": confirmed,
         "submitted_at": datetime.now(ZoneInfo("America/Sao_Paulo")).isoformat(),
-    })
+    }
+    jk = (job_key or "").strip()
+    if jk:
+        entry["job_key"] = jk
+    data.setdefault("submitted", []).append(entry)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 

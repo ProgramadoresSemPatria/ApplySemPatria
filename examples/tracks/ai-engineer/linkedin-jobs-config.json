@@ -42,5 +42,5 @@
   "require_usd_salary": false,
   "table_sort": "date_posted",
   "easy_apply_visual": true,
-  "easy_apply_submit_from_ui": true
+  "easy_apply_submit_from_ui": false
 }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Senior AI Engineer — Acme</title></head>
+<body>
+<main>
+  <h1>Senior AI Engineer</h1>
+  <p>Acme Robotics · Remote</p>
+  <a class="jobs-apply-button artdeco-button--primary" aria-label="Easy Apply to Senior AI Engineer at Acme Robotics" href="#">
+    Easy Apply
+  </a>
+
+  <div class="jobs-easy-apply-modal" role="dialog" aria-label="Apply to Acme Robotics" hidden>
+    <div class="jobs-easy-apply-content">
+      <h2>Contact info</h2>
+      <label for="ea-email">Email</label>
+      <input type="email" id="ea-email" name="email" required />
+      <label for="ea-phone">Phone</label>
+      <input type="tel" id="ea-phone" name="phone" />
+      <label for="ea-resume">Resume</label>
+      <input type="file" id="ea-resume" name="resume" accept=".pdf,.doc,.docx" />
+    </div>
+    <footer class="jobs-easy-apply-footer">
+      <button type="button" class="artdeco-button artdeco-button--primary" data-easy-apply-next-button aria-label="Continue to next step">
+        Next
+      </button>
+    </footer>
+  </div>
+</main>
+<script>
+document.querySelector('a.jobs-apply-button').addEventListener('click', function (e) {
+  e.preventDefault();
+  document.querySelector('.jobs-easy-apply-modal').hidden = false;
+});
+</script>
+</body>
+</html>

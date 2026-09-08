@@ -36,6 +36,7 @@ def test_server_supports_current_meta():
     meta = ui_meta_payload()
     assert meta["version"] == UI_VERSION
     assert meta["bulk_actions"] == list(SUPPORTED_BULK_ACTIONS)
+    assert "chameleon" in meta
     assert server_supports_client(meta) is True
 
 

@@ -74,20 +74,9 @@ def load_email_sent() -> tuple[set[str], set[str]]:
 
 
 def load_url_submitted() -> set[str]:
-    path = ROOT / "state" / "url-applications.json"
-    if not path.exists():
-        return set()
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return set()
-    out: set[str] = set()
-    for r in data.get("submitted", []):
-        for k in ("url", "resolved_url"):
-            v = (r.get(k) or "").strip()
-            if v:
-                out.add(v)
-    return out
+    from form_apply_state import load_url_submitted as _load_url_submitted  # noqa: WPS433
+
+    return _load_url_submitted()
 
 
 def _form_status(job: dict) -> str:

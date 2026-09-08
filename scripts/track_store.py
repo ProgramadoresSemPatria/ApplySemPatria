@@ -16,6 +16,7 @@ LEGACY_LINKEDIN_JOBS = ROOT / "linkedin-jobs-config.json"
 LEGACY_GOOGLE = ROOT / "google-jobs-config.json"
 LEGACY_EMAIL = ROOT / "email-apply-config.json"
 LEGACY_FORM = ROOT / "form-answers.json"
+LEGACY_CHAMELEON = ROOT / "resume-chameleon-config.json"
 
 
 def _load_json(path: Path, default: dict | list | None = None) -> dict | list:
@@ -39,6 +40,7 @@ def load_manifest() -> dict[str, Any]:
                     "google_config_path": "google-jobs-config.json",
                     "email_config_path": "email-apply-config.json",
                     "form_answers_path": "form-answers.json",
+                    "chameleon_config_path": "resume-chameleon-config.json",
                 }
             },
         }
@@ -128,6 +130,17 @@ def load_form_answers(track_id: str | None = None) -> dict[str, Any]:
     return _load_track_json(track_id, "form_answers_path", legacy=LEGACY_FORM)
 
 
+def load_chameleon_config(track_id: str | None = None) -> dict[str, Any]:
+    from resume_chameleon import DEFAULT_CHAMELEON_CONFIG, default_chameleon_config  # noqa: WPS433
+
+    data = _load_track_json(track_id, "chameleon_config_path", legacy=LEGACY_CHAMELEON)
+    if not data:
+        return default_chameleon_config(track_id)
+    merged = dict(DEFAULT_CHAMELEON_CONFIG)
+    merged.update(data)
+    return merged
+
+
 def save_profile(track_id: str | None, data: dict[str, Any]) -> None:
     path = track_path(track_id, "profile_path")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -166,6 +179,12 @@ def save_email_config(track_id: str | None, data: dict[str, Any]) -> None:
 
 def save_form_answers(track_id: str | None, data: dict[str, Any]) -> None:
     path = track_path(track_id, "form_answers_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_chameleon_config(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "chameleon_config_path")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

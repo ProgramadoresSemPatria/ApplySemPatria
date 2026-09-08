@@ -44,7 +44,13 @@ def test_regression_bulk_dm_runs_connect_before_follow_up_phases(mock_run):
     from ui_server import run_bulk_dm_followup
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
-    result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    pending = [
+        {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": keys[0], "company": "Acme AI"},
+    ]
+    with patch("dm_followup.pending_profiles", return_value=pending):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
+            with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
+                result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     assert result["ok"] is True
     assert mock_run.call_count == 3
@@ -57,8 +63,8 @@ def test_regression_bulk_dm_runs_connect_before_follow_up_phases(mock_run):
 
     scripts = [call[0][0] for call in mock_run.call_args_list]
     assert expect_action(scripts[0], must_include=["dm_apply.py", "--send", "--job-keys"])
-    assert expect_action(scripts[1], must_include=["dm_followup.py", "--job-keys"])
-    assert expect_action(scripts[2], must_include=["dm_followup.py", "--send", "--job-keys"])
+    assert expect_action(scripts[1], must_include=["dm_followup.py", "--phase", "check", "--job-keys"])
+    assert expect_action(scripts[2], must_include=["dm_followup.py", "--phase", "send", "--send", "--job-keys"])
     assert "dm_apply.py" not in " ".join(scripts[1] + scripts[2])
 
 

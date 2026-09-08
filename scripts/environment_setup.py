@@ -14,6 +14,7 @@ REQUIREMENTS = ROOT / "requirements.txt"
 GMAIL_APP_PASSWORD_FILE = ROOT / "secrets" / "gmail-app-password"
 MIN_PYTHON = (3, 11)
 
+CORE_PACKAGES = ["python-docx>=1.1.0", "pymupdf>=1.24.0"]
 GMAIL_PACKAGES = [
     "google-api-python-client",
     "google-auth-httplib2",
@@ -163,7 +164,7 @@ def install_deps(
         return False, [py_path]
 
     python = Path(py_path)
-    packages: list[str] = []
+    packages: list[str] = list(CORE_PACKAGES)
     if gmail:
         packages.extend(GMAIL_PACKAGES)
     if browser:

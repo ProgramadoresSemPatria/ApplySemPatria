@@ -252,6 +252,29 @@ def cmd_login(args: argparse.Namespace) -> int:
     return subprocess.call([str(script), args.action])
 
 
+def cmd_chameleon(args: argparse.Namespace) -> int:
+    ch_args = [PY, str(SCRIPTS / "resume_chameleon.py"), args.chameleon_cmd]
+    if getattr(args, "track", None):
+        ch_args.extend(["--track", args.track])
+    if getattr(args, "job_key", None):
+        ch_args.extend(["--job-key", args.job_key])
+    if getattr(args, "master", None):
+        ch_args.extend(["--master", args.master])
+    if getattr(args, "no_download", False):
+        ch_args.append("--no-download")
+    if getattr(args, "json", False):
+        ch_args.append("--json")
+    if getattr(args, "dry_run", False):
+        ch_args.append("--dry-run")
+    if getattr(args, "master_id", None):
+        ch_args.extend(["--master-id", args.master_id])
+    if getattr(args, "master_label", None):
+        ch_args.extend(["--master-label", args.master_label])
+    if getattr(args, "force", False):
+        ch_args.append("--force")
+    return subprocess.call(ch_args, cwd=str(ROOT))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="jobsearch",
@@ -422,6 +445,43 @@ def build_parser() -> argparse.ArgumentParser:
         help="Override manual UI mode and send from CLI (email or DM)",
     )
     app.set_defaults(func=cmd_apply)
+
+    ch = sub.add_parser("chameleon", help="CV Chameleon — tailor resume per role")
+    ch_sub = ch.add_subparsers(dest="chameleon_cmd", required=True)
+    ch_gen = ch_sub.add_parser("generate", help="Generate tailored CV for a job")
+    ch_gen.add_argument("--job-key", required=True)
+    ch_gen.add_argument("--track", default=None)
+    ch_gen.add_argument("--master", default=None, help="Force master id")
+    ch_gen.add_argument("--no-download", action="store_true")
+    ch_gen.set_defaults(func=cmd_chameleon)
+
+    ch_kw = ch_sub.add_parser("keywords", help="Show role keywords for a job")
+    ch_kw.add_argument("--job-key", required=True)
+    ch_kw.add_argument("--track", default=None)
+    ch_kw.add_argument("--json", action="store_true")
+    ch_kw.set_defaults(func=cmd_chameleon)
+
+    ch_m = ch_sub.add_parser("masters", help="List master CVs")
+    ch_m.add_argument("--track", default=None)
+    ch_m.set_defaults(func=cmd_chameleon)
+
+    ch_sync = ch_sub.add_parser("sync", help="Re-read headline keywords from master DOCX")
+    ch_sync.add_argument("--track", default=None)
+    ch_sync.add_argument("--dry-run", action="store_true")
+    ch_sync.set_defaults(func=cmd_chameleon)
+
+    ch_setup = ch_sub.add_parser("setup", help="Create CV Chameleon config")
+    ch_setup.add_argument("--track", default=None)
+    ch_setup.add_argument("--master", help="Master DOCX/PDF path")
+    ch_setup.add_argument("--master-id", default=None)
+    ch_setup.add_argument("--master-label", default=None)
+    ch_setup.add_argument("--force", action="store_true")
+    ch_setup.set_defaults(func=cmd_chameleon)
+
+    ch_status = ch_sub.add_parser("status", help="Show CV Chameleon readiness")
+    ch_status.add_argument("--track", default=None)
+    ch_status.add_argument("--json", action="store_true")
+    ch_status.set_defaults(func=cmd_chameleon)
 
     return parser
 

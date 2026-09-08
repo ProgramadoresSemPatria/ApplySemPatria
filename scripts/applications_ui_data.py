@@ -52,12 +52,12 @@ from generate_applications import (  # noqa: E402
     dm_profile_url,
     is_applied,
     load_email_sent,
-    load_url_submitted,
     post_url_for,
     priority,
     status_cell,
     track_cell,
 )
+from form_apply_state import load_form_submission_state  # noqa: E402
 from registry import job_key, load_registry  # noqa: E402
 from table_format import format_posted  # noqa: E402
 from linkedin_jobs_merge import posted_within_hours  # noqa: E402
@@ -111,7 +111,15 @@ def list_snapshot_days() -> list[dict[str, Any]]:
     return sorted(days.values(), key=lambda d: d["day"], reverse=True)
 
 
-def _status_kind(job: dict, dm: dict, email_to: set[str], email_keys: set[str], url_done: set[str]) -> str:
+def _status_kind(
+    job: dict,
+    dm: dict,
+    email_to: set[str],
+    email_keys: set[str],
+    url_done: set[str],
+    *,
+    form_job_keys: set[str] | None = None,
+) -> str:
     channel = classify_channel(job)
     if channel == CHANNEL_EMAIL:
         email = (apply_email_for_job(job) or "").strip().lower()
@@ -120,7 +128,8 @@ def _status_kind(job: dict, dm: dict, email_to: set[str], email_keys: set[str], 
         return "pending"
     if channel == CHANNEL_URL:
         au = apply_url_for(job)
-        if au in url_done or (job.get("apply_url") or "").strip() in url_done:
+        keys_done = form_job_keys or set()
+        if job_key(job) in keys_done or au in url_done or (job.get("apply_url") or "").strip() in url_done:
             return "form_submitted"
         return "pending"
     if channel == CHANNEL_DM:
@@ -132,6 +141,86 @@ def _status_kind(job: dict, dm: dict, email_to: set[str], email_keys: set[str], 
     return "unknown"
 
 
+def _easy_apply_form_action(
+    job: dict,
+    *,
+    form_submitted: bool,
+    ea_record: dict[str, Any] | None,
+) -> dict[str, Any]:
+    status = str((ea_record or {}).get("status") or "")
+    checked_text = str((ea_record or {}).get("status_text") or "")
+
+    if form_submitted or status == "applied":
+        return {
+            "label": "Update Easy Apply status",
+            "status_text": checked_text or "Applied on LinkedIn",
+            "done": True,
+            "in_progress": False,
+            "status_kind": "applied",
+            "easy_apply_enabled": False,
+            "checked_at": (ea_record or {}).get("checked_at"),
+        }
+    if status == "continue":
+        return {
+            "label": "Update Easy Apply status",
+            "status_text": checked_text or "Application in progress",
+            "done": False,
+            "in_progress": True,
+            "status_kind": "continue",
+            "easy_apply_enabled": True,
+            "checked_at": (ea_record or {}).get("checked_at"),
+        }
+    if status == "closed":
+        return {
+            "label": "Update Easy Apply status",
+            "status_text": checked_text or "No longer accepting",
+            "done": False,
+            "in_progress": False,
+            "status_kind": "closed",
+            "easy_apply_enabled": False,
+            "checked_at": (ea_record or {}).get("checked_at"),
+        }
+    if status == "external":
+        return {
+            "label": "Update Easy Apply status",
+            "status_text": checked_text or "External apply only",
+            "done": False,
+            "in_progress": False,
+            "status_kind": "external",
+            "easy_apply_enabled": False,
+            "checked_at": (ea_record or {}).get("checked_at"),
+        }
+    if status == "available":
+        return {
+            "label": "Update Easy Apply status",
+            "status_text": checked_text or "Easy Apply open",
+            "done": False,
+            "in_progress": False,
+            "status_kind": "available",
+            "easy_apply_enabled": True,
+            "checked_at": (ea_record or {}).get("checked_at"),
+        }
+    if ea_record:
+        return {
+            "label": "Update Easy Apply status",
+            "status_text": checked_text or "Status unknown",
+            "done": False,
+            "in_progress": False,
+            "status_kind": status or "unknown",
+            "easy_apply_enabled": bool((ea_record or {}).get("easy_apply_enabled")),
+            "checked_at": (ea_record or {}).get("checked_at"),
+        }
+    return {
+        "label": "Update Easy Apply status",
+        "status_text": "Check status",
+        "done": False,
+        "in_progress": False,
+        "status_kind": "unchecked",
+        "easy_apply_enabled": None,
+        "checked_at": None,
+    }
+
+
 def _action_states(
     job: dict,
     dm: dict,
@@ -139,7 +228,9 @@ def _action_states(
     email_keys: set[str],
     url_done: set[str],
     *,
+    form_job_keys: set[str] | None = None,
     li_cfg: dict[str, Any] | None = None,
+    ea_status: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     formats = {f["id"] for f in list_application_formats(job)}
     prof = dm_profile_url(job)
@@ -151,8 +242,9 @@ def _action_states(
 
     au = apply_url_for(job)
     resolved = (job.get("apply_url") or "").strip()
+    keys_done = form_job_keys or set()
     form_submitted = bool(formats & {"form"}) and (
-        au in url_done or resolved in url_done
+        jk in keys_done or au in url_done or resolved in url_done
     )
 
     dm_st = dm_state.status_for(dm, prof) if prof else dm_state.STATUS_NONE
@@ -173,9 +265,17 @@ def _action_states(
         "available": "form" in formats,
         "done": form_submitted,
         "in_progress": False,
-        "label": "Easy Apply via LinkedIn" if job.get("linkedin_easy_apply") else "Apply via form",
+        "label": "Apply via form",
         "status_text": "submitted" if form_submitted else "not applied",
     }
+    if job.get("linkedin_easy_apply"):
+        form.update(
+            _easy_apply_form_action(
+                job,
+                form_submitted=form_submitted,
+                ea_record=(ea_status or {}).get(jk),
+            )
+        )
 
     if dm_st == dm_state.STATUS_NONE:
         connect_status = "not applied"
@@ -236,6 +336,26 @@ def _action_states(
     }
 
 
+def _chameleon_card_state(job: dict[str, Any]) -> dict[str, Any]:
+    from resume_chameleon import chameleon_is_configured, resolve_output_for_job  # noqa: WPS433
+    from resume_keywords import extract_role_keywords_for_job  # noqa: WPS433
+    from track_store import infer_track, load_chameleon_config  # noqa: WPS433
+
+    tid = (job.get("track") or infer_track(job) or "ai-engineer").strip()
+    cfg = load_chameleon_config(tid)
+    jk = job_key(job)
+    ready = chameleon_is_configured(cfg)
+    keywords = extract_role_keywords_for_job(job, cfg) if ready else []
+    output = resolve_output_for_job(jk, track_id=tid) if ready else None
+    return {
+        "ready": ready,
+        "generated": output is not None,
+        "download_url": f"/api/chameleon/download?job_key={jk}" if output else "",
+        "role_keywords": keywords[:10],
+        "role_keywords_count": len(keywords),
+    }
+
+
 def job_to_card(
     job: dict,
     *,
@@ -244,15 +364,26 @@ def job_to_card(
     email_to: set[str],
     email_keys: set[str],
     url_done: set[str],
+    form_job_keys: set[str] | None = None,
     li_cfg: dict[str, Any] | None = None,
+    ea_status: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    kind = _status_kind(job, dm, email_to, email_keys, url_done)
+    kind = _status_kind(job, dm, email_to, email_keys, url_done, form_job_keys=form_job_keys)
     apply_url = apply_url_for(job)
     if apply_url in ("—", "See post", "DM recruiter"):
         resolved = (job.get("apply_url") or "").strip()
         if resolved.startswith("http"):
             apply_url = resolved
-    actions = _action_states(job, dm, email_to, email_keys, url_done, li_cfg=li_cfg)
+    actions = _action_states(
+        job,
+        dm,
+        email_to,
+        email_keys,
+        url_done,
+        form_job_keys=form_job_keys,
+        li_cfg=li_cfg,
+        ea_status=ea_status,
+    )
     steps_on = application_steps_enabled(job)
     if not steps_on:
         for state in actions.values():
@@ -290,6 +421,7 @@ def job_to_card(
         "linkedin_easy_apply": bool(job.get("linkedin_easy_apply")),
         "apply_method": job.get("apply_method") or "",
         "actions": actions,
+        "chameleon": _chameleon_card_state(job),
     }
 
 
@@ -307,11 +439,14 @@ def collect_jobs_for_ui(
     )
     from filters import salary_sort_value  # noqa: E402
     from linkedin_posts_merge import sort_jobs_by_recency  # noqa: E402
-    from track_store import filter_jobs_by_track, infer_track, load_linkedin_config  # noqa: E402
+    from track_store import filter_jobs_by_track, infer_track, job_track_label, load_linkedin_config  # noqa: E402
+
+    from linkedin_easy_apply_status import load_all_status_records  # noqa: E402
 
     dm = dm_state.load()
     email_to, email_keys = load_email_sent()
-    url_done = load_url_submitted()
+    url_done, form_job_keys = load_form_submission_state()
+    ea_status = load_all_status_records()
     li_cfgs: dict[str, dict[str, Any]] = {}
 
     registry = load_registry()
@@ -369,7 +504,9 @@ def collect_jobs_for_ui(
                 email_to=email_to,
                 email_keys=email_keys,
                 url_done=url_done,
+                form_job_keys=form_job_keys,
                 li_cfg=_li_cfg_for(job),
+                ea_status=ea_status,
             )
         )
     for job in li_review:
@@ -381,7 +518,9 @@ def collect_jobs_for_ui(
                 email_to=email_to,
                 email_keys=email_keys,
                 url_done=url_done,
+                form_job_keys=form_job_keys,
                 li_cfg=_li_cfg_for(job),
+                ea_status=ea_status,
             )
         )
     for job in boards_eligible:
@@ -393,7 +532,9 @@ def collect_jobs_for_ui(
                 email_to=email_to,
                 email_keys=email_keys,
                 url_done=url_done,
+                form_job_keys=form_job_keys,
                 li_cfg=_li_cfg_for(job),
+                ea_status=ea_status,
             )
         )
     return cards

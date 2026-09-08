@@ -1,0 +1,29 @@
+{
+  "enabled": true,
+  "download_dir": "~/Downloads",
+  "cache_dir": "state/chameleon",
+  "headline_separator": " | ",
+  "headline_max_chars": 280,
+  "headline_paragraph_index": 1,
+  "tech_lexicon": [
+    "kotlin",
+    "android",
+    "jetpack compose",
+    "coroutines",
+    "mvvm",
+    "gradle",
+    "firebase",
+    "rest api",
+    "ci/cd"
+  ],
+  "masters": [
+    {
+      "id": "android-developer",
+      "label": "Android Developer",
+      "path": "/absolute/path/to/your-master-android.docx",
+      "format": "docx",
+      "default": true,
+      "keywords": []
+    }
+  ]
+}

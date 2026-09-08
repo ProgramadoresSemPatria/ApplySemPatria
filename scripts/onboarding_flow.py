@@ -69,6 +69,7 @@ def _banner(track_label: str, track_id: str) -> None:
     print("  2. Profile + resume")
     print("  3. Gmail + application message + send mode")
     print("  4. LinkedIn session + recruiter connect/message + form/link message")
+    print("  5. (Optional) CV Chameleon — jobsearch chameleon setup --track …")
     print()
 
 

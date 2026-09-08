@@ -5,11 +5,13 @@
   "vars_required": ["job_url"],
   "steps": [
     { "action": "goto", "target": "{job_url}", "wait_until": "domcontentloaded", "timeout": 90000 },
-    { "action": "sleep", "seconds": 2.5 },
+    { "action": "sleep", "seconds": 3.0 },
+    { "action": "close_chat", "optional": true },
     { "action": "dismiss_premium", "optional": true },
-    { "action": "sleep", "seconds": 0.4 },
-    { "action": "click", "role": "button", "name_regex": "^Easy Apply$|^Easy Apply to ", "timeout": 20000 },
+    { "action": "sleep", "seconds": 0.6 },
+    { "action": "wait_job_detail", "optional": false },
+    { "action": "click_easy_apply", "optional": false },
     { "action": "sleep", "seconds": 2.0 },
-    { "action": "assert_visible", "selector": ".jobs-easy-apply-modal, .jobs-easy-apply-content, [data-test-modal-id='easy-apply-modal']" }
+    { "action": "assert_visible", "selector": ".jobs-easy-apply-modal, .jobs-easy-apply-content, [data-test-modal-id='easy-apply-modal'], div[role='dialog'] .jobs-easy-apply-content", "optional": true }
   ]
 }

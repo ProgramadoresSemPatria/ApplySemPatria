@@ -32,10 +32,12 @@ def test_meta_ui_approval(mock_ui_server):
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=5) as resp:
         meta = json.loads(resp.read().decode())
     assert meta.get("ui_approval") is True
-    assert meta.get("version") == 6
+    assert meta.get("version") == 7
     assert "email_process_all" in (meta.get("bulk_actions") or [])
     assert meta.get("has_research_today") is True
     assert meta.get("today") == "2026-09-06"
+    assert "chameleon" in meta
+    assert "ready" in (meta.get("chameleon") or {})
 
 
 def test_bulk_email_routing_uses_real_handler(monkeypatch):
@@ -134,7 +136,7 @@ def test_run_action_dm_connect_cmd(mock_run):
     cmd = mock_run.call_args[0][0]
     verdict = expect_action(
         cmd,
-        must_include=["dm_apply.py", "--send", "--ui-approved", "--force-send", "Acme AI"],
+        must_include=["dm_apply.py", "--send", "--ui-approved", "--force-send", "--job-keys", "test-key"],
     )
     assert verdict, verdict.reason
 
@@ -157,7 +159,22 @@ def test_run_action_dm_message_cmd(mock_run):
             run_action("dm_message", "test-key")
 
     cmd = mock_run.call_args[0][0]
-    assert expect_action(cmd, must_include=["dm_followup.py", "--send", "--ui-approved"])
+    assert expect_action(cmd, must_include=["dm_followup.py", "--send", "--ui-approved", "--job-keys", "test-key"])
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_action_dm_check_cmd(mock_run):
+    mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+    from ui_server import run_action
+
+    with patch("ui_server._find_job") as find:
+        find.return_value = {"company": "Acme", "track": "ai-engineer"}
+        with patch("position_disposition.application_steps_enabled", return_value=True):
+            run_action("dm_check", "test-key")
+
+    cmd = mock_run.call_args[0][0]
+    assert expect_action(cmd, must_include=["dm_followup.py", "--job-keys", "test-key", "--limit", "1"])
+    assert "--match" not in cmd
 
 
 @patch("ui_server._run_apply_cmd")
@@ -194,13 +211,67 @@ def test_run_action_steps_disabled():
     assert "disabled" in result["message"].lower()
 
 
+@patch("table_refresh.refresh_applications_table", return_value=True)
+def test_run_action_form_apply_skips_when_already_submitted(mock_refresh):
+    from ui_server import run_action
+
+    job = {
+        "company": "Acme",
+        "role": "AI Engineer",
+        "url": "https://boards.greenhouse.io/acme/jobs/123",
+        "apply_url": "https://boards.greenhouse.io/acme/jobs/123",
+        "linkedin_easy_apply": False,
+        "source": "himalayas",
+        "track": "ai-engineer",
+    }
+    with patch("ui_server._find_job", return_value=job):
+        with patch("position_disposition.application_steps_enabled", return_value=True):
+            with patch("form_apply_state.form_is_submitted", return_value=True):
+                with patch("ui_server._run_apply_cmd") as mock_run:
+                    result = run_action("form_apply", "test-key")
+    assert result["ok"] is True
+    assert result.get("skipped") is True
+    assert "already applied" in result["message"].lower()
+    mock_run.assert_not_called()
+    mock_refresh.assert_called_once()
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_action_easy_apply_runs_status_check(mock_run):
+    from ui_server import run_action
+
+    mock_run.return_value = MagicMock(returncode=0, stdout="status: available", stderr="")
+    job = {
+        "company": "BriteCore",
+        "role": "Senior Forward Deployed Engineer",
+        "url": "https://www.linkedin.com/jobs/view/4298246321/",
+        "apply_url": "https://www.linkedin.com/jobs/view/4298246321/",
+        "linkedin_easy_apply": True,
+        "source": "linkedin_jobs",
+        "track": "ai-engineer",
+    }
+    with patch("ui_server._find_job", return_value=job):
+        with patch("position_disposition.application_steps_enabled", return_value=True):
+            result = run_action("form_apply", "test-key")
+    assert result["ok"] is True
+    cmd = mock_run.call_args[0][0]
+    assert "linkedin_easy_apply_status.py" in " ".join(cmd)
+    assert "check" in cmd
+
+
 @patch("ui_server._run_apply_cmd")
 def test_run_bulk_dm_followup_invokes_connect_check_then_send(mock_run):
     mock_run.return_value = MagicMock(returncode=0, stdout="phase ok", stderr="")
     from ui_server import run_bulk_dm_followup
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
-    result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
+    pending = [
+        {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": keys[0], "company": "Acme AI"},
+    ]
+    with patch("dm_followup.pending_profiles", return_value=pending):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
+            with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
+                result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
 
     assert result["ok"] is True
     assert result["action"] == "dm_process_all"
@@ -215,12 +286,35 @@ def test_run_bulk_dm_followup_invokes_connect_check_then_send(mock_run):
         connect_cmd,
         must_include=["dm_apply.py", "--send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
     )
-    assert expect_action(check_cmd, must_include=["dm_followup.py", "--track", "ai-engineer", "--job-keys"])
+    assert expect_action(check_cmd, must_include=["dm_followup.py", "--phase", "check", "--track", "ai-engineer", "--job-keys"])
     assert expect_action(
         send_cmd,
-        must_include=["dm_followup.py", "--send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
+        must_include=["dm_followup.py", "--send", "--phase", "send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
     )
     assert keys[0] in connect_cmd[connect_cmd.index("--job-keys") + 1]
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_bulk_dm_followup_skips_send_when_none_accepted(mock_run):
+    mock_run.return_value = MagicMock(returncode=0, stdout="phase ok", stderr="")
+    from ui_server import run_bulk_dm_followup
+
+    keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
+    pending = [
+        {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": keys[0], "company": "Acme AI"},
+    ]
+
+    def _status(entries, *, phase):
+        return entries if phase == "check" else []
+
+    with patch("dm_followup.pending_profiles", return_value=pending):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
+            with patch("dm_followup.filter_entries_by_status", side_effect=_status):
+                result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+
+    assert result["ok"] is True
+    assert mock_run.call_count == 2
+    assert "skipped — no accepted connections ready to message" in result["message"]
 
 
 @patch("ui_server._run_apply_cmd")
@@ -229,11 +323,14 @@ def test_run_bulk_dm_followup_runs_connect_when_queue_empty(mock_run):
     from ui_server import run_bulk_dm_followup
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
-    result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    with patch("dm_followup.pending_profiles", return_value=[]):
+        with patch("dm_followup.filter_entries_by_job_keys", return_value=[]):
+            result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     assert result["ok"] is True
-    assert mock_run.call_count == 3
+    assert mock_run.call_count == 1
     assert expect_action(mock_run.call_args_list[0][0][0], must_include=["dm_apply.py", "--send"])
+    assert "skipped — no pending accepts to check" in result["message"]
 
 
 @patch("ui_server._run_apply_cmd")
@@ -254,7 +351,8 @@ def test_run_bulk_dm_followup_respects_limit(mock_run):
     fake_entry = {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": "k"}
     with patch("dm_followup.pending_profiles", return_value=[fake_entry]):
         with patch("dm_followup.filter_entries_by_job_keys", return_value=[fake_entry]):
-            run_bulk_dm_followup(track="android-developer", limit=3)
+            with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
+                run_bulk_dm_followup(track="android-developer", limit=3)
 
     for call in mock_run.call_args_list:
         cmd = call[0][0]

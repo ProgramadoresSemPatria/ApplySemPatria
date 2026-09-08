@@ -237,6 +237,17 @@ async def _run_steps(
 
                 closed = await cleanup_after_message(page)
                 rec["note"] = ", ".join(closed) if closed else "nothing to close"
+            elif action == "wait_job_detail":
+                from linkedin_ui import wait_for_job_detail_ready  # noqa: E402
+
+                rec["ok"] = await wait_for_job_detail_ready(page, timeout_ms=int(step.get("timeout_ms", 30000)))
+                rec["note"] = "job detail ready" if rec["ok"] else "job detail not ready"
+            elif action == "click_easy_apply":
+                from linkedin_ui import click_easy_apply_button  # noqa: E402
+
+                click = await click_easy_apply_button(page)
+                rec["ok"] = bool(click.get("clicked"))
+                rec["note"] = click.get("strategy") or click.get("error") or "click failed"
             else:
                 rec["ok"] = False
                 rec["note"] = f"unknown action {action}"
@@ -258,7 +269,7 @@ async def _run_steps(
                     }
                 )
             break  # a real (or would-be) action succeeded; don't fall through to fallbacks
-        if not rec["ok"] and not optional and action in ("click", "goto"):
+        if not rec["ok"] and not optional and action in ("click", "goto", "click_easy_apply", "wait_job_detail"):
             break
 
 

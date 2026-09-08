@@ -36,7 +36,7 @@ def _resolve_python() -> str:
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_VERSION = 6
+UI_VERSION = 7
 SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
 UI_META = {
     "ui_approval": True,
@@ -47,8 +47,14 @@ UI_META = {
 
 def ui_meta_payload() -> dict[str, Any]:
     from research_log import research_status  # noqa: E402
+    from resume_chameleon import chameleon_status  # noqa: E402
+    from track_store import default_track_id  # noqa: E402
 
-    return {**UI_META, **research_status()}
+    return {
+        **UI_META,
+        **research_status(),
+        "chameleon": chameleon_status(default_track_id()),
+    }
 
 
 def server_supports_client(meta: dict[str, Any]) -> bool:
@@ -148,28 +154,44 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
             from track_store import load_linkedin_jobs_config  # noqa: WPS433
 
             lj_cfg = load_linkedin_jobs_config(tid)
+            import re as _re  # noqa: WPS433
+
+            m = _re.search(r"(https?://(?:www\.)?linkedin\.com/jobs/view/\d+)", url, _re.I)
+            if m:
+                url = m.group(1).rstrip("/") + "/"
             cmd = [
                 PY,
-                str(SCRIPTS / "linkedin_easy_apply.py"),
-                "apply",
+                str(SCRIPTS / "linkedin_easy_apply_status.py"),
+                "check",
                 "--url",
                 url,
-                "--track",
-                tid,
                 "--hold",
-                "300",
+                "12",
                 "--company",
                 match,
                 "--role",
                 (job.get("role") or "")[:80],
+                "--job-key",
+                job_key,
             ]
             if lj_cfg.get("easy_apply_visual", True):
                 cmd.append("--visual")
             else:
                 cmd.append("--no-visual")
-            if lj_cfg.get("easy_apply_submit_from_ui", True):
-                cmd.append("--submit")
         else:
+            from form_apply_state import form_is_submitted  # noqa: WPS433
+
+            if form_is_submitted(job):
+                from table_refresh import refresh_applications_table  # noqa: WPS433
+
+                refresh_applications_table()
+                return {
+                    "ok": True,
+                    "message": "Form already applied — table refreshed.",
+                    "action": action,
+                    "job_key": job_key,
+                    "skipped": True,
+                }
             cmd = [
                 PY,
                 str(SCRIPTS / "url_apply.py"),
@@ -188,8 +210,8 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
             "--send",
             *UI_APPROVE,
             "--force-send",
-            "--match",
-            match,
+            "--job-keys",
+            job_key,
             "--limit",
             "1",
             "--track",
@@ -199,8 +221,10 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
         cmd = [
             PY,
             str(SCRIPTS / "dm_followup.py"),
-            "--match",
-            match,
+            "--phase",
+            "check",
+            "--job-keys",
+            job_key,
             "--limit",
             "1",
             "--track",
@@ -213,8 +237,10 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
             "--send",
             *UI_APPROVE,
             "--force-send",
-            "--match",
-            match,
+            "--phase",
+            "send",
+            "--job-keys",
+            job_key,
             "--limit",
             "1",
             "--track",
@@ -315,6 +341,8 @@ def run_bulk_dm_followup(
     check_cmd = [
         PY,
         str(SCRIPTS / "dm_followup.py"),
+        "--phase",
+        "check",
         "--track",
         tid,
         *limit_args,
@@ -326,18 +354,39 @@ def run_bulk_dm_followup(
         "--send",
         *UI_APPROVE,
         "--force-send",
+        "--phase",
+        "send",
         "--track",
         tid,
         *limit_args,
         *key_args,
     ]
 
-    phases: list[tuple[str, list[str]]] = [
-        ("send_connections", connect_cmd),
-        ("check_connections", check_cmd),
-        ("send_messages", send_cmd),
-    ]
+    from dm_followup import (  # noqa: WPS433
+        filter_entries_by_job_keys,
+        filter_entries_by_status,
+        pending_profiles,
+    )
+    import dm_state  # noqa: WPS433
+
+    state = dm_state.load()
+    scoped = pending_profiles(state)
+    if keys:
+        scoped = filter_entries_by_job_keys(scoped, keys)
+    need_check = filter_entries_by_status(scoped, phase="check")
+    need_send = filter_entries_by_status(scoped, phase="send")
+
+    phases: list[tuple[str, list[str]]] = [("send_connections", connect_cmd)]
     summaries: list[str] = []
+    if need_check:
+        phases.append(("check_connections", check_cmd))
+    else:
+        summaries.append("[check_connections] skipped — no pending accepts to check in this list")
+    if need_send:
+        phases.append(("send_messages", send_cmd))
+    else:
+        summaries.append("[send_messages] skipped — no accepted connections ready to message in this list")
+
     ok = True
 
     for label, cmd in phases:
@@ -518,6 +567,27 @@ def set_disposition(job_key: str, disposition: str) -> dict[str, Any]:
     }
 
 
+def set_form_status(job_key: str, applied: bool) -> dict[str, Any]:
+    from application_channel import list_application_formats  # noqa: E402
+    from form_apply_state import set_form_applied  # noqa: E402
+
+    job = _find_job(job_key)
+    if not job:
+        return {"ok": False, "message": f"Job not found: {job_key}"}
+
+    formats = {f["id"] for f in list_application_formats(job)}
+    if "form" not in formats:
+        return {"ok": False, "message": "This role has no form apply channel."}
+
+    result = set_form_applied(job, applied)
+    return {
+        "ok": bool(result.get("ok")),
+        "message": str(result.get("message") or "Updated"),
+        "job_key": job_key,
+        "form_applied": bool(result.get("applied")),
+    }
+
+
 class ApplicationsUIHandler(BaseHTTPRequestHandler):
     server_version = "JobsearchUI/1.0"
 
@@ -594,6 +664,28 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                 self._json(400, {"ok": False, "message": str(exc)})
                 return
             self._json(200, {"ok": True, "config": bundle})
+            return
+
+        if path.path == "/api/chameleon/download":
+            job_key_value = (qs.get("job_key") or [""])[0]
+            track = (qs.get("track") or [None])[0]
+            if not job_key_value:
+                self._json(400, {"ok": False, "message": "job_key required"})
+                return
+            from resume_chameleon import resolve_output_for_job  # noqa: E402
+
+            out_path = resolve_output_for_job(job_key_value, track_id=track)
+            if not out_path or not out_path.is_file():
+                self._json(404, {"ok": False, "message": "Tailored CV not found — generate first."})
+                return
+            self._serve_download(out_path)
+            return
+
+        if path.path == "/api/chameleon/status":
+            from resume_chameleon import chameleon_status  # noqa: E402
+
+            track = (qs.get("track") or [None])[0]
+            self._json(200, chameleon_status(track))
             return
 
         if path.path in ("/", "/index.html"):
@@ -732,10 +824,72 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             self._json(200, {"ok": True, "message": f"Saved {section}.", "config": bundle})
             return
 
-        if path not in ("/api/action", "/api/disposition"):
+        if path == "/api/chameleon/generate":
+            body = self._read_json()
+            job_key_value = str(body.get("job_key") or "")
+            track = body.get("track")
+            master_id = body.get("master_id")
+            if not job_key_value:
+                self._json(400, {"ok": False, "message": "job_key required"})
+                return
+            from resume_chameleon import chameleon_is_configured, find_job_by_key, generate_for_job  # noqa: E402
+            from track_store import infer_track, load_chameleon_config  # noqa: E402
+
+            job = find_job_by_key(job_key_value)
+            if not job:
+                self._json(404, {"ok": False, "message": f"Job not found: {job_key_value}"})
+                return
+            tid = track or infer_track(job)
+            cfg = load_chameleon_config(tid)
+            if not chameleon_is_configured(cfg):
+                self._json(
+                    400,
+                    {
+                        "ok": False,
+                        "needs_setup": True,
+                        "message": "CV Chameleon is not set up. Add master CV(s) in Settings → CV Chameleon.",
+                    },
+                )
+                return
+            try:
+                result = generate_for_job(job, track_id=tid, master_id=master_id, download=True)
+            except Exception as exc:  # noqa: BLE001
+                self._json(500, {"ok": False, "message": str(exc)})
+                return
+            from applications_ui_data import refresh_live_snapshot  # noqa: E402
+
+            download_name = Path(result.get("output_path") or "resume.docx").name
+            self._json(
+                200,
+                {
+                    "ok": True,
+                    "message": f"CV saved to Downloads/{download_name}",
+                    "result": result,
+                    "download_url": f"/api/chameleon/download?job_key={job_key_value}",
+                    "snapshot": refresh_live_snapshot(),
+                },
+            )
+            return
+
+        if path not in ("/api/action", "/api/disposition", "/api/form-status"):
             self.send_error(404)
             return
         body = self._read_json()
+
+        if path == "/api/form-status":
+            job_key = str(body.get("job_key") or "")
+            if not job_key:
+                self._json(400, {"ok": False, "message": "job_key required"})
+                return
+            if "applied" not in body:
+                self._json(400, {"ok": False, "message": "applied required"})
+                return
+            result = set_form_status(job_key, bool(body.get("applied")))
+            from applications_ui_data import refresh_live_snapshot  # noqa: E402
+
+            result["snapshot"] = refresh_live_snapshot()
+            self._json(200 if result.get("ok") else 400, result)
+            return
 
         if path == "/api/disposition":
             job_key = str(body.get("job_key") or "")
@@ -782,6 +936,16 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _serve_download(self, path: Path) -> None:
+        content = path.read_bytes()
+        ctype = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Content-Disposition", f'attachment; filename="{path.name}"')
         self.end_headers()
         self.wfile.write(content)
 

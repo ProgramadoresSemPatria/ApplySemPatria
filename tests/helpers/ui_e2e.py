@@ -13,7 +13,7 @@ def wait_for_toast_text(page: Page, text: str, *, timeout_ms: int = 10_000) -> N
     """Wait until #toast is visible and contains ``text``."""
     toast = page.locator("#toast.show")
     toast.wait_for(state="visible", timeout=timeout_ms)
-    expect(toast).to_contain_text(text, timeout=timeout_ms)
+    expect(toast).to_contain_text(text)
 
 
 def wait_for_mock_action(

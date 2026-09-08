@@ -1,4 +1,7 @@
-# Core CLI (discover, table, profile) — stdlib only; listed for clarity.
+# Core CLI (discover, table, profile, ResumeChameleon)
+python-docx>=1.1.0
+pymupdf>=1.24.0
+
 # Optional groups installed by: jobsearch install [--gmail] [--browser]
 
 # Gmail API send

@@ -42,6 +42,7 @@ def _start_mock_ui_server(
     snapshot_override: dict[str, Any] | None = None,
     bulk_dm: str = "mock",
     meta_override: dict[str, Any] | None = None,
+    chameleon_generate: str = "mock",
 ) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """HTTP server with mocked action/snapshot handlers for UI e2e."""
     from tests.helpers.jobs import ui_snapshot
@@ -53,6 +54,7 @@ def _start_mock_ui_server(
         "last_action": None,
         "last_bulk_action": None,
         "last_research": None,
+        "last_chameleon": None,
         "apply_cmds": [],
     }
 
@@ -94,7 +96,22 @@ def _start_mock_ui_server(
         }
 
     def fake_refresh():
-        return snapshot
+        import copy
+
+        from form_apply_state import load_form_submission_state
+
+        data = copy.deepcopy(snapshot)
+        urls, keys = load_form_submission_state()
+        for row in data.get("jobs", []):
+            form = (row.get("actions") or {}).get("form")
+            if not form or not form.get("available"):
+                continue
+            apply = (row.get("apply_url") or "").strip()
+            row_jk = row.get("job_key") or ""
+            submitted = row_jk in keys or apply in urls
+            form["done"] = submitted
+            form["status_text"] = "submitted" if submitted else "not applied"
+        return data
 
     sidebar_days: list[dict[str, Any]] = []
     if not has_research_today:
@@ -142,6 +159,18 @@ def _start_mock_ui_server(
         captured["apply_cmds"].append(list(cmd))
         return MagicMock(returncode=0, stdout="[DRY RUN] checking 1 profile(s)\nSummary: ok", stderr="")
 
+    def fake_find_job(job_key_value: str):
+        from registry import job_key as registry_job_key
+        from tests.helpers.jobs import linkedin_dm_job
+
+        job = linkedin_dm_job()
+        aliases = {
+            registry_job_key(job),
+            "ai-engineer|linkedin|acme ai|ai engineer",
+        }
+        return job if job_key_value in aliases else None
+
+    monkeypatch.setattr(ui_server, "_find_job", fake_find_job)
     monkeypatch.setattr(ui_server, "run_action", fake_run_action)
     if bulk_dm == "mock":
         monkeypatch.setattr(ui_server, "run_bulk_dm_followup", fake_run_bulk_dm_followup)
@@ -196,10 +225,89 @@ def _start_mock_ui_server(
 
     monkeypatch.setattr(ui_server, "set_disposition", fake_set_disposition)
 
+    if chameleon_generate == "mock":
+
+        def fake_find_job_by_key(job_key_value: str):
+            from registry import job_key as registry_job_key
+            from tests.helpers.jobs import linkedin_dm_job
+
+            job = linkedin_dm_job()
+            aliases = {
+                registry_job_key(job),
+                "ai-engineer|linkedin|acme ai|ai engineer",
+            }
+            return job if job_key_value in aliases else None
+
+        def fake_generate_for_job(job, *, track_id=None, master_id=None, download=True):
+            from registry import job_key as registry_job_key
+
+            jk = registry_job_key(job)
+            captured["last_chameleon"] = {
+                "job_key": jk,
+                "track_id": track_id,
+                "master_id": master_id,
+                "download": download,
+            }
+            aliases = {
+                jk,
+                "ai-engineer|linkedin|acme ai|ai engineer",
+            }
+            ch_state = {
+                "ready": True,
+                "generated": True,
+                "download_url": f"/api/chameleon/download?job_key={jk}",
+                "role_keywords": ["python", "rag"],
+                "role_keywords_count": 2,
+            }
+            for row in snapshot.get("jobs", []):
+                row_key = row.get("job_key") or ""
+                if row_key == jk or row_key in aliases:
+                    row["chameleon"] = dict(ch_state)
+                    row["chameleon"]["download_url"] = f"/api/chameleon/download?job_key={row_key}"
+                    break
+            return {
+                "job_key": jk,
+                "output_path": str(Path("/tmp/mock-chameleon.pdf")),
+                "headline_edited": True,
+                "skill_lines": ["Python | RAG"],
+            }
+
+        def fake_resolve_output_for_job(job_key_value, *, track_id=None):
+            mock_path = Path("/tmp/mock-chameleon.pdf")
+            if not mock_path.is_file():
+                mock_path.write_bytes(b"%PDF-1.4\n% mock chameleon\n")
+            aliases = {
+                "ai-engineer|linkedin|acme ai|ai engineer",
+            }
+            last = captured.get("last_chameleon") or {}
+            if job_key_value in aliases or last.get("job_key") == job_key_value:
+                return mock_path
+            return mock_path if last else None
+
+        monkeypatch.setattr("resume_chameleon.generate_for_job", fake_generate_for_job)
+        monkeypatch.setattr("resume_chameleon.resolve_output_for_job", fake_resolve_output_for_job)
+        monkeypatch.setattr("resume_chameleon.find_job_by_key", fake_find_job_by_key)
+        monkeypatch.setattr("resume_chameleon.chameleon_is_configured", lambda cfg=None, track_id=None: True)
+
+    elif chameleon_generate == "off":
+
+        def fake_find_job_by_key(job_key_value: str):
+            from registry import job_key as registry_job_key
+            from tests.helpers.jobs import linkedin_dm_job
+
+            job = linkedin_dm_job()
+            aliases = {
+                registry_job_key(job),
+                "ai-engineer|linkedin|acme ai|ai engineer",
+            }
+            return job if job_key_value in aliases else None
+
+        monkeypatch.setattr("resume_chameleon.find_job_by_key", fake_find_job_by_key)
+
     import config_ui_data
 
     def fake_save_config_section(track_id, section, payload):
-        if section not in ("profile", "linkedin", "linkedin_jobs", "email", "board", "google", "form_answers"):
+        if section not in ("profile", "linkedin", "linkedin_jobs", "email", "board", "google", "form_answers", "chameleon"):
             raise ValueError(f"Unknown config section: {section}")
         captured.setdefault("config_saves", []).append(
             {"track": track_id, "section": section, "payload": payload}
@@ -235,6 +343,9 @@ def _start_mock_ui_server(
     from ui_server import UI_META
 
     def fake_meta_payload():
+        from resume_chameleon import chameleon_status  # noqa: WPS433
+        from track_store import default_track_id  # noqa: WPS433
+
         base = {
             **UI_META,
             "today": today,
@@ -253,6 +364,8 @@ def _start_mock_ui_server(
         }
         if meta_override:
             base.update(meta_override)
+        if int(base.get("version") or 0) >= UI_META["version"]:
+            base.setdefault("chameleon", chameleon_status(default_track_id()))
         return base
 
     monkeypatch.setattr(ui_server, "ui_meta_payload", fake_meta_payload)
@@ -441,4 +554,72 @@ def mock_ui_server_linkedin_jobs(monkeypatch) -> Generator[tuple[int, dict[str, 
         has_research_today=True,
         last_research_day="2026-09-06",
         snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_chameleon(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Dashboard with CV Chameleon ready on cards and in /api/meta."""
+    from tests.helpers.jobs import ui_snapshot
+
+    job_key = "ai-engineer|linkedin|acme ai|ai engineer"
+    chameleon = {
+        "ready": True,
+        "generated": False,
+        "download_url": "",
+        "role_keywords": ["python", "rag"],
+        "role_keywords_count": 2,
+    }
+    snapshot = ui_snapshot(job_key, day="2026-09-06", chameleon=chameleon)
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+        meta_override={
+            "chameleon": {
+                "ready": True,
+                "message": "1 master CV(s) ready.",
+                "masters_count": 1,
+                "track_id": "ai-engineer",
+            }
+        },
+        chameleon_generate="mock",
+    )
+
+
+@pytest.fixture
+def mock_ui_server_chameleon_not_ready(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    from tests.helpers.jobs import ui_snapshot
+
+    job_key = "ai-engineer|linkedin|acme ai|ai engineer"
+    chameleon = {
+        "ready": False,
+        "generated": False,
+        "download_url": "",
+        "role_keywords": [],
+        "role_keywords_count": 0,
+    }
+    snapshot = ui_snapshot(job_key, day="2026-09-06", chameleon=chameleon)
+
+    def fake_is_configured(cfg=None, track_id=None):
+        return False
+
+    monkeypatch.setattr("resume_chameleon.chameleon_is_configured", fake_is_configured)
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+        meta_override={
+            "chameleon": {
+                "ready": False,
+                "message": "Master CV path(s) missing — update CV Chameleon settings.",
+                "masters_count": 0,
+                "track_id": "ai-engineer",
+            }
+        },
+        chameleon_generate="off",
     )

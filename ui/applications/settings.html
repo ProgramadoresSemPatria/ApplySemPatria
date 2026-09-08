@@ -425,6 +425,7 @@
         <a href="#linkedin-jobs">LinkedIn jobs</a>
         <a href="#dm">LinkedIn DM</a>
         <a href="#email">Email apply</a>
+        <a href="#chameleon">CV Chameleon</a>
         <a href="#board">Job boards</a>
         <a href="#google">Google jobs</a>
         <a href="#form-rules">Form rules bank</a>
@@ -609,6 +610,23 @@
           <button class="save-btn" data-section="email">Save email config</button>
         </section>
 
+        <section class="panel" id="chameleon">
+          <h3>CV Chameleon</h3>
+          <p class="subtitle">Master CV files and headline tailoring per role</p>
+          ${toggleRow("chameleon_enabled", "CV Chameleon enabled", "", c.chameleon.enabled)}
+          <div class="field-grid" style="margin-top:1rem;">
+            ${field("chameleon_download_dir", "Download directory", c.chameleon.download_dir, "text", true)}
+            ${field("chameleon_headline_separator", "Headline separator", c.chameleon.headline_separator)}
+            ${field("chameleon_headline_max_chars", "Headline max characters", c.chameleon.headline_max_chars, "number")}
+            ${field("chameleon_headline_paragraph_index", "Headline paragraph index (DOCX)", c.chameleon.headline_paragraph_index, "number")}
+            ${field("chameleon_tech_lexicon_csv", "Extra tech keywords", (c.chameleon.tech_lexicon || []).join(", "), "text", true)}
+          </div>
+          <p class="subtitle" style="margin-top:1rem;">Master CVs (one per line: id | label | full path | default?)</p>
+          <textarea class="rules-editor" id="chameleonMastersText">${esc((c.chameleon.masters || []).map(m => `${m.id || ""} | ${m.label || ""} | ${m.path || ""} | ${m.default ? "default" : ""}`).join("\n"))}</textarea>
+          <p class="rules-meta">Use DOCX masters for headline edits. After updating a master file run <code>jobsearch chameleon sync</code>.</p>
+          <button class="save-btn" data-section="chameleon">Save CV Chameleon</button>
+        </section>
+
         <section class="panel" id="board">
           <h3>Job board discovery</h3>
           <p class="subtitle">RemoteOK, Himalayas, etc.</p>
@@ -738,6 +756,33 @@
       }
       if (section === "form_answers") {
         return { rules: JSON.parse(document.getElementById("rulesJson").value || "[]") };
+      }
+      if (section === "chameleon") {
+        const masters = (document.getElementById("chameleonMastersText").value || "")
+          .split("\n")
+          .map(line => line.trim())
+          .filter(Boolean)
+          .map(line => {
+            const parts = line.split("|").map(s => s.trim());
+            const path = parts[2] || parts[parts.length - 1] || "";
+            return {
+              id: parts[0] || "master",
+              label: parts[1] || parts[0] || "Master CV",
+              path,
+              format: path.toLowerCase().endsWith(".pdf") ? "pdf" : "docx",
+              default: /default/i.test(line),
+              keywords: [],
+            };
+          });
+        return {
+          enabled: document.getElementById("chameleon_enabled").checked,
+          download_dir: document.getElementById("chameleon_download_dir").value,
+          headline_separator: document.getElementById("chameleon_headline_separator").value,
+          headline_max_chars: parseInt(document.getElementById("chameleon_headline_max_chars").value, 10),
+          headline_paragraph_index: parseInt(document.getElementById("chameleon_headline_paragraph_index").value, 10),
+          tech_lexicon: (document.getElementById("chameleon_tech_lexicon_csv").value || "").split(",").map(s => s.trim()).filter(Boolean),
+          masters,
+        };
       }
       return {};
     }

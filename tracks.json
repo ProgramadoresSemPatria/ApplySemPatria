@@ -9,7 +9,8 @@
       "linkedin_jobs_config_path": "tracks/ai-engineer/linkedin-jobs-config.json",
       "google_config_path": "tracks/ai-engineer/google-jobs-config.json",
       "email_config_path": "tracks/ai-engineer/email-apply-config.json",
-      "form_answers_path": "tracks/ai-engineer/form-answers.json"
+      "form_answers_path": "tracks/ai-engineer/form-answers.json",
+      "chameleon_config_path": "tracks/ai-engineer/resume-chameleon-config.json"
     },
     "android-developer": {
       "label": "Android Developer",
@@ -19,7 +20,8 @@
       "linkedin_jobs_config_path": "tracks/android-developer/linkedin-jobs-config.json",
       "google_config_path": "tracks/android-developer/google-jobs-config.json",
       "email_config_path": "tracks/android-developer/email-apply-config.json",
-      "form_answers_path": "tracks/android-developer/form-answers.json"
+      "form_answers_path": "tracks/android-developer/form-answers.json",
+      "chameleon_config_path": "tracks/android-developer/resume-chameleon-config.json"
     }
   }
 }

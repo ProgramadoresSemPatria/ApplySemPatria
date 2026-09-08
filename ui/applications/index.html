@@ -568,6 +568,12 @@
       padding: 0.35rem 0.5rem 0.25rem;
     }
 
+    .card-menu label + label {
+      margin-top: 0.25rem;
+      border-top: 1px solid var(--border);
+      padding-top: 0.55rem;
+    }
+
     .card-menu button {
       display: block;
       width: 100%;
@@ -770,6 +776,12 @@
       border-color: rgba(251, 191, 36, 0.28);
     }
 
+    .step-pill.warning {
+      background: rgba(248, 113, 113, 0.1);
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.28);
+    }
+
     .step-pill.loading {
       opacity: 0.65;
       pointer-events: none;
@@ -813,6 +825,86 @@
     }
 
     .card-links a:hover { opacity: 1; text-decoration: underline; }
+
+    .card-links button.chameleon-link {
+      font-size: 0.72rem;
+      color: var(--accent-2);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+      opacity: 0.9;
+    }
+
+    .card-links button.chameleon-link:hover { opacity: 1; text-decoration: underline; }
+    .card-links button.chameleon-link.loading { opacity: 0.5; cursor: wait; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 6, 12, 0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .modal-backdrop[hidden] { display: none !important; }
+
+    .modal-panel {
+      width: min(520px, 100%);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-bright);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-panel h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1.15rem;
+    }
+
+    .modal-panel p {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.92rem;
+      margin: 0 0 0.75rem;
+    }
+
+    .modal-panel code {
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.06);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.65rem;
+      justify-content: flex-end;
+      margin-top: 1.25rem;
+    }
+
+    .modal-actions button {
+      border-radius: 10px;
+      padding: 0.55rem 1rem;
+      font-family: inherit;
+      font-size: 0.88rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+    }
+
+    .modal-actions button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #07080d;
+      border: none;
+      font-weight: 700;
+    }
 
     /* legacy action styles removed — use step-pill */
 
@@ -946,6 +1038,20 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="modal-backdrop" id="chameleonModal" hidden>
+    <div class="modal-panel" role="dialog" aria-labelledby="chameleonModalTitle">
+      <h3 id="chameleonModalTitle">Set up CV Chameleon</h3>
+      <p>Tailor your resume headline per role using master CV files (DOCX recommended).</p>
+      <p>1. Add one or more master CV paths in <strong>Settings → CV Chameleon</strong>.<br>
+         2. Use DOCX masters so headline skills can be rewritten.<br>
+         3. Run <code>jobsearch chameleon sync --track ai-engineer</code> after updating a master.</p>
+      <div class="modal-actions">
+        <button type="button" id="chameleonModalClose">Close</button>
+        <button type="button" class="primary" id="chameleonModalSettings">Open settings</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let snapshot = { jobs: [] };
     let activeDay = null;
@@ -953,9 +1059,9 @@
     let sourceFilter = "all";
     let searchQuery = "";
     let serverUiApproval = false;
-    let serverMeta = { today: "", has_research_today: false, last_research_day: null };
+    let serverMeta = { today: "", has_research_today: false, last_research_day: null, chameleon: { ready: false } };
 
-    const UI_CLIENT_VERSION = 6;
+    const UI_CLIENT_VERSION = 7;
     const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
 
     function serverSupportsClient(meta) {
@@ -1367,7 +1473,9 @@
 
     const ACTION_ORDER = ["email", "form", "dm_connect", "dm_check", "dm_message"];
 
-    function stepClickable(key, state) {
+    function stepClickable(key, state, job) {
+      if (key === "form" && job && job.linkedin_easy_apply) return true;
+      if (key === "form" && state.done) return true;
       if (!state.available && !state.in_progress) return false;
       if (state.done) return false;
       if (key === "dm_connect") return !state.in_progress;
@@ -1383,10 +1491,14 @@
       let cls = "step-pill";
       if (done) cls += " done";
       else if (progress) cls += " progress";
-      const clickable = stepClickable(key, state);
+      const clickable = stepClickable(key, state, job);
       if (clickable) cls += " clickable";
+      if (!done && !progress && (state.status_kind === "closed" || state.status_kind === "external")) {
+        cls += " warning";
+      }
       const statusText = state.status_text || (done ? "done" : "not applied");
-      return `<button type="button" class="${cls}" data-action="${key}" data-job="${job.job_key}" ${clickable ? "" : "disabled"}>
+      const refreshOnly = key === "form" && (done || (job && job.linkedin_easy_apply));
+      return `<button type="button" class="${cls}" data-action="${key}" data-job="${job.job_key}" ${refreshOnly ? 'data-refresh-only="1"' : ""} ${clickable ? "" : "disabled"}>
         <span class="step-icon">${icon}</span>
         <span class="step-label">${esc(state.label)}</span>
         <span class="step-status">${esc(statusText)}</span>
@@ -1410,6 +1522,15 @@
       }).join("");
     }
 
+    function renderFormStatusMenuItem(job) {
+      const form = (job.actions || {}).form;
+      if (!form || !form.available) return "";
+      const applied = !!form.done;
+      const label = applied ? "Mark form as not applied" : "Mark form as applied";
+      const nextApplied = applied ? "0" : "1";
+      return `<button type="button" data-form-applied="${nextApplied}">${esc(label)}</button>`;
+    }
+
     function renderDispositionMenu(job) {
       const effective = job.position_disposition || job.position_disposition_auto || "best_fit";
       const override = job.position_disposition_is_override;
@@ -1419,11 +1540,13 @@
           || (d.id !== "auto" && override && d.id === stored);
         return `<button type="button" class="${active ? "active" : ""}" data-disposition="${d.id}">${esc(d.label)}</button>`;
       }).join("");
+      const formItem = renderFormStatusMenuItem(job);
       return `<div class="card-header-actions">
         <button type="button" class="card-menu-btn" aria-label="Override position status" aria-expanded="false">⋮</button>
         <div class="card-menu" role="menu">
           <label>Override status</label>
           ${items}
+          ${formItem ? `<label>Form status</label>${formItem}` : ""}
         </div>
       </div>`;
     }
@@ -1486,6 +1609,7 @@
           ${job.post_url && job.post_url.startsWith("http") ? `<a href="${esc(job.post_url)}" target="_blank" rel="noopener">${job.role_from === "linkedin_jobs" ? "Job" : "Post"} ↗</a>` : ""}
           ${job.apply_url && job.apply_url.startsWith("http") ? `<a href="${esc(job.apply_url)}" target="_blank" rel="noopener">${job.linkedin_easy_apply ? "Easy Apply ↗" : "Apply link ↗"}</a>` : ""}
           ${job.profile_url ? `<a href="${esc(job.profile_url)}" target="_blank" rel="noopener">Profile ↗</a>` : ""}
+          <button type="button" class="chameleon-link" data-chameleon="${esc(job.job_key)}">${job.chameleon && job.chameleon.generated ? "CV Chameleon ↓" : "CV Chameleon"}</button>
         </div>
         ${renderStepsBlock(job, actions)}`;
       card.dataset.jobKey = job.job_key;
@@ -1515,9 +1639,21 @@
         };
       });
 
+      card.querySelectorAll(".card-menu button[data-form-applied]").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          setFormStatus(card.dataset.jobKey, btn.dataset.formApplied === "1");
+        };
+      });
+
       card.querySelectorAll(".step-pill.clickable").forEach(btn => {
         btn.onclick = () => runAction(btn);
       });
+
+      const chBtn = card.querySelector(".chameleon-link");
+      if (chBtn) {
+        chBtn.onclick = () => runChameleon(chBtn);
+      }
     }
 
     function jobVisible(job_key) {
@@ -1584,6 +1720,23 @@
       dm_message: "dm_message",
     };
 
+    async function setFormStatus(job_key, applied) {
+      try {
+        const res = await fetch("/api/form-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job_key, applied }),
+        });
+        const data = await res.json();
+        showToast(data.message || (data.ok ? "Updated" : "Failed"), data.ok);
+        if (data.snapshot) {
+          applySnapshot(data.snapshot, job_key);
+        }
+      } catch (e) {
+        showToast(String(e), false);
+      }
+    }
+
     async function setDisposition(job_key, disposition) {
       try {
         const res = await fetch("/api/disposition", {
@@ -1601,14 +1754,77 @@
       }
     }
 
+    function chameleonReadyForJob(job_key) {
+      if (serverMeta.chameleon && serverMeta.chameleon.ready) return true;
+      const job = (snapshot.jobs || []).find(j => j.job_key === job_key);
+      return !!(job && job.chameleon && job.chameleon.ready);
+    }
+
+    function chameleonBlockedReason(job_key) {
+      if ((serverMeta.version || 0) < UI_CLIENT_VERSION) return "stale_server";
+      if (!chameleonReadyForJob(job_key)) return "needs_setup";
+      return null;
+    }
+
+    function showChameleonSetupModal() {
+      document.getElementById("chameleonModal").hidden = false;
+    }
+
+    function hideChameleonSetupModal() {
+      document.getElementById("chameleonModal").hidden = true;
+    }
+
+    async function runChameleon(btn) {
+      const job_key = btn.dataset.chameleon;
+      const blocked = chameleonBlockedReason(job_key);
+      if (blocked === "stale_server") {
+        showToast("CV Chameleon needs a newer UI server — restart: jobsearch ui", false);
+        serverStale.hidden = false;
+        return;
+      }
+      if (blocked === "needs_setup") {
+        showChameleonSetupModal();
+        return;
+      }
+      btn.classList.add("loading");
+      const prev = btn.textContent;
+      btn.textContent = "Tailoring…";
+      try {
+        const res = await fetch("/api/chameleon/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job_key }),
+        });
+        const data = await res.json();
+        if (data.needs_setup) {
+          showChameleonSetupModal();
+          showToast(data.message || "CV Chameleon not set up", false);
+          return;
+        }
+        showToast(data.message || (data.ok ? "CV ready" : "Failed"), data.ok);
+        if (data.snapshot) {
+          applySnapshot(data.snapshot, job_key);
+        }
+        if (data.ok && data.download_url) {
+          window.location.href = data.download_url;
+        }
+      } catch (e) {
+        showToast(String(e.message || e), false);
+      } finally {
+        btn.classList.remove("loading");
+        btn.textContent = prev;
+      }
+    }
+
     async function runAction(btn) {
+      if (btn.classList.contains("loading")) return;
       const raw = btn.dataset.action;
       const action = ACTION_MAP[raw] || raw;
       const job_key = btn.dataset.job;
       btn.classList.add("loading");
       const statusEl = btn.querySelector(".step-status");
       const prev = statusEl ? statusEl.textContent : "";
-      if (statusEl) statusEl.textContent = "working…";
+      if (statusEl) statusEl.textContent = btn.dataset.refreshOnly === "1" ? "refreshing…" : "working…";
       try {
         const res = await fetch("/api/action", {
           method: "POST",
@@ -1793,6 +2009,15 @@
     }
 
     document.getElementById("bulkEmailBtn").onclick = runBulkEmailApply;
+
+    document.getElementById("chameleonModalClose").onclick = hideChameleonSetupModal;
+    document.getElementById("chameleonModalSettings").onclick = () => {
+      hideChameleonSetupModal();
+      window.location.href = "settings.html#chameleon";
+    };
+    document.getElementById("chameleonModal").onclick = (e) => {
+      if (e.target.id === "chameleonModal") hideChameleonSetupModal();
+    };
 
     (async () => {
       await checkServerMeta();
