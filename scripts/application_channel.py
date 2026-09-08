@@ -56,6 +56,10 @@ def _real_apply_url(job: dict[str, Any]) -> str | None:
     apply = (job.get("apply_url") or "").strip()
     if apply and apply.startswith("http") and not is_email_address(apply):
         return apply
+    if job.get("source") == "linkedin_jobs":
+        url = (job.get("url") or "").strip()
+        if url.startswith("http"):
+            return url
     # Non-LinkedIn/board jobs: the job url itself is the apply page.
     if job.get("source") not in ("linkedin_posts", "google"):
         url = (job.get("url") or "").strip()

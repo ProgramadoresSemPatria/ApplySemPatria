@@ -36,7 +36,7 @@ def _resolve_python() -> str:
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_VERSION = 5
+UI_VERSION = 6
 SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
 UI_META = {
     "ui_approval": True,
@@ -144,17 +144,43 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
         url = apply_url_for(job)
         if not url or not url.startswith("http"):
             return {"ok": False, "message": "No apply URL for this role."}
-        cmd = [
-            PY,
-            str(SCRIPTS / "url_apply.py"),
-            "apply",
-            "--url",
-            url,
-            "--track",
-            tid,
-            "--hold",
-            "300",
-        ]
+        if job.get("linkedin_easy_apply") and "/jobs/view/" in url.lower():
+            from track_store import load_linkedin_jobs_config  # noqa: WPS433
+
+            lj_cfg = load_linkedin_jobs_config(tid)
+            cmd = [
+                PY,
+                str(SCRIPTS / "linkedin_easy_apply.py"),
+                "apply",
+                "--url",
+                url,
+                "--track",
+                tid,
+                "--hold",
+                "300",
+                "--company",
+                match,
+                "--role",
+                (job.get("role") or "")[:80],
+            ]
+            if lj_cfg.get("easy_apply_visual", True):
+                cmd.append("--visual")
+            else:
+                cmd.append("--no-visual")
+            if lj_cfg.get("easy_apply_submit_from_ui", True):
+                cmd.append("--submit")
+        else:
+            cmd = [
+                PY,
+                str(SCRIPTS / "url_apply.py"),
+                "apply",
+                "--url",
+                url,
+                "--track",
+                tid,
+                "--hold",
+                "300",
+            ]
     elif action == "dm_connect":
         cmd = [
             PY,
@@ -596,11 +622,18 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             def _worker() -> None:
                 try:
                     from daily_research import run_daily_research  # noqa: E402
+                    from research_log import has_research_today  # noqa: E402
+
+                    force_full = bool(body.get("force_full"))
+                    same_day_refresh = has_research_today() and not force_full
 
                     result_holder["result"] = run_daily_research(
                         track=track,
                         since=since,
-                        skip_linkedin=skip_linkedin,
+                        skip_linkedin=skip_linkedin or same_day_refresh,
+                        skip_linkedin_jobs=bool(body.get("skip_linkedin_jobs")),
+                        skip_discover=bool(body.get("table_only")),
+                        table_only=bool(body.get("table_only")),
                     )
                 except Exception as exc:  # noqa: BLE001
                     result_holder["result"] = {

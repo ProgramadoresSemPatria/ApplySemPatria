@@ -28,6 +28,7 @@ COV_ARGS=(
 # file:// HTML baseline + HAR replay + UI e2e
 PW_PATHS=(
   "tests/test_flow_linkedin_fixtures.py"
+  "tests/test_flow_linkedin_jobs.py"
   "tests/test_flow_linkedin_har.py"
   "tests/e2e/"
 )

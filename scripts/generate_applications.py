@@ -36,6 +36,7 @@ from linkedin_posts_merge import (  # noqa: E402
     resolve_apply_url_from_text,
     sort_jobs_by_recency,
 )
+from linkedin_jobs_merge import extract_job_view_id  # noqa: E402
 from registry import RUNS_DIR, job_key, load_registry  # noqa: E402
 from table_format import format_posted, md_cell, normalize_company_display  # noqa: E402
 from track_store import filter_jobs_by_track, job_track_label, list_track_ids, track_label  # noqa: E402
@@ -176,6 +177,8 @@ def priority(job: dict) -> str:
 
 
 def post_url_for(job: dict) -> str:
+    if job.get("source") == "linkedin_jobs":
+        return (job.get("url") or "").strip()
     url = (job.get("url") or "").strip()
     author = normalize_company_display(job.get("company") or "")
     role = job.get("role") or "ai engineer"
@@ -222,21 +225,31 @@ def apply_url_for(job: dict) -> str:
         return resolved
     if job.get("source") == "linkedin_posts":
         return "See post"
+    if job.get("source") == "linkedin_jobs":
+        url = (job.get("url") or "").strip()
+        return url if url.startswith("http") else "—"
     return "—"
 
 
 def dedupe_linkedin_rows(jobs: list[dict]) -> list[dict]:
-    """Drop duplicate rows that share the same post permalink."""
+    """Drop duplicate rows that share the same post permalink or jobs/view id."""
     seen: set[str] = set()
     out: list[dict] = []
     for job in jobs:
-        post = post_url_for(job)
-        key = post if is_posts_permalink(post) else job_key(job)
+        view_id = extract_job_view_id(job.get("url")) or extract_job_view_id(job.get("apply_url"))
+        if view_id:
+            key = f"jobview:{view_id}"
+        else:
+            post = post_url_for(job)
+            key = post if is_posts_permalink(post) else job_key(job)
         if key in seen:
             continue
         seen.add(key)
         out.append(job)
     return out
+
+
+LINKEDIN_TABLE_SOURCES = ("linkedin_posts", "linkedin_jobs")
 
 
 def is_applied(job: dict) -> bool:
@@ -299,7 +312,7 @@ def generate(
     linkedin = [
         j
         for j in all_jobs
-        if j.get("source") == "linkedin_posts"
+        if j.get("source") in LINKEDIN_TABLE_SOURCES
         and discovered_at(j)
         and discovered_at(j) >= linkedin_since
     ]
@@ -315,7 +328,7 @@ def generate(
     boards = [
         j
         for j in all_jobs
-        if j.get("source") not in ("linkedin_posts", "google")
+        if j.get("source") not in (*LINKEDIN_TABLE_SOURCES, "google")
         and discovered_at(j)
         and discovered_at(j) >= board_since
     ]
@@ -371,7 +384,7 @@ def generate(
         "",
         "| Source | Window | Total | Eligible | In table |",
         "|--------|--------|------:|---------:|---------:|",
-        f"| **LinkedIn** (deep collect + registry) | {linkedin_since.strftime('%b %d')} → now | {len(linkedin)} | {len(linkedin_eligible)} | {len(li_apply) + len(li_review_apply)} |",
+        f"| **LinkedIn** (posts + jobs · registry) | {linkedin_since.strftime('%b %d')} → now | {len(linkedin)} | {len(linkedin_eligible)} | {len(li_apply) + len(li_review_apply)} |",
         f"| **Boards** (Himalayas, RemoteOK, etc.) | {board_since.strftime('%b %d')} → now | {len(boards)} | {len(boards_eligible)} | {len(boards_eligible)} |",
         "| Google jobs | — | — | — | skipped (no API key) |",
         *track_lines,

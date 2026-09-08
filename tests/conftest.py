@@ -26,6 +26,11 @@ def linkedin_html_dir() -> Path:
     return FIXTURES / "linkedin"
 
 
+@pytest.fixture
+def linkedin_jobs_html_dir() -> Path:
+    return FIXTURES / "linkedin_jobs"
+
+
 def _start_mock_ui_server(
     monkeypatch,
     *,
@@ -194,7 +199,7 @@ def _start_mock_ui_server(
     import config_ui_data
 
     def fake_save_config_section(track_id, section, payload):
-        if section not in ("profile", "linkedin", "email", "board", "google", "form_answers"):
+        if section not in ("profile", "linkedin", "linkedin_jobs", "email", "board", "google", "form_answers"):
             raise ValueError(f"Unknown config section: {section}")
         captured.setdefault("config_saves", []).append(
             {"track": track_id, "section": section, "payload": payload}
@@ -206,6 +211,8 @@ def _start_mock_ui_server(
                     bundle["profile"][group].update(fields)
         elif section == "linkedin":
             bundle["linkedin"].update(payload)
+        elif section == "linkedin_jobs":
+            bundle["linkedin_jobs"].update(payload)
         elif section == "email":
             bundle["email"].update(payload)
         elif section == "board":
@@ -419,4 +426,19 @@ def mock_ui_server_bulk_dm_empty_queue(monkeypatch) -> Generator[tuple[int, dict
         has_research_today=True,
         last_research_day="2026-09-06",
         bulk_dm="real_empty",
+    )
+
+
+@pytest.fixture
+def mock_ui_server_linkedin_jobs(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Mixed LinkedIn posts + jobs for source / Posted 24h filter e2e."""
+    from tests.helpers.jobs import ui_snapshot_linkedin_jobs_mixed
+
+    snapshot = ui_snapshot_linkedin_jobs_mixed(day="2026-09-06")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
     )

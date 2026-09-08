@@ -12,6 +12,7 @@ EXAMPLES_TRACKS = ROOT / "examples" / "tracks"
 LEGACY_PROFILE = ROOT / "applicant-profile.json"
 LEGACY_BOARD = ROOT / "config.json"
 LEGACY_LINKEDIN = ROOT / "linkedin-posts-config.json"
+LEGACY_LINKEDIN_JOBS = ROOT / "linkedin-jobs-config.json"
 LEGACY_GOOGLE = ROOT / "google-jobs-config.json"
 LEGACY_EMAIL = ROOT / "email-apply-config.json"
 LEGACY_FORM = ROOT / "form-answers.json"
@@ -34,6 +35,7 @@ def load_manifest() -> dict[str, Any]:
                     "profile_path": "applicant-profile.json",
                     "board_config_path": "config.json",
                     "linkedin_config_path": "linkedin-posts-config.json",
+                    "linkedin_jobs_config_path": "linkedin-jobs-config.json",
                     "google_config_path": "google-jobs-config.json",
                     "email_config_path": "email-apply-config.json",
                     "form_answers_path": "form-answers.json",
@@ -110,6 +112,10 @@ def load_linkedin_config(track_id: str | None = None) -> dict[str, Any]:
     return _load_track_json(track_id, "linkedin_config_path", legacy=LEGACY_LINKEDIN)
 
 
+def load_linkedin_jobs_config(track_id: str | None = None) -> dict[str, Any]:
+    return _load_track_json(track_id, "linkedin_jobs_config_path", legacy=LEGACY_LINKEDIN_JOBS)
+
+
 def load_google_config(track_id: str | None = None) -> dict[str, Any]:
     return _load_track_json(track_id, "google_config_path", legacy=LEGACY_GOOGLE)
 
@@ -136,6 +142,12 @@ def save_board_config(track_id: str | None, data: dict[str, Any]) -> None:
 
 def save_linkedin_config(track_id: str | None, data: dict[str, Any]) -> None:
     path = track_path(track_id, "linkedin_config_path")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def save_linkedin_jobs_config(track_id: str | None, data: dict[str, Any]) -> None:
+    path = track_path(track_id, "linkedin_jobs_config_path")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -168,7 +180,9 @@ def infer_track(job: dict[str, Any]) -> str:
         cfg = _load_json(ROOT / meta.get("board_config_path", ""), {})
         keywords = [k.lower() for k in cfg.get("search", {}).get("title_keywords", [])]
         li_cfg = _load_json(ROOT / meta.get("linkedin_config_path", ""), {})
+        li_jobs_cfg = _load_json(ROOT / meta.get("linkedin_jobs_config_path", ""), {})
         roles = [r.lower() for r in li_cfg.get("roles", [])]
+        roles.extend(r.lower() for r in li_jobs_cfg.get("roles", []))
         role_text = (job.get("role") or "").lower()
         if search_role and (search_role in keywords or search_role in roles):
             return tid

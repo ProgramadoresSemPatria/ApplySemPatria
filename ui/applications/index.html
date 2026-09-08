@@ -247,9 +247,45 @@
       background: rgba(10, 12, 20, 0.6);
       backdrop-filter: blur(12px);
       display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .toolbar-search {
+      width: 100%;
+    }
+
+    .filter-row {
+      display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 1rem;
+      gap: 0.5rem;
+    }
+
+    .filter-row-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      flex-shrink: 0;
+      min-width: 3.5rem;
+    }
+
+    .source-filters,
+    .filters {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chip-source.active {
+      border-color: rgba(167, 139, 250, 0.45);
+      background: rgba(167, 139, 250, 0.12);
+      color: #ddd6fe;
     }
 
     .search {
@@ -281,13 +317,6 @@
       transform: translateY(-50%);
       color: var(--muted);
       font-size: 1rem;
-    }
-
-    .filters {
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-      flex-shrink: 0;
     }
 
     .chip {
@@ -618,6 +647,7 @@
     .badge-channel-url { background: rgba(251, 191, 36, 0.12); color: var(--amber); }
     .badge-channel-dm { background: rgba(52, 211, 153, 0.12); color: var(--green); }
     .badge-section { background: rgba(255,255,255,0.06); color: var(--muted); }
+    .badge-easy { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
 
     .format-tags {
       display: flex;
@@ -847,17 +877,38 @@
 
     <main class="main">
       <div class="toolbar">
-        <div class="search">
+        <div class="search toolbar-search">
           <input type="search" id="searchInput" placeholder="Search role or company…" />
         </div>
-        <div class="filters" id="filters">
-          <button class="chip active" data-filter="all">All</button>
-          <button class="chip" data-filter="linkedin_eligible">Best fit</button>
-          <button class="chip" data-filter="linkedin_review">Needs review</button>
-          <button class="chip" data-filter="email">Email</button>
-          <button class="chip" data-filter="form">Form</button>
-          <button class="chip" data-filter="dm">Direct message</button>
-          <button class="chip" data-filter="dismissed">Dismissed</button>
+        <div class="filter-row">
+          <span class="filter-row-label">Source</span>
+          <div class="source-filters" id="sourceFilters">
+            <button type="button" class="chip chip-source active" data-source="all">All</button>
+            <button type="button" class="chip chip-source" data-source="linkedin_posts">LinkedIn posts</button>
+            <button type="button" class="chip chip-source" data-source="linkedin_jobs">LinkedIn jobs</button>
+            <button type="button" class="chip chip-source" data-source="himalayas">Himalayas</button>
+            <button type="button" class="chip chip-source" data-source="google">Google</button>
+            <button type="button" class="chip chip-source" data-source="remoteok">RemoteOK</button>
+            <button type="button" class="chip chip-source" data-source="weworkremotely">We Work Remotely</button>
+            <button type="button" class="chip chip-source" data-source="opentoworkremote">Open To Work Remote</button>
+            <button type="button" class="chip chip-source" data-source="wellfound">Wellfound</button>
+            <button type="button" class="chip chip-source" data-source="defi">DeFi Jobs</button>
+            <button type="button" class="chip chip-source" data-source="f6s">F6S</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-row-label">Show</span>
+          <div class="filters" id="filters">
+            <button type="button" class="chip active" data-filter="all">All</button>
+            <button type="button" class="chip" data-filter="linkedin_eligible">Best fit</button>
+            <button type="button" class="chip" data-filter="linkedin_review">Needs review</button>
+            <button type="button" class="chip" data-filter="posted_24h">Posted 24h</button>
+            <button type="button" class="chip" data-filter="easy_apply">Easy Apply</button>
+            <button type="button" class="chip" data-filter="email">Email</button>
+            <button type="button" class="chip" data-filter="form">Form</button>
+            <button type="button" class="chip" data-filter="dm">Direct message</button>
+            <button type="button" class="chip" data-filter="dismissed">Dismissed</button>
+          </div>
         </div>
       </div>
       <div class="server-stale" id="serverStale" hidden>
@@ -899,11 +950,12 @@
     let snapshot = { jobs: [] };
     let activeDay = null;
     let sectionFilter = "all";
+    let sourceFilter = "all";
     let searchQuery = "";
     let serverUiApproval = false;
     let serverMeta = { today: "", has_research_today: false, last_research_day: null };
 
-    const UI_CLIENT_VERSION = 5;
+    const UI_CLIENT_VERSION = 6;
     const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
 
     function serverSupportsClient(meta) {
@@ -973,6 +1025,7 @@
     const RESEARCH_STEP_LABELS = {
       starting: "Starting research…",
       linkedin_collect: "Collecting LinkedIn posts — can take 15–30+ minutes",
+      linkedin_jobs_collect: "Collecting LinkedIn jobs (pagination)",
       discover: "Discovering job boards",
       generate_table: "Building today's apply table",
     };
@@ -1154,6 +1207,18 @@
           if (sectionFilter === "email" && !hasFormat(j, "email")) return false;
           if (sectionFilter === "form" && !hasFormat(j, "form")) return false;
           if (sectionFilter === "dm" && !hasFormat(j, "direct_message")) return false;
+        } else if (sectionFilter === "easy_apply") {
+          if (!j.linkedin_easy_apply) return false;
+        } else if (sectionFilter === "posted_24h") {
+          if (!j.posted_within_24h) return false;
+        }
+        if (sourceFilter !== "all") {
+          const src = (j.role_from || "").toLowerCase();
+          if (sourceFilter === "linkedin_posts" && src !== "linkedin_posts" && src !== "browser_scroll") {
+            return false;
+          } else if (sourceFilter !== "linkedin_posts" && src !== sourceFilter) {
+            return false;
+          }
         }
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
@@ -1405,6 +1470,7 @@
         <div class="badges">
           <span class="badge badge-track">${esc(job.track_label)}</span>
           <span class="badge ${dispositionBadgeClass(disp)}">${esc(job.position_disposition_label || "Best fit")}${overrideMark}</span>
+          ${job.linkedin_easy_apply ? '<span class="badge badge-easy">Easy Apply</span>' : ""}
         </div>
         <div class="card-meta">
           <div class="meta-item meta-item-full">
@@ -1417,8 +1483,8 @@
           <div class="meta-item"><label>Location</label><span>${esc(job.location)}</span></div>
         </div>
         <div class="card-links">
-          ${job.post_url && job.post_url.startsWith("http") ? `<a href="${esc(job.post_url)}" target="_blank" rel="noopener">Post ↗</a>` : ""}
-          ${job.apply_url && job.apply_url.startsWith("http") ? `<a href="${esc(job.apply_url)}" target="_blank" rel="noopener">Apply link ↗</a>` : ""}
+          ${job.post_url && job.post_url.startsWith("http") ? `<a href="${esc(job.post_url)}" target="_blank" rel="noopener">${job.role_from === "linkedin_jobs" ? "Job" : "Post"} ↗</a>` : ""}
+          ${job.apply_url && job.apply_url.startsWith("http") ? `<a href="${esc(job.apply_url)}" target="_blank" rel="noopener">${job.linkedin_easy_apply ? "Easy Apply ↗" : "Apply link ↗"}</a>` : ""}
           ${job.profile_url ? `<a href="${esc(job.profile_url)}" target="_blank" rel="noopener">Profile ↗</a>` : ""}
         </div>
         ${renderStepsBlock(job, actions)}`;
@@ -1577,13 +1643,22 @@
       renderCards();
     };
 
-    document.querySelectorAll(".chip").forEach(chip => {
-      chip.onclick = () => {
-        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-        chip.classList.add("active");
-        sectionFilter = chip.dataset.filter;
-        renderCards();
-      };
+    document.getElementById("sourceFilters").addEventListener("click", e => {
+      const chip = e.target.closest(".chip[data-source]");
+      if (!chip) return;
+      document.querySelectorAll("#sourceFilters .chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      sourceFilter = chip.dataset.source || "all";
+      renderCards();
+    });
+
+    document.getElementById("filters").addEventListener("click", e => {
+      const chip = e.target.closest(".chip[data-filter]");
+      if (!chip) return;
+      document.querySelectorAll("#filters .chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      sectionFilter = chip.dataset.filter || "all";
+      renderCards();
     });
 
     document.getElementById("liveBtn").onclick = () => {

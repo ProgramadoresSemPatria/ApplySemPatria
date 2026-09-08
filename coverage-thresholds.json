@@ -9,6 +9,7 @@
     "scripts/table_format.py": 0.75,
     "scripts/filters.py": 0.8,
     "scripts/post_intent.py": 0.84,
-    "scripts/config_ui_data.py": 0.72
+    "scripts/config_ui_data.py": 0.72,
+    "scripts/linkedin_jobs_merge.py": 0.68
   }
 }

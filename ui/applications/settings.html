@@ -421,7 +421,8 @@
         <a href="#profile">Profile &amp; identity</a>
         <a href="#messages">Message templates</a>
         <a href="#answers">Form answers</a>
-        <a href="#linkedin">LinkedIn discovery</a>
+        <a href="#linkedin">LinkedIn posts</a>
+        <a href="#linkedin-jobs">LinkedIn jobs</a>
         <a href="#dm">LinkedIn DM</a>
         <a href="#email">Email apply</a>
         <a href="#board">Job boards</a>
@@ -532,8 +533,8 @@
         </section>
 
         <section class="panel" id="linkedin">
-          <h3>LinkedIn discovery</h3>
-          <p class="subtitle">Post search roles, salary policy, LLM borderline classifier</p>
+          <h3>LinkedIn post discovery</h3>
+          <p class="subtitle">Content search roles, salary policy, LLM borderline classifier</p>
           ${field("roles_csv", "Roles (comma-separated)", (c.linkedin.roles || []).join(", "), "text", true)}
           ${field("region_suffixes_csv", "Regions", (c.linkedin.region_suffixes || []).join(", "), "text", true)}
           <div style="margin-top:1rem;">
@@ -546,7 +547,25 @@
             ${field("default_period_days", "Default period (days)", c.linkedin.default_period_days, "number")}
             ${field("default_max_pages", "Max search pages", c.linkedin.default_max_pages, "number")}
           </div>
-          <button class="save-btn" data-section="linkedin">Save LinkedIn discovery</button>
+          <button class="save-btn" data-section="linkedin">Save LinkedIn posts</button>
+        </section>
+
+        <section class="panel" id="linkedin-jobs">
+          <h3>LinkedIn jobs discovery</h3>
+          <p class="subtitle">Jobs search (pagination) · board-style filters · Easy Apply detection only</p>
+          ${field("lj_roles_csv", "Roles (comma-separated)", (c.linkedin_jobs?.roles || []).join(", "), "text", true)}
+          ${field("lj_region_suffixes_csv", "Regions", (c.linkedin_jobs?.region_suffixes || []).join(", "), "text", true)}
+          <div style="margin-top:1rem;">
+            ${toggleRow("lj_require_usd_salary", "Require USD salary for eligible", "", c.linkedin_jobs?.require_usd_salary)}
+            ${toggleRow("lj_remote_only", "Remote only", "LinkedIn f_WT=2 filter", c.linkedin_jobs?.remote_only !== false)}
+            ${toggleRow("lj_jobs_collect_enabled", "Collect enabled", "Include in daily research", c.linkedin_jobs?.jobs_collect_enabled !== false)}
+          </div>
+          <div class="field-grid" style="margin-top:1rem;">
+            ${field("lj_default_period_days", "Default period (days, 1 = 24h)", c.linkedin_jobs?.default_period_days ?? 1, "number")}
+            ${field("lj_default_max_pages", "Max search pages", c.linkedin_jobs?.default_max_pages ?? 12, "number")}
+            ${field("lj_salary_filter", "LinkedIn salary filter (f_SAL)", c.linkedin_jobs?.salary_filter || "", "text", true)}
+          </div>
+          <button class="save-btn" data-section="linkedin-jobs">Save LinkedIn jobs</button>
         </section>
 
         <section class="panel" id="dm">
@@ -658,6 +677,17 @@
           llm_intent_model: document.getElementById("llm_intent_model").value,
           default_period_days: parseInt(document.getElementById("default_period_days").value, 10),
           default_max_pages: parseInt(document.getElementById("default_max_pages").value, 10),
+        };
+      }
+      if (section === "linkedin-jobs") {
+        return {
+          roles: (document.getElementById("lj_roles_csv").value || "").split(",").map(s => s.trim()).filter(Boolean),
+          region_suffixes: (document.getElementById("lj_region_suffixes_csv").value || "").split(",").map(s => s.trim()).filter(Boolean),
+          require_usd_salary: document.getElementById("lj_require_usd_salary").checked,
+          remote_only: document.getElementById("lj_remote_only").checked,
+          jobs_collect_enabled: document.getElementById("lj_jobs_collect_enabled").checked,
+          default_period_days: parseInt(document.getElementById("lj_default_period_days").value, 10),
+          default_max_pages: parseInt(document.getElementById("lj_default_max_pages").value, 10),
         };
       }
       if (section === "linkedin-dm") {

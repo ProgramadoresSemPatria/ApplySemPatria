@@ -14,7 +14,8 @@ ROOT = SCRIPTS.parent
 TZ = ZoneInfo("America/Sao_Paulo")
 
 ROLE_FROM_LABELS: dict[str, str] = {
-    "linkedin_posts": "LinkedIn",
+    "linkedin_posts": "LinkedIn Post",
+    "linkedin_jobs": "LinkedIn Job",
     "google": "Google Jobs",
     "remoteok": "RemoteOK",
     "weworkremotely": "We Work Remotely",
@@ -59,6 +60,7 @@ from generate_applications import (  # noqa: E402
 )
 from registry import job_key, load_registry  # noqa: E402
 from table_format import format_posted  # noqa: E402
+from linkedin_jobs_merge import posted_within_hours  # noqa: E402
 from table_paths import APPLICATIONS_TABLES_DIR  # noqa: E402
 import dm_state  # noqa: E402
 from position_disposition import (  # noqa: E402
@@ -171,7 +173,7 @@ def _action_states(
         "available": "form" in formats,
         "done": form_submitted,
         "in_progress": False,
-        "label": "Apply via form",
+        "label": "Easy Apply via LinkedIn" if job.get("linkedin_easy_apply") else "Apply via form",
         "status_text": "submitted" if form_submitted else "not applied",
     }
 
@@ -267,6 +269,7 @@ def job_to_card(
         "salary": job.get("salary_usd") or "—",
         "location": job.get("location_note") or "—",
         "posted": format_posted(job),
+        "posted_within_24h": posted_within_hours(job, 24),
         "priority": priority(job),
         "channel": classify_channel(job),
         "channel_label": channel_label(job),
@@ -284,6 +287,8 @@ def job_to_card(
         "profile_url": dm_profile_url(job) or "",
         "application_formats": list_application_formats(job),
         "form_link_message_enabled": recruiter_message_enabled(job, li_cfg or {}),
+        "linkedin_easy_apply": bool(job.get("linkedin_easy_apply")),
+        "apply_method": job.get("apply_method") or "",
         "actions": actions,
     }
 
@@ -317,7 +322,7 @@ def collect_jobs_for_ui(
     linkedin = [
         j
         for j in all_jobs
-        if j.get("source") == "linkedin_posts"
+        if j.get("source") in ("linkedin_posts", "linkedin_jobs")
         and discovered_at(j)
         and discovered_at(j) >= linkedin_since
     ]
@@ -329,7 +334,7 @@ def collect_jobs_for_ui(
     boards = [
         j
         for j in all_jobs
-        if j.get("source") not in ("linkedin_posts", "google")
+        if j.get("source") not in ("linkedin_posts", "linkedin_jobs", "google")
         and discovered_at(j)
         and discovered_at(j) >= board_since
     ]

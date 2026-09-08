@@ -1,0 +1,41 @@
+{
+  "roles": [
+    "android developer",
+    "kotlin developer"
+  ],
+  "region_suffixes": [
+    "latam",
+    "worldwide"
+  ],
+  "query_template": "{role}",
+  "default_period_days": 1,
+  "default_max_pages": 12,
+  "remote_only": false,
+  "salary_filter": "f_SA_id_225001:272001",
+  "jobs_collect_enabled": true,
+  "region_locations": {
+    "latam": "Brazil",
+    "worldwide": ""
+  },
+  "region_location_alts": {
+    "latam": [
+      "Brazil",
+      "Mexico",
+      "Colombia",
+      "Argentina"
+    ],
+    "worldwide": []
+  },
+  "region_geo_ids": {
+    "latam": "106057199"
+  },
+  "time_posted_map": {
+    "1": "r86400",
+    "7": "r604800",
+    "30": "r2592000"
+  },
+  "require_usd_salary": false,
+  "table_sort": "date_posted",
+  "easy_apply_visual": true,
+  "easy_apply_submit_from_ui": true
+}

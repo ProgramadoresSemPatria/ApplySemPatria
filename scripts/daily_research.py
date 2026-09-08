@@ -38,65 +38,99 @@ def run_daily_research(
     track: str | None = None,
     since: str = "7d",
     skip_linkedin: bool = False,
+    skip_linkedin_jobs: bool = False,
+    skip_discover: bool = False,
+    table_only: bool = False,
 ) -> dict[str, Any]:
     """Discover jobs and build today's researched applications snapshot."""
-    from table_paths import applications_table_path, ensure_table_dirs  # noqa: E402
+    from table_paths import applications_table_for_day, applications_table_path, ensure_table_dirs  # noqa: E402
     from table_window import load_window, save_window  # noqa: E402
     from track_readiness import ready_track_ids  # noqa: E402
+    from research_log import has_research, load_log  # noqa: E402
     from track_store import resolve_track  # noqa: E402
 
     day = today_local()
     ensure_table_dirs()
     steps: list[str] = []
     errors: list[str] = []
+    prev_steps: list[str] = []
+    if has_research(day):
+        prev_steps = list(load_log().get("days", {}).get(day, {}).get("steps") or [])
+
     start_research_run(day)
 
     try:
-        if not skip_linkedin:
-            li_script = SCRIPTS / "linkedin-deep-collect.sh"
-            if li_script.is_file():
-                steps.append("linkedin_collect")
-                set_research_step("linkedin_collect")
-                proc = subprocess.run(
-                    [str(li_script), "--all-queries", "--merge", "--since", since],
-                    cwd=str(ROOT),
-                    capture_output=True,
-                    text=True,
-                )
-                if proc.returncode != 0:
-                    tail = (proc.stderr or proc.stdout or "").strip().splitlines()
-                    errors.append("LinkedIn collect: " + (tail[-1] if tail else f"exit {proc.returncode}"))
-            else:
-                errors.append("LinkedIn collect script missing — skipped")
+        track_ids: list[str] = []
 
-        track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
-        if not track_ids:
-            msg = "No tracks ready for discovery. Run jobsearch doctor."
-            finish_research_run(ok=False, message=msg)
-            return {
-                "ok": False,
-                "message": msg,
-                "day": day,
-            }
+        if not table_only:
+            if not skip_linkedin:
+                li_script = SCRIPTS / "linkedin-deep-collect.sh"
+                if li_script.is_file():
+                    steps.append("linkedin_collect")
+                    set_research_step("linkedin_collect")
+                    proc = subprocess.run(
+                        [str(li_script), "--all-queries", "--merge", "--since", since],
+                        cwd=str(ROOT),
+                        capture_output=True,
+                        text=True,
+                    )
+                    if proc.returncode != 0:
+                        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+                        errors.append("LinkedIn collect: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+                else:
+                    errors.append("LinkedIn collect script missing — skipped")
 
-        for tid in track_ids:
-            steps.append(f"discover:{tid}")
-            set_research_step("discover", detail=tid)
-            proc = subprocess.run(
-                [PY, str(SCRIPTS / "discover.py"), "--since", since, "--track", tid],
-                cwd=str(ROOT),
-                capture_output=True,
-                text=True,
-            )
-            if proc.returncode != 0:
-                tail = (proc.stderr or proc.stdout or "").strip().splitlines()
-                errors.append(f"Discover {tid}: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+            if not skip_linkedin_jobs:
+                li_jobs_script = SCRIPTS / "linkedin-jobs-collect.sh"
+                if li_jobs_script.is_file():
+                    steps.append("linkedin_jobs_collect")
+                    set_research_step("linkedin_jobs_collect")
+                    proc = subprocess.run(
+                        [str(li_jobs_script), "--all-queries", "--merge", "--since", since],
+                        cwd=str(ROOT),
+                        capture_output=True,
+                        text=True,
+                    )
+                    if proc.returncode != 0:
+                        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+                        errors.append("LinkedIn jobs: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+                else:
+                    errors.append("LinkedIn jobs collect script missing — skipped")
+
+            track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
+            if not track_ids:
+                msg = "No tracks ready for discovery. Run jobsearch doctor."
+                finish_research_run(ok=False, message=msg)
+                return {
+                    "ok": False,
+                    "message": msg,
+                    "day": day,
+                }
+
+            if not skip_discover:
+                for tid in track_ids:
+                    steps.append(f"discover:{tid}")
+                    set_research_step("discover", detail=tid)
+                    proc = subprocess.run(
+                        [PY, str(SCRIPTS / "discover.py"), "--since", since, "--track", tid],
+                        cwd=str(ROOT),
+                        capture_output=True,
+                        text=True,
+                    )
+                    if proc.returncode != 0:
+                        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+                        errors.append(f"Discover {tid}: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+        else:
+            track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
+            if not track_ids:
+                track_ids = ["ai-engineer"]
 
         li_since, bd_since = load_window()
         save_window(linkedin_since=li_since, board_since=bd_since)
-        out = applications_table_path()
+        out = applications_table_for_day(day) if has_research(day) else applications_table_path()
 
-        steps.append("generate_table")
+        if "generate_table" not in steps:
+            steps.append("generate_table")
         set_research_step("generate_table")
         proc = subprocess.run(
             [
@@ -134,7 +168,15 @@ def run_daily_research(
         except (OSError, json.JSONDecodeError):
             pass
 
-        mark_research_day(day, job_count=job_count, tracks=track_ids, since=since, steps=steps)
+        merged_steps = prev_steps + [s for s in steps if s not in prev_steps]
+        mark_research_day(
+            day,
+            job_count=job_count,
+            tracks=track_ids,
+            since=since,
+            steps=merged_steps,
+            catch_up=bool(prev_steps and set(steps) - set(prev_steps)),
+        )
         msg = f"Research complete for {day}: {job_count} roles in apply table."
         if errors:
             msg += "\nWarnings:\n" + "\n".join(errors)
@@ -158,6 +200,22 @@ def main() -> int:
     parser.add_argument("--track", default=None)
     parser.add_argument("--since", default="7d")
     parser.add_argument("--skip-linkedin", action="store_true")
+    parser.add_argument("--skip-linkedin-jobs", action="store_true")
+    parser.add_argument(
+        "--skip-discover",
+        action="store_true",
+        help="Skip job-board discover (use with catch-up when posts/jobs already ran)",
+    )
+    parser.add_argument(
+        "--table-only",
+        action="store_true",
+        help="Regenerate today's apply table from registry only (no new discovery)",
+    )
+    parser.add_argument(
+        "--catch-up-jobs",
+        action="store_true",
+        help="LinkedIn Jobs collect + refresh table; skip posts scroll and boards",
+    )
     parser.add_argument("--repair-snapshots", action="store_true", help="Remove snapshot files without research log entry")
     args = parser.parse_args()
 
@@ -171,10 +229,17 @@ def main() -> int:
             print("No spurious snapshot days to remove.")
         return 0
 
+    skip_linkedin = args.skip_linkedin or args.catch_up_jobs or args.table_only
+    skip_linkedin_jobs = args.skip_linkedin_jobs or args.table_only
+    skip_discover = args.skip_discover or args.catch_up_jobs or args.table_only
+
     result = run_daily_research(
         track=args.track,
         since=args.since,
-        skip_linkedin=args.skip_linkedin,
+        skip_linkedin=skip_linkedin,
+        skip_linkedin_jobs=skip_linkedin_jobs,
+        skip_discover=skip_discover,
+        table_only=args.table_only,
     )
     print(result.get("message", result))
     return 0 if result.get("ok") else 1

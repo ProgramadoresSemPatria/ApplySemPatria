@@ -140,45 +140,110 @@ def ui_snapshot_duplicate_email(
     return {"day": day, "generated_at": f"{day}T12:00:00", "jobs": jobs}
 
 
-def ui_snapshot_multi_dm(*, day: str = "2026-09-06") -> dict[str, Any]:
-    """Two DM list rows with no connect sent yet (full-pipeline regression fixture)."""
-    actions = {
+def _linkedin_job_card(
+    *,
+    job_key: str,
+    role: str,
+    company: str,
+    post_url: str,
+    posted: str,
+    posted_within_24h: bool,
+    easy_apply: bool = True,
+) -> dict[str, Any]:
+    return {
+        "job_key": job_key,
+        "role": role,
+        "company": company,
+        "track_label": "AI Engineer",
+        "role_from": "linkedin_jobs",
+        "role_from_label": "LinkedIn Job",
+        "salary": "—",
+        "location": "Brazil · Remote",
+        "posted": posted,
+        "posted_within_24h": posted_within_24h,
+        "section": "linkedin_eligible",
+        "position_disposition": "best_fit",
+        "position_disposition_label": "Best fit",
+        "position_disposition_auto": "best_fit",
+        "position_disposition_is_override": False,
+        "application_steps_enabled": True,
+        "application_formats": [{"id": "form", "label": "Form"}],
+        "post_url": post_url,
+        "apply_url": post_url,
+        "apply_email": "",
+        "profile_url": "",
+        "linkedin_easy_apply": easy_apply,
+        "apply_method": "easy_apply" if easy_apply else "external",
+        "actions": {
+            "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
+            "form": {"available": True, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
+            "dm_connect": {"available": False, "done": False, "in_progress": False, "label": "Send connection", "status_text": "not applied"},
+            "dm_check": {"available": False, "done": False, "in_progress": False, "label": "Check connection accepted", "status_text": "not applied"},
+            "dm_message": {"available": False, "done": False, "in_progress": False, "label": "Send LinkedIn message", "status_text": "not applied"},
+        },
+    }
+
+
+def ui_snapshot_linkedin_jobs_mixed(*, day: str = "2026-09-06") -> dict[str, Any]:
+    """Two LinkedIn jobs (24h) + one older job + one LinkedIn post."""
+    post_actions = {
         "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
-        "form": {"available": False, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
+        "form": {"available": True, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
         "dm_connect": {"available": True, "done": False, "in_progress": False, "label": "Send connection", "status_text": "not applied"},
         "dm_check": {"available": False, "done": False, "in_progress": False, "label": "Check connection accepted", "status_text": "not applied"},
         "dm_message": {"available": True, "done": False, "in_progress": False, "label": "Send LinkedIn message", "status_text": "not applied"},
     }
-    formats = [{"id": "direct_message", "label": "Direct message"}]
-    jobs = []
-    for idx, (suffix, profile) in enumerate(
-        (("a", "https://www.linkedin.com/in/recruiter-a/"), ("b", "https://www.linkedin.com/in/recruiter-b/")),
-        start=1,
-    ):
-        jobs.append(
-            {
-                "job_key": f"ai-engineer|linkedin|acme ai|ai engineer {suffix}",
-                "role": f"AI Engineer {suffix}",
-                "company": f"Acme AI {suffix}",
-                "track_label": "AI Engineer",
-                "role_from_label": "LinkedIn",
-                "salary": "USD 120k",
-                "location": "Remote LATAM",
-                "posted": "2d",
-                "section": "linkedin_eligible",
-                "position_disposition": "best_fit",
-                "position_disposition_label": "Best fit",
-                "position_disposition_auto": "best_fit",
-                "position_disposition_is_override": False,
-                "application_steps_enabled": True,
-                "application_formats": formats,
-                "post_url": f"https://www.linkedin.com/posts/test-activity-{idx}",
-                "apply_url": "",
-                "apply_email": "",
-                "profile_url": profile,
-                "actions": actions,
-            }
-        )
+    post_card = {
+        "job_key": "ai-engineer|linkedin|acme ai|ai engineer",
+        "role": "AI Engineer",
+        "company": "Acme AI",
+        "track_label": "AI Engineer",
+        "role_from": "linkedin_posts",
+        "role_from_label": "LinkedIn Post",
+        "salary": "USD 120k",
+        "location": "Remote LATAM",
+        "posted": "2d",
+        "posted_within_24h": False,
+        "section": "linkedin_eligible",
+        "position_disposition": "best_fit",
+        "position_disposition_label": "Best fit",
+        "position_disposition_auto": "best_fit",
+        "position_disposition_is_override": False,
+        "application_steps_enabled": True,
+        "application_formats": [{"id": "direct_message", "label": "Direct message"}],
+        "post_url": "https://www.linkedin.com/posts/test-activity-123",
+        "apply_url": "https://example.com/apply",
+        "apply_email": "",
+        "profile_url": "https://www.linkedin.com/in/recruiter-test/",
+        "actions": post_actions,
+    }
+    jobs = [
+        post_card,
+        _linkedin_job_card(
+            job_key="ai-engineer|linkedin_jobs|tcs|ai engineer",
+            role="AI Engineer",
+            company="Tata Consultancy Services",
+            post_url="https://www.linkedin.com/jobs/view/4464387581/",
+            posted="19h",
+            posted_within_24h=True,
+        ),
+        _linkedin_job_card(
+            job_key="ai-engineer|linkedin_jobs|britecore|senior forward deployed engineer",
+            role="Senior Forward Deployed Engineer",
+            company="BriteCore",
+            post_url="https://www.linkedin.com/jobs/view/4298246321/",
+            posted="4h",
+            posted_within_24h=True,
+        ),
+        _linkedin_job_card(
+            job_key="ai-engineer|linkedin_jobs|neon|staff ml engineer",
+            role="Staff ML Engineer",
+            company="Neon",
+            post_url="https://www.linkedin.com/jobs/view/4100099999/",
+            posted="5d",
+            posted_within_24h=False,
+        ),
+    ]
     return {"day": day, "generated_at": f"{day}T12:00:00", "jobs": jobs}
 
 

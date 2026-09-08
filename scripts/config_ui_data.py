@@ -12,6 +12,7 @@ from track_store import (  # noqa: E402
     load_form_answers,
     load_google_config,
     load_linkedin_config,
+    load_linkedin_jobs_config,
     load_profile,
     resolve_track,
     save_board_config,
@@ -19,6 +20,7 @@ from track_store import (  # noqa: E402
     save_form_answers,
     save_google_config,
     save_linkedin_config,
+    save_linkedin_jobs_config,
     save_profile,
     track_label,
 )
@@ -52,6 +54,12 @@ PROFILE_ANSWER_FIELDS = (
     "english_level",
     "hourly_rate_usd",
     "annual_salary_usd",
+)
+
+LINKEDIN_JOBS_BOOL_FIELDS = (
+    "require_usd_salary",
+    "remote_only",
+    "jobs_collect_enabled",
 )
 
 LINKEDIN_BOOL_FIELDS = (
@@ -112,6 +120,7 @@ def load_config_bundle(track_id: str | None = None) -> dict[str, Any]:
     tid = resolve_track(track_id)
     profile = load_profile(tid)
     linkedin = load_linkedin_config(tid)
+    linkedin_jobs = load_linkedin_jobs_config(tid)
     email = load_email_config(tid)
     board = load_board_config(tid)
     google = load_google_config(tid)
@@ -155,6 +164,17 @@ def load_config_bundle(track_id: str | None = None) -> dict[str, Any]:
             "llm_intent_model": linkedin.get("llm_intent_model", "gpt-4o-mini"),
             "table_sort": linkedin.get("table_sort", "date_posted"),
             "search_sort": linkedin.get("search_sort", "date_posted"),
+        },
+        "linkedin_jobs": {
+            "roles": linkedin_jobs.get("roles") or [],
+            "region_suffixes": linkedin_jobs.get("region_suffixes") or [],
+            "require_usd_salary": bool(linkedin_jobs.get("require_usd_salary")),
+            "default_period_days": linkedin_jobs.get("default_period_days", 1),
+            "default_max_pages": linkedin_jobs.get("default_max_pages", 12),
+            "remote_only": bool(linkedin_jobs.get("remote_only", False)),
+            "salary_filter": linkedin_jobs.get("salary_filter") or "",
+            "jobs_collect_enabled": bool(linkedin_jobs.get("jobs_collect_enabled", True)),
+            "table_sort": linkedin_jobs.get("table_sort", "date_posted"),
         },
         "email": {
             "sender_email": email.get("sender_email", ""),
@@ -222,6 +242,18 @@ def save_config_section(track_id: str | None, section: str, payload: dict[str, A
             elif key == "llm_intent_model":
                 cfg[key] = str(val or "gpt-4o-mini").strip()
         save_linkedin_config(tid, cfg)
+    elif section == "linkedin_jobs":
+        cfg = load_linkedin_jobs_config(tid)
+        for key, val in payload.items():
+            if key in ("roles", "region_suffixes") and isinstance(val, list):
+                cfg[key] = [str(v).strip() for v in val if str(v).strip()]
+            elif key in LINKEDIN_JOBS_BOOL_FIELDS:
+                cfg[key] = bool(val)
+            elif key in ("default_period_days", "default_max_pages"):
+                cfg[key] = int(val)
+            elif key == "salary_filter":
+                cfg[key] = str(val or "").strip()
+        save_linkedin_jobs_config(tid, cfg)
     elif section == "email":
         cfg = load_email_config(tid)
         for key, val in payload.items():
