@@ -14,7 +14,7 @@ from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
 
 CONNECT_RE = re.compile(r"connect|invite.*to connect", re.I)
 MESSAGE_RE = re.compile(r"^message", re.I)
@@ -100,8 +100,7 @@ async def main() -> None:
         print("\n(Leaving browser open 8s so you can look.)")
         await asyncio.sleep(8)
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
 
 
 if __name__ == "__main__":

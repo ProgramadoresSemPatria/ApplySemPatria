@@ -21,6 +21,12 @@ sys.path.insert(0, str(ROOT))
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
+@pytest.fixture(autouse=True)
+def disable_human_pacing_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep unit/browser tests fast — full human pacing is for live LinkedIn runs."""
+    monkeypatch.setenv("JOBSEARCH_HUMAN_PACING", "0")
+
+
 @pytest.fixture
 def linkedin_html_dir() -> Path:
     return FIXTURES / "linkedin"

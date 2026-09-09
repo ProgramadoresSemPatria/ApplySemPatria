@@ -30,7 +30,7 @@ ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
 import form_answers  # noqa: E402
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
 from flow_runner import resolve_recipe, run_recipe  # noqa: E402
 from track_store import load_profile as load_track_profile  # noqa: E402
 
@@ -561,8 +561,7 @@ async def run(
         print(f"\nholding browser open {hold}s for review…")
         await asyncio.sleep(hold)
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
 
 
 def main() -> int:

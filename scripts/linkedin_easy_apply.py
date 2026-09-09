@@ -26,7 +26,7 @@ ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
 import form_answers  # noqa: E402
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
 from flow_runner import resolve_recipe, run_recipe  # noqa: E402
 from track_store import load_linkedin_jobs_config, load_profile as load_track_profile  # noqa: E402
 from url_apply import (  # noqa: E402
@@ -378,8 +378,7 @@ async def run_apply(
             await asyncio.sleep(hold_on_error)
         raise
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
 
     return summary
 

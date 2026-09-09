@@ -37,12 +37,7 @@ from linkedin_jobs_merge import (  # noqa: E402
 )
 from track_store import load_linkedin_jobs_config  # noqa: E402
 
-PROFILE_DIR = Path.home() / ".linkedin-mcp" / "profile"
-BROWSERS_PATH = Path.home() / ".linkedin-mcp" / "patchright-browsers"
-CHROME_EXECUTABLE = (
-    BROWSERS_PATH
-    / "chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-)
+from browser_session import PROFILE_DIR, browser_launch_kwargs, load_cookies  # noqa: E402
 RUNS = ROOT / "runs"
 TZ = ZoneInfo("America/Sao_Paulo")
 PAGE_PAUSE = 1.5
@@ -51,22 +46,9 @@ CARD_PAUSE = 0.12
 
 
 async def _launch_context(p: Any, *, use_profile: bool) -> tuple[Any, dict[str, Any]]:
-    import os
-
-    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(BROWSERS_PATH)
     stats: dict[str, Any] = {"errors": [], "auth_mode": "cookies"}
-
-    launch_kwargs: dict[str, Any] = {
-        "headless": True,
-        "args": ["--disable-blink-features=AutomationControlled"],
-    }
-    if CHROME_EXECUTABLE.exists():
-        launch_kwargs["executable_path"] = str(CHROME_EXECUTABLE)
-
-    cookies_path = Path.home() / ".linkedin-mcp" / "cookies.json"
-    cookies: list[dict[str, Any]] = []
-    if cookies_path.exists():
-        cookies = json.loads(cookies_path.read_text(encoding="utf-8"))
+    launch_kwargs = browser_launch_kwargs(headless=True)
+    cookies = load_cookies()
 
     context = None
     if use_profile and PROFILE_DIR.exists():

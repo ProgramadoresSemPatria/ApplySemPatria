@@ -3,22 +3,28 @@
 
 from __future__ import annotations
 
-import asyncio
 import re
 from typing import Any
 
+from human_pacing import (
+    drift_mouse,
+    human_click,
+    human_fill,
+    human_scroll,
+    pause_human,
+    pause_page_settle,
+    pause_poll,
+)
 from linkedin_ui import cleanup_after_message, dismiss_blocking_dialogs
 
 MESSAGE_AFFORDANCE = "main a:has-text('Message'), main button:has-text('Message')"
 
-# LinkedIn shows these as centered headers when messages are < ~1 week old.
 RECENT_HEADER_RE = re.compile(
     r"^(today|yesterday|"
     r"monday|tuesday|wednesday|thursday|friday|saturday|sunday)$",
     re.I,
 )
 
-# Older buckets look like "AUG 6", "Jul 29", "September 1".
 OLDER_HEADER_RE = re.compile(
     r"^(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
     r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
@@ -89,8 +95,9 @@ async def _thread_panel_visible(page) -> bool:
 async def open_message_thread(page) -> bool:
     """Click Message on profile top card and wait for the chat overlay."""
     await page.evaluate("window.scrollTo(0, 0)")
-    await asyncio.sleep(0.4)
+    await pause_poll(base=0.4)
     await dismiss_blocking_dialogs(page)
+    await drift_mouse(page)
 
     compose_url = await _top_compose_href(page)
     loc = page.locator("main a[href*='messaging/compose']:not([aria-label])")
@@ -104,14 +111,15 @@ async def open_message_thread(page) -> bool:
         return False
 
     try:
-        await loc.first.click(timeout=15000)
+        await human_click(page, loc, timeout=15000)
     except Exception:  # noqa: BLE001
         if compose_url:
             await page.goto(compose_url, wait_until="domcontentloaded", timeout=60000)
+            await pause_page_settle()
         else:
             return False
 
-    await asyncio.sleep(3.0)
+    await pause_page_settle(base=6.5)
     await dismiss_blocking_dialogs(page)
 
     if await _thread_panel_visible(page):
@@ -119,7 +127,7 @@ async def open_message_thread(page) -> bool:
 
     if compose_url:
         await page.goto(compose_url, wait_until="domcontentloaded", timeout=60000)
-        await asyncio.sleep(3.0)
+        await pause_page_settle(base=6.5)
         await dismiss_blocking_dialogs(page)
         return await _thread_panel_visible(page)
 
@@ -150,17 +158,15 @@ async def send_message(page, text: str, *, send: bool) -> tuple[bool, str]:
     if not send:
         return True, "DRY: would send message"
     try:
-        await composer.first.click()
-        await composer.first.fill(text)
-        await asyncio.sleep(0.6)
+        await human_fill(page, composer, text)
+        await pause_human(base=6.0)
         btn = page.locator(
             "button.msg-form__send-button, button.msg-form__send-btn, "
             ".msg-form button[type='submit']"
         )
         if await btn.count() == 0:
             return False, "Send button not found"
-        await btn.first.click(timeout=10000)
-        await asyncio.sleep(1.2)
+        await human_click(page, btn, timeout=10000)
         closed = await cleanup_after_message(page)
         suffix = f" · cleanup: {', '.join(closed)}" if closed else ""
         return True, f"sent{suffix}"
@@ -175,10 +181,11 @@ async def inspect_thread(page) -> dict[str, Any]:
         return {"opened": False, "headers": [], "recent": False, "reason": "message thread did not open"}
 
     try:
+        await human_scroll(page)
         await page.evaluate(
             "() => { const el = document.querySelector('.msg-s-message-list-content'); if (el) el.scrollTop = el.scrollHeight; }"
         )
-        await asyncio.sleep(0.5)
+        await pause_human(base=5.5)
     except Exception:  # noqa: BLE001
         pass
 

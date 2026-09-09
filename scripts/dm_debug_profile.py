@@ -10,7 +10,7 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
 
 URL = sys.argv[1] if len(sys.argv) > 1 else "https://www.linkedin.com/in/luciadeledda/"
 
@@ -48,8 +48,7 @@ async def main() -> None:
         print(json.dumps(info, indent=2))
         await asyncio.sleep(8)
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
 
 
 if __name__ == "__main__":

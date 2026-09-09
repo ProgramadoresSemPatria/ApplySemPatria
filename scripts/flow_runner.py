@@ -140,8 +140,16 @@ async def _run_steps(
                     wait_until=step.get("wait_until", "domcontentloaded"),
                     timeout=step.get("timeout", 60000),
                 )
+                if send:
+                    from human_pacing import drift_mouse, pause_page_settle  # noqa: WPS433
+
+                    await pause_page_settle()
+                    await drift_mouse(page)
             elif action == "sleep":
-                await asyncio.sleep(float(step.get("seconds", 1.0)))
+                from human_pacing import MIN_HUMAN_PAUSE, pause_human  # noqa: WPS433
+
+                sec = max(float(step.get("seconds", MIN_HUMAN_PAUSE)), MIN_HUMAN_PAUSE)
+                await pause_human(base=sec)
             elif action == "press":
                 await page.keyboard.press(step.get("key", "Escape"))
                 rec["note"] = step.get("key", "Escape")
@@ -157,7 +165,18 @@ async def _run_steps(
                         rec["commit_kind"] = step.get("commit_kind")
                 else:
                     idx = step.get("index", 0)
-                    await loc.nth(idx).click(timeout=step.get("timeout", 15000))
+                    if send:
+                        from human_pacing import human_click  # noqa: WPS433
+
+                        await human_click(
+                            page,
+                            loc,
+                            index=idx,
+                            timeout=float(step.get("timeout", 15000)),
+                            force=bool(step.get("force")),
+                        )
+                    else:
+                        await loc.nth(idx).click(timeout=step.get("timeout", 15000))
                     if step.get("commit"):
                         rec["committed"] = True
                         rec["commit_kind"] = step.get("commit_kind")
@@ -179,7 +198,12 @@ async def _run_steps(
                 elif destructive and not send:
                     rec["note"] = f"DRY: would fill '{value[:40]}'"
                 else:
-                    await loc.nth(step.get("index", 0)).fill(value)
+                    if send:
+                        from human_pacing import human_fill  # noqa: WPS433
+
+                        await human_fill(page, loc, value, index=step.get("index", 0))
+                    else:
+                        await loc.nth(step.get("index", 0)).fill(value)
                     rec["note"] = f"filled '{value[:40]}'"
             elif action == "upload":
                 loc = _locator(page, step, variables)

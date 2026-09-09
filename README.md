@@ -1,4 +1,4 @@
-# ApplySemPatria / Jobsearch
+# ApplySemPatria
 
 [![CI](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml)
 

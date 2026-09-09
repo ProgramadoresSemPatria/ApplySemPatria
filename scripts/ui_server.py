@@ -589,7 +589,7 @@ def set_form_status(job_key: str, applied: bool) -> dict[str, Any]:
 
 
 class ApplicationsUIHandler(BaseHTTPRequestHandler):
-    server_version = "JobsearchUI/1.0"
+    server_version = "ApplySemPatriaUI/1.0"
 
     def log_message(self, fmt: str, *args: Any) -> None:
         print(f"[ui] {self.address_string()} {fmt % args}")

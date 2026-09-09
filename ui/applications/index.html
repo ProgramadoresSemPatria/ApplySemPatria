@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Jobsearch · Applications</title>
+  <title>ApplySemPatria · Applications</title>
+  <link rel="icon" href="logo.jpg" type="image/jpeg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
@@ -104,17 +105,13 @@
       height: 18px;
     }
 
-    .brand-icon {
+    .brand-logo {
       width: 40px;
       height: 40px;
       border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: #07080d;
-      box-shadow: 0 8px 24px rgba(110, 231, 255, 0.25);
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(110, 231, 255, 0.15);
     }
 
     .brand h1 {
@@ -247,51 +244,23 @@
       background: rgba(10, 12, 20, 0.6);
       backdrop-filter: blur(12px);
       display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.75rem;
-    }
-
-    .toolbar-search {
-      width: 100%;
-    }
-
-    .filter-row {
-      display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 0.5rem;
+      align-content: flex-start;
+      gap: 0.5rem 0.65rem;
     }
 
-    .filter-row-label {
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      flex-shrink: 0;
-      min-width: 3.5rem;
-    }
-
-    .source-filters,
-    .filters {
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-      flex: 1;
-      min-width: 0;
+    .search {
+      flex: 0 1 280px;
+      width: min(100%, 280px);
+      min-width: 200px;
+      position: relative;
     }
 
     .chip-source.active {
       border-color: rgba(167, 139, 250, 0.45);
       background: rgba(167, 139, 250, 0.12);
       color: #ddd6fe;
-    }
-
-    .search {
-      flex: 1;
-      min-width: 220px;
-      position: relative;
     }
 
     .search input {
@@ -320,6 +289,7 @@
     }
 
     .chip {
+      flex: 0 0 auto;
       padding: 0.45rem 0.85rem;
       border-radius: 999px;
       border: 1px solid var(--border);
@@ -948,9 +918,9 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-icon">JS</div>
+        <img class="brand-logo" src="logo.jpg" alt="" width="40" height="40" />
         <div>
-          <h1>Jobsearch</h1>
+          <h1>ApplySemPatria</h1>
           <p>Applications dashboard</p>
         </div>
         <a href="settings.html" class="config-link" title="Configuration &amp; setup" aria-label="Configuration">
@@ -968,40 +938,29 @@
     </aside>
 
     <main class="main">
-      <div class="toolbar">
-        <div class="search toolbar-search">
+      <div class="toolbar" id="toolbarFilters">
+        <div class="search">
           <input type="search" id="searchInput" placeholder="Search role or company…" />
         </div>
-        <div class="filter-row">
-          <span class="filter-row-label">Source</span>
-          <div class="source-filters" id="sourceFilters">
-            <button type="button" class="chip chip-source active" data-source="all">All</button>
-            <button type="button" class="chip chip-source" data-source="linkedin_posts">LinkedIn posts</button>
-            <button type="button" class="chip chip-source" data-source="linkedin_jobs">LinkedIn jobs</button>
-            <button type="button" class="chip chip-source" data-source="himalayas">Himalayas</button>
-            <button type="button" class="chip chip-source" data-source="google">Google</button>
-            <button type="button" class="chip chip-source" data-source="remoteok">RemoteOK</button>
-            <button type="button" class="chip chip-source" data-source="weworkremotely">We Work Remotely</button>
-            <button type="button" class="chip chip-source" data-source="opentoworkremote">Open To Work Remote</button>
-            <button type="button" class="chip chip-source" data-source="wellfound">Wellfound</button>
-            <button type="button" class="chip chip-source" data-source="defi">DeFi Jobs</button>
-            <button type="button" class="chip chip-source" data-source="f6s">F6S</button>
-          </div>
-        </div>
-        <div class="filter-row">
-          <span class="filter-row-label">Show</span>
-          <div class="filters" id="filters">
-            <button type="button" class="chip active" data-filter="all">All</button>
-            <button type="button" class="chip" data-filter="linkedin_eligible">Best fit</button>
-            <button type="button" class="chip" data-filter="linkedin_review">Needs review</button>
-            <button type="button" class="chip" data-filter="posted_24h">Posted 24h</button>
-            <button type="button" class="chip" data-filter="easy_apply">Easy Apply</button>
-            <button type="button" class="chip" data-filter="email">Email</button>
-            <button type="button" class="chip" data-filter="form">Form</button>
-            <button type="button" class="chip" data-filter="dm">Direct message</button>
-            <button type="button" class="chip" data-filter="dismissed">Dismissed</button>
-          </div>
-        </div>
+        <button type="button" class="chip active" data-filter="all">All</button>
+        <button type="button" class="chip chip-source" data-source="linkedin_posts">LinkedIn posts</button>
+        <button type="button" class="chip chip-source" data-source="linkedin_jobs">LinkedIn jobs</button>
+        <button type="button" class="chip chip-source" data-source="himalayas">Himalayas</button>
+        <button type="button" class="chip chip-source" data-source="google">Google</button>
+        <button type="button" class="chip chip-source" data-source="remoteok">RemoteOK</button>
+        <button type="button" class="chip chip-source" data-source="weworkremotely">We Work Remotely</button>
+        <button type="button" class="chip chip-source" data-source="opentoworkremote">Open To Work Remote</button>
+        <button type="button" class="chip chip-source" data-source="wellfound">Wellfound</button>
+        <button type="button" class="chip chip-source" data-source="defi">DeFi Jobs</button>
+        <button type="button" class="chip chip-source" data-source="f6s">F6S</button>
+        <button type="button" class="chip" data-filter="linkedin_eligible">Best fit</button>
+        <button type="button" class="chip" data-filter="linkedin_review">Needs review</button>
+        <button type="button" class="chip" data-filter="posted_24h">Posted 24h</button>
+        <button type="button" class="chip" data-filter="easy_apply">Easy Apply</button>
+        <button type="button" class="chip" data-filter="email">Email</button>
+        <button type="button" class="chip" data-filter="form">Form</button>
+        <button type="button" class="chip" data-filter="dm">Direct message</button>
+        <button type="button" class="chip" data-filter="dismissed">Dismissed</button>
       </div>
       <div class="server-stale" id="serverStale" hidden>
         UI server is outdated — bulk email, card taps, and other actions may fail. Restart:
@@ -1055,8 +1014,15 @@
   <script>
     let snapshot = { jobs: [] };
     let activeDay = null;
-    let sectionFilter = "all";
-    let sourceFilter = "all";
+    let activeChipFilter = { type: "section", value: "all" };
+
+    function sectionFilterValue() {
+      return activeChipFilter?.type === "section" ? activeChipFilter.value : "all";
+    }
+
+    function sourceFilterValue() {
+      return activeChipFilter?.type === "source" ? activeChipFilter.value : "all";
+    }
     let searchQuery = "";
     let serverUiApproval = false;
     let serverMeta = { today: "", has_research_today: false, last_research_day: null, chameleon: { ready: false } };
@@ -1300,6 +1266,8 @@
     }
 
     function filteredJobs() {
+      const sectionFilter = sectionFilterValue();
+      const sourceFilter = sourceFilterValue();
       return (snapshot.jobs || []).filter(j => {
         const disp = j.position_disposition || j.position_disposition_auto || "best_fit";
         if (sectionFilter === "dismissed") {
@@ -1859,21 +1827,17 @@
       renderCards();
     };
 
-    document.getElementById("sourceFilters").addEventListener("click", e => {
-      const chip = e.target.closest(".chip[data-source]");
+    document.getElementById("toolbarFilters").addEventListener("click", e => {
+      const chip = e.target.closest(".chip[data-source], .chip[data-filter]");
       if (!chip) return;
-      document.querySelectorAll("#sourceFilters .chip").forEach(c => c.classList.remove("active"));
+      if (chip.classList.contains("active")) return;
+      document.querySelectorAll("#toolbarFilters .chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
-      sourceFilter = chip.dataset.source || "all";
-      renderCards();
-    });
-
-    document.getElementById("filters").addEventListener("click", e => {
-      const chip = e.target.closest(".chip[data-filter]");
-      if (!chip) return;
-      document.querySelectorAll("#filters .chip").forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-      sectionFilter = chip.dataset.filter || "all";
+      if (chip.dataset.source) {
+        activeChipFilter = { type: "source", value: chip.dataset.source };
+      } else {
+        activeChipFilter = { type: "section", value: chip.dataset.filter || "all" };
+      }
       renderCards();
     });
 
@@ -1942,7 +1906,7 @@
           body: JSON.stringify({
             action: "dm_process_all",
             job_keys: dmJobs.map(j => j.job_key),
-            section_filter: sectionFilter,
+            section_filter: sectionFilterValue(),
           }),
         });
         const data = await res.json();
@@ -1988,7 +1952,7 @@
           body: JSON.stringify({
             action: "email_process_all",
             job_keys: emailJobs.map(j => j.job_key),
-            section_filter: sectionFilter,
+            section_filter: sectionFilterValue(),
           }),
         });
         const data = await res.json();

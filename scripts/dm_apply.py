@@ -37,7 +37,16 @@ from application_channel import (  # noqa: E402
     recruiter_message_enabled,
     recruiter_profile_url,
 )
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
+from human_pacing import (
+    drift_mouse,
+    human_click,
+    maybe_session_break,
+    pause_between_actions,
+    pause_between_reads,
+    pause_human,
+    pause_page_settle,
+)
 from flow_runner import resolve_recipe, run_recipe  # noqa: E402
 from linkedin_ui import cleanup_after_message, dismiss_blocking_dialogs  # noqa: E402
 from registry import job_key, load_registry  # noqa: E402
@@ -176,7 +185,8 @@ async def classify_affordance(page, prof_url: str) -> str:
     """
     try:
         await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
-        await asyncio.sleep(2.0)
+        await pause_page_settle()
+        await drift_mouse(page)
         await dismiss_blocking_dialogs(page)
     except Exception:  # noqa: BLE001
         return "error"
@@ -188,8 +198,8 @@ async def classify_affordance(page, prof_url: str) -> str:
     more = main.get_by_role("button", name=re.compile(r"^More", re.I))
     if await more.count() > 0:
         try:
-            await more.first.click()
-            await asyncio.sleep(1.0)
+            await human_click(page, more, timeout=10000)
+            await pause_human(base=6.0)
             items = page.get_by_role("menuitem")
             labels = []
             for i in range(await items.count()):
@@ -232,9 +242,10 @@ async def scan(candidates: list[dict[str, Any]], *, headless: bool) -> None:
             )
             flag = "✓" if actionable else "·"
             print(f"  [{i:>2}/{len(candidates)}] {flag} {kind:12} {job.get('company','?')[:32]:32} {prof}")
+            if i < len(candidates):
+                await pause_between_reads()
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps({"counts": counts, "results": results}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     actionable = [r for r in results if r["actionable"]]
@@ -253,6 +264,7 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
     pw, browser, ctx = await launch_context(headless=headless)
     try:
         page = await ctx.new_page()
+        sent_actions = 0
         for job in candidates:
             prof_check = profile_url_for(job)
             existing = dm_state.status_for(state, prof_check)
@@ -268,7 +280,8 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
             variables = {"profile_url": prof_url, "message": message_body(job, profile, track_id=track_id)}
             try:
                 await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
-                await asyncio.sleep(2.5)
+                await pause_page_settle()
+                await drift_mouse(page)
                 await dismiss_blocking_dialogs(page)
                 result = await run_recipe(page, recipe, variables=variables, profile=profile, send=send)
             except Exception as exc:  # noqa: BLE001
@@ -306,10 +319,11 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
                     else:
                         print("  → CONNECT request sent (no note) · Pending not shown (follow-primary; verify via Sent Invitations)")
                 dm_state.save(state)
-                await asyncio.sleep(20)  # rate limit between real actions
+                sent_actions += 1
+                await pause_between_actions()
+                await maybe_session_break(sent_actions)
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
     if send:
         from table_refresh import refresh_applications_table  # noqa: E402
         refresh_applications_table()

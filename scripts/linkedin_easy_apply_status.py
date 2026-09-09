@@ -21,7 +21,7 @@ SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
 from linkedin_ui import dismiss_blocking_dialogs, wait_for_job_detail_ready  # noqa: E402
 
 STATUS_PATH = ROOT / "state" / "easy-apply-status.json"
@@ -289,8 +289,7 @@ async def run_check(
             print(f"holding browser open {hold}s…")
             await asyncio.sleep(hold)
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
     return summary
 
 

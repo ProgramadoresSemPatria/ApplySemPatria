@@ -10,6 +10,17 @@ from playwright.sync_api import Page, expect
 pytestmark = pytest.mark.playwright
 
 
+def test_lj_ui00_all_selected_by_default(mock_ui_server_linkedin_jobs, page: Page):
+    port, _captured = mock_ui_server_linkedin_jobs
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.wait_for_selector(".card", timeout=10000)
+    expect(page.locator('.chip[data-filter="all"]')).to_have_class(re.compile(r"\bactive\b"))
+    expect(page.locator(".card")).to_have_count(4)
+    page.locator('.chip[data-filter="all"]').click()
+    expect(page.locator('.chip[data-filter="all"]')).to_have_class(re.compile(r"\bactive\b"))
+    expect(page.locator(".card")).to_have_count(4)
+
+
 def test_lj_ui01_source_filter_linkedin_jobs(mock_ui_server_linkedin_jobs, page: Page):
     port, _captured = mock_ui_server_linkedin_jobs
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
@@ -34,14 +45,24 @@ def test_lj_ui02_posted_24h_filter(mock_ui_server_linkedin_jobs, page: Page):
     assert any("Forward Deployed" in r for r in roles)
 
 
-def test_lj_ui03_posted_24h_plus_linkedin_jobs(mock_ui_server_linkedin_jobs, page: Page):
+def test_lj_ui03_single_filter_replaces_previous(mock_ui_server_linkedin_jobs, page: Page):
+    """Only one chip active at a time — Posted 24h replaces LinkedIn jobs, not AND."""
     port, _captured = mock_ui_server_linkedin_jobs
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.wait_for_selector(".card", timeout=10000)
 
     page.locator('.chip-source[data-source="linkedin_jobs"]').click()
+    expect(page.locator(".card")).to_have_count(3)
+    expect(page.locator('.chip-source[data-source="linkedin_jobs"]')).to_have_class(re.compile(r"\bactive\b"))
+
     page.locator('.chip[data-filter="posted_24h"]').click()
     expect(page.locator(".card")).to_have_count(2)
+    expect(page.locator('.chip[data-filter="posted_24h"]')).to_have_class(re.compile(r"\bactive\b"))
+    expect(page.locator('.chip-source[data-source="linkedin_jobs"]')).not_to_have_class(re.compile(r"\bactive\b"))
+
+    page.locator('.chip[data-filter="all"]').click()
+    expect(page.locator('.chip[data-filter="all"]')).to_have_class(re.compile(r"\bactive\b"))
+    expect(page.locator(".card")).to_have_count(4)
 
 
 def test_lj_ui04_old_job_hidden_by_posted_24h(mock_ui_server_linkedin_jobs, page: Page):

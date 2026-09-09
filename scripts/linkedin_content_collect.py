@@ -40,12 +40,7 @@ from linkedin_posts_merge import (  # noqa: E402
 )
 from registry import load_json, job_key  # noqa: E402
 
-PROFILE_DIR = Path.home() / ".linkedin-mcp" / "profile"
-BROWSERS_PATH = Path.home() / ".linkedin-mcp" / "patchright-browsers"
-CHROME_EXECUTABLE = (
-    BROWSERS_PATH
-    / "chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-)
+from browser_session import PROFILE_DIR, browser_launch_kwargs, load_cookies  # noqa: E402
 RUNS = ROOT / "runs"
 TZ = ZoneInfo("America/Sao_Paulo")
 
@@ -103,18 +98,10 @@ async def collect_feed_text(
     activity_seen: set[str] = set()
     stats: dict[str, Any] = {"scrolls": 0, "stale": 0, "errors": [], "auth_mode": "cookies"}
 
-    cookies_path = Path.home() / ".linkedin-mcp" / "cookies.json"
-    cookies: list[dict[str, Any]] = []
-    if cookies_path.exists():
-        cookies = json.loads(cookies_path.read_text(encoding="utf-8"))
+    cookies = load_cookies()
 
     async with async_playwright() as p:
-        launch_kwargs: dict[str, Any] = {
-            "headless": True,
-            "args": ["--disable-blink-features=AutomationControlled"],
-        }
-        if CHROME_EXECUTABLE.exists():
-            launch_kwargs["executable_path"] = str(CHROME_EXECUTABLE)
+        launch_kwargs = browser_launch_kwargs(headless=True)
 
         context = None
         if use_profile:

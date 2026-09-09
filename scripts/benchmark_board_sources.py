@@ -99,7 +99,7 @@ async def run_patchright_collectors(
     *,
     headless: bool,
 ) -> dict[str, list[dict[str, Any]]]:
-    from browser_session import launch_context  # noqa: E402
+    from browser_session import close_session, launch_context  # noqa: E402
 
     import collectors.http_utils as hu  # noqa: E402
 
@@ -135,8 +135,7 @@ async def run_patchright_collectors(
     finally:
         hu.fetch_text = orig_text
         hu.fetch_json = orig_json
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
 
     return out
 

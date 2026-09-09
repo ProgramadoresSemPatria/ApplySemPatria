@@ -32,7 +32,8 @@ sys.path.insert(0, str(SCRIPTS))
 
 import dm_chat  # noqa: E402
 import dm_state  # noqa: E402
-from browser_session import launch_context  # noqa: E402
+from browser_session import close_session, launch_context  # noqa: E402
+from human_pacing import drift_mouse, maybe_session_break, pause_between_actions, pause_human, pause_page_settle, pause_poll  # noqa: E402
 from dm_apply import message_body  # noqa: E402
 from track_store import load_profile as load_track_profile  # noqa: E402
 from flow_runner import resolve_recipe, run_recipe  # noqa: E402
@@ -61,10 +62,11 @@ async def has_top_card_message(page) -> bool:
 async def is_connected(page, prof_url: str) -> tuple[bool, str]:
     try:
         await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
-        await asyncio.sleep(2.5)
+        await pause_page_settle()
+        await drift_mouse(page)
         dismissed = await dismiss_blocking_dialogs(page)
         if dismissed:
-            await asyncio.sleep(0.3)
+            await pause_poll(base=0.35)
     except Exception:  # noqa: BLE001
         return False, "profile load failed"
     main = page.locator("main").first
@@ -155,6 +157,7 @@ async def run(
         return
     pw, browser, ctx = await launch_context(headless=headless)
     accepted = messaged = recent_skipped = still_pending = 0
+    sent_actions = 0
     print(f"  recipe: {recipe.get('name')}\n")
     try:
         page = await ctx.new_page()
@@ -211,14 +214,17 @@ async def run(
                     dm_state.save(state)
                     messaged += 1
                     print("  → MESSAGE SENT ✓")
-                    await asyncio.sleep(20)
+                    sent_actions += 1
+                    await pause_between_actions()
+                    await maybe_session_break(sent_actions)
                 elif not send and ok:
                     print("  → (dry) would send message")
                 elif send and not ok:
                     # Fallback: reload profile and use message-only recipe.
                     print("  → composer send failed — trying recipe fallback")
                     await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
-                    await asyncio.sleep(2.0)
+                    await pause_page_settle()
+                    await drift_mouse(page)
                     await dismiss_blocking_dialogs(page)
                     variables = {"profile_url": prof_url, "message": msg}
                     try:
@@ -232,14 +238,15 @@ async def run(
                         dm_state.save(state)
                         messaged += 1
                         print("  → MESSAGE SENT ✓ (recipe fallback)")
-                        await asyncio.sleep(20)
+                        sent_actions += 1
+                        await pause_between_actions()
+                        await maybe_session_break(sent_actions)
             finally:
                 closed = await cleanup_after_message(page)
                 if closed:
                     print(f"  cleanup: {', '.join(closed)}")
     finally:
-        await browser.close()
-        await pw.stop()
+        await close_session(pw=pw, browser=browser, context=ctx)
     if send:
         from table_refresh import refresh_applications_table  # noqa: E402
         refresh_applications_table()
