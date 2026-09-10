@@ -98,6 +98,76 @@ def ui_snapshot_with_email(job_key: str, *, day: str = "2026-09-06", email_done:
     return ui_snapshot(job_key, day=day, actions=actions)
 
 
+def ui_snapshot_review_dm_connect(*, day: str = "2026-09-10") -> dict[str, Any]:
+    """Review-section DM with profile — must stay in bulk Connect scope (regression)."""
+    actions = {
+        "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
+        "form": {"available": False, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
+        "dm_connect": {"available": True, "done": False, "in_progress": False, "label": "Send connection", "status_text": "not applied"},
+        "dm_check": {"available": False, "done": False, "in_progress": False, "label": "Check connection accepted", "status_text": "not applied"},
+        "dm_message": {"available": True, "done": False, "in_progress": False, "label": "Send LinkedIn message", "status_text": "not applied"},
+    }
+    return {
+        "day": day,
+        "generated_at": f"{day}T12:00:00",
+        "jobs": [
+            {
+                "job_key": "https://www.linkedin.com/in/gabriela-rayo-10b6a262/recent-activity/all",
+                "role": "Ai Engineer",
+                "company": "Gabriela Rayo",
+                "track_label": "AI Engineer",
+                "role_from_label": "LinkedIn Post",
+                "salary": "—",
+                "location": "LATAM",
+                "posted": "5h",
+                "section": "linkedin_review",
+                "channel": "dm",
+                "position_disposition": "human_review",
+                "position_disposition_label": "Human review",
+                "position_disposition_auto": "human_review",
+                "position_disposition_is_override": False,
+                "application_steps_enabled": False,
+                "dm_apply_steps_enabled": True,
+                "application_formats": [{"id": "direct_message", "label": "Direct message"}],
+                "post_url": "https://www.linkedin.com/in/gabriela-rayo-10b6a262/recent-activity/all/",
+                "apply_url": "DM recruiter",
+                "apply_email": "",
+                "profile_url": "https://www.linkedin.com/in/gabriela-rayo-10b6a262/",
+                "actions": actions,
+            },
+            {
+                "job_key": "https://www.linkedin.com/in/mariana-vilela-sv/recent-activity/all",
+                "role": "Ai Engineer",
+                "company": "Mariana Vilela",
+                "track_label": "AI Engineer",
+                "role_from_label": "LinkedIn Post",
+                "salary": "USD 120k",
+                "location": "LATAM",
+                "posted": "2d",
+                "section": "linkedin_eligible",
+                "channel": "url",
+                "application_steps_enabled": True,
+                "dm_apply_steps_enabled": True,
+                "application_formats": [
+                    {"id": "form", "label": "Form"},
+                    {"id": "direct_message", "label": "Direct message"},
+                ],
+                "post_url": "https://www.linkedin.com/in/mariana-vilela-sv/recent-activity/all/",
+                "apply_url": "https://example.com/apply",
+                "apply_email": "",
+                "profile_url": "https://www.linkedin.com/in/mariana-vilela-sv/",
+                "actions": {
+                    "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
+                    "form": {"available": True, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
+                    "dm_connect": {"available": True, "done": False, "in_progress": True, "label": "Send connection", "status_text": "connect sent"},
+                    "dm_check": {"available": True, "done": False, "in_progress": True, "label": "Check connection accepted", "status_text": "awaiting accept"},
+                    "dm_message": {"available": True, "done": False, "in_progress": False, "label": "Send LinkedIn message", "status_text": "not applied"},
+                },
+            },
+        ],
+    }
+
+
 def ui_snapshot_duplicate_email(
     *,
     day: str = "2026-09-06",

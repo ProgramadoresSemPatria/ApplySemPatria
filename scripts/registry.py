@@ -223,3 +223,23 @@ def write_run_markdown(
             )
 
     run_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def purge_discovered_on_days(days: list[str]) -> int:
+    """Remove registry rows whose ``discovered_at`` date is in ``days`` (YYYY-MM-DD)."""
+    drop = {d.strip() for d in days if d and d.strip()}
+    if not drop:
+        return 0
+    registry = load_registry()
+    kept: list[dict[str, Any]] = []
+    removed = 0
+    for job in registry.get("jobs", []):
+        raw = str(job.get("discovered_at") or "")
+        if raw[:10] in drop:
+            removed += 1
+        else:
+            kept.append(job)
+    if removed:
+        registry["jobs"] = kept
+        save_registry(registry)
+    return removed

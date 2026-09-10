@@ -78,7 +78,7 @@ def test_settings_round_trip_to_dashboard(mock_ui_server, page: Page):
     page.goto(f"http://127.0.0.1:{port}/settings.html", wait_until="networkidle")
     page.locator('a.nav-link[href="index.html"]').click()
     page.wait_for_url(re.compile(r"/(index\.html)?$"), timeout=10000)
-    expect(page.locator(".brand h1")).to_contain_text("ApplySemPatria")
+    expect(page.locator(".brand h1")).to_contain_text("JobSemPatria")
     expect(page.locator('a.config-link[href="settings.html"]')).to_be_visible()
 
 

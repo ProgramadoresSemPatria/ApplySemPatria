@@ -65,6 +65,7 @@ from table_paths import APPLICATIONS_TABLES_DIR  # noqa: E402
 import dm_state  # noqa: E402
 from position_disposition import (  # noqa: E402
     application_steps_enabled,
+    dm_apply_steps_enabled,
     auto_disposition_for_job,
     disposition_is_override,
     disposition_label,
@@ -385,8 +386,11 @@ def job_to_card(
         ea_status=ea_status,
     )
     steps_on = application_steps_enabled(job)
+    dm_on = dm_apply_steps_enabled(job)
     if not steps_on:
-        for state in actions.values():
+        for key, state in actions.items():
+            if key.startswith("dm_") and dm_on:
+                continue
             state["available"] = False
             state["in_progress"] = False
     return {
@@ -412,6 +416,7 @@ def job_to_card(
         "position_disposition_auto": auto_disposition_for_job(job),
         "position_disposition_is_override": disposition_is_override(job),
         "application_steps_enabled": steps_on,
+        "dm_apply_steps_enabled": dm_on,
         "post_url": post_url_for(job),
         "apply_url": apply_url,
         "apply_email": apply_email_display(job) or "",
@@ -427,16 +432,27 @@ def job_to_card(
 
 def collect_jobs_for_ui(
     *,
-    linkedin_since: datetime,
-    board_since: datetime,
+    research_day: str | None = None,
+    linkedin_since: datetime | None = None,
+    board_since: datetime | None = None,
     track_filter: str | None = None,
 ) -> list[dict[str, Any]]:
     """Same rows as generate_applications table, as UI card dicts."""
     from generate_applications import (  # noqa: E402
         NOISE,
+        _job_in_table_scope,
         dedupe_linkedin_rows,
-        discovered_at,
     )
+    from table_window import day_bounds, load_research_day  # noqa: E402
+
+    if research_day:
+        linkedin_since, _ = day_bounds(research_day)
+        board_since = linkedin_since
+    elif linkedin_since is None or board_since is None:
+        day = load_research_day() or datetime.now(TZ).date().isoformat()
+        linkedin_since, _ = day_bounds(day)
+        board_since = linkedin_since
+        research_day = day
     from filters import salary_sort_value  # noqa: E402
     from linkedin_posts_merge import sort_jobs_by_recency  # noqa: E402
     from track_store import filter_jobs_by_track, infer_track, job_track_label, load_linkedin_config  # noqa: E402
@@ -458,8 +474,13 @@ def collect_jobs_for_ui(
         j
         for j in all_jobs
         if j.get("source") in ("linkedin_posts", "linkedin_jobs")
-        and discovered_at(j)
-        and discovered_at(j) >= linkedin_since
+        and _job_in_table_scope(
+            j,
+            research_day=research_day,
+            linkedin_since=linkedin_since,
+            board_since=board_since,
+            linkedin_source=True,
+        )
     ]
     linkedin = [j for j in linkedin if not NOISE.search((j.get("role", "") + j.get("company", "") + j.get("description_snippet", "")))]
     linkedin_ranked = sort_jobs_by_recency(linkedin)
@@ -470,8 +491,13 @@ def collect_jobs_for_ui(
         j
         for j in all_jobs
         if j.get("source") not in ("linkedin_posts", "linkedin_jobs", "google")
-        and discovered_at(j)
-        and discovered_at(j) >= board_since
+        and _job_in_table_scope(
+            j,
+            research_day=research_day,
+            linkedin_since=linkedin_since,
+            board_since=board_since,
+            linkedin_source=False,
+        )
     ]
     boards = [j for j in boards if not NOISE.search((j.get("role", "") + j.get("company", "")))]
     boards_eligible = sorted(
@@ -544,15 +570,22 @@ def write_ui_snapshot(
     md_path: Path,
     *,
     jobs: list[dict[str, Any]],
+    research_day: str | None,
     linkedin_since: datetime,
     board_since: datetime,
     track_filter: str | None,
     counts: dict[str, int],
 ) -> Path:
+    import re
+
     out = _snapshot_path_for_md(md_path)
+    m = re.match(r"applications-(\d{4}-\d{2}-\d{2})-", md_path.name)
+    day = research_day or (m.group(1) if m else datetime.now(TZ).strftime("%Y-%m-%d"))
     payload = {
         "generated_at": datetime.now(TZ).isoformat(),
-        "day": md_path.name.split("-")[1] if "-" in md_path.name else datetime.now(TZ).strftime("%Y-%m-%d"),
+        "day": day,
+        "research_day": day,
+        "table_mode": "daily",
         "linkedin_since": linkedin_since.date().isoformat(),
         "board_since": board_since.date().isoformat(),
         "track_filter": track_filter or "all",
@@ -570,15 +603,14 @@ def load_snapshot(day: str) -> dict[str, Any] | None:
     md = APPLICATIONS_TABLES_DIR / f"applications-{day}-full.md"
     if not md.exists():
         return None
-    from table_window import load_window  # noqa: E402
-
-    li, bd = load_window()
-    jobs = collect_jobs_for_ui(linkedin_since=li, board_since=bd, track_filter="all")
+    jobs = collect_jobs_for_ui(research_day=day, track_filter="all")
     return {
         "generated_at": datetime.fromtimestamp(md.stat().st_mtime, TZ).isoformat(),
         "day": day,
-        "linkedin_since": li.date().isoformat(),
-        "board_since": bd.date().isoformat(),
+        "research_day": day,
+        "table_mode": "daily",
+        "linkedin_since": day,
+        "board_since": day,
         "track_filter": "all",
         "counts": {"jobs": len(jobs)},
         "jobs": jobs,
@@ -586,15 +618,17 @@ def load_snapshot(day: str) -> dict[str, Any] | None:
 
 
 def refresh_live_snapshot() -> dict[str, Any]:
-    from table_window import load_window  # noqa: E402
+    from research_log import latest_research_day, today_local  # noqa: E402
 
-    li, bd = load_window()
-    jobs = collect_jobs_for_ui(linkedin_since=li, board_since=bd, track_filter="all")
+    day = latest_research_day() or today_local()
+    jobs = collect_jobs_for_ui(research_day=day, track_filter="all")
     return {
         "generated_at": datetime.now(TZ).isoformat(),
-        "day": "live",
-        "linkedin_since": li.date().isoformat(),
-        "board_since": bd.date().isoformat(),
+        "day": day,
+        "research_day": day,
+        "table_mode": "daily",
+        "linkedin_since": day,
+        "board_since": day,
         "track_filter": "all",
         "counts": {"jobs": len(jobs)},
         "jobs": jobs,

@@ -19,25 +19,20 @@ def refresh_applications_table() -> bool:
     """Refresh the latest *researched* day's table (never create a new calendar day)."""
     from research_log import latest_research_day  # noqa: E402
     from table_paths import applications_table_for_day, ensure_table_dirs  # noqa: E402
-    from table_window import load_window  # noqa: E402
-
     day = latest_research_day()
     if not day:
         print("  ○ table refresh skipped — no research day logged yet")
         return False
 
     ensure_table_dirs()
-    li_since, bd_since = load_window()
     out = applications_table_for_day(day)
     try:
         proc = subprocess.run(
             [
                 sys.executable,
                 str(SCRIPTS / "generate_applications.py"),
-                "--linkedin-since",
-                li_since.date().isoformat(),
-                "--board-since",
-                bd_since.date().isoformat(),
+                "--research-day",
+                day,
                 "--output",
                 str(out),
             ],

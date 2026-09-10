@@ -11,7 +11,12 @@ def test_resolve_linkedin_connect_recipe():
     recipe = resolve_recipe("https://www.linkedin.com/in/test/", name="linkedin-connect-or-message")
     assert recipe is not None
     assert recipe["name"] == "linkedin-connect-or-message"
-    assert any(s.get("commit_kind") == "connect" for s in recipe["steps"])
+    steps = recipe.get("steps") or []
+    assert any(s.get("action") == "click_connect" for s in steps)
+    assert any(s.get("commit_kind") == "connect" for s in steps)
+    more_idx = next(i for i, s in enumerate(steps) if s.get("name_regex") == "^More")
+    connect_idx = next(i for i, s in enumerate(steps) if s.get("action") == "click_connect")
+    assert connect_idx < more_idx
 
 
 def test_subst_variables():

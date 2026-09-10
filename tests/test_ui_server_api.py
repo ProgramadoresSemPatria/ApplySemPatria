@@ -106,6 +106,81 @@ def test_research_status_endpoint(mock_ui_server_research_flow):
     assert status.get("running") is False
 
 
+def test_research_post_returns_409_when_active_run(monkeypatch, tmp_path):
+    """Regression: stuck running=true must not spawn duplicate research workers."""
+    import threading
+    import time
+    from datetime import datetime, timedelta
+    from http.server import ThreadingHTTPServer
+    from zoneinfo import ZoneInfo
+
+    import ui_server
+
+    run_path = tmp_path / "state" / "research-run.json"
+    run_path.parent.mkdir(parents=True)
+    recent = datetime.now(ZoneInfo("America/Sao_Paulo")).isoformat()
+    run_path.write_text(
+        f'{{"running": true, "day": "2026-09-09", "step": "linkedin_jobs_collect", '
+        f'"started_at": "{recent}", "updated_at": "{recent}", "version": 1}}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("research_log.RUN_PATH", run_path)
+    monkeypatch.setattr("research_log.STALE_RUN_MINUTES", 25)
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), ui_server.ApplicationsUIHandler)
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.15)
+    try:
+        status, data = _post_json(f"http://127.0.0.1:{port}/api/research", {})
+    finally:
+        httpd.shutdown()
+
+    assert status == 409
+    assert data.get("ok") is False
+    assert "already running" in (data.get("message") or "").lower()
+
+
+def test_research_post_clears_stale_run(monkeypatch, tmp_path):
+    """Regression: stale running=true must auto-clear so today's ingestion can restart."""
+    import threading
+    import time
+    from datetime import datetime, timedelta
+    from http.server import ThreadingHTTPServer
+    from zoneinfo import ZoneInfo
+
+    import ui_server
+
+    run_path = tmp_path / "state" / "research-run.json"
+    run_path.parent.mkdir(parents=True)
+    stale = (datetime.now(ZoneInfo("America/Sao_Paulo")) - timedelta(minutes=60)).isoformat()
+    run_path.write_text(
+        f'{{"running": true, "day": "2026-09-09", "step": "linkedin_jobs_collect", '
+        f'"started_at": "{stale}", "updated_at": "{stale}", "version": 1}}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("research_log.RUN_PATH", run_path)
+    monkeypatch.setattr("research_log.STALE_RUN_MINUTES", 25)
+    monkeypatch.setattr(
+        "daily_research.run_daily_research",
+        lambda **_kwargs: {"ok": True, "message": "mock research", "day": "2026-09-09"},
+    )
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), ui_server.ApplicationsUIHandler)
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.15)
+    try:
+        status, data = _post_json(f"http://127.0.0.1:{port}/api/research", {})
+    finally:
+        httpd.shutdown()
+
+    assert status == 200
+    assert data.get("ok") is True
+
+
 def test_action_dm_connect_mock(mock_ui_server):
     port, _captured = mock_ui_server
     jk = "ai-engineer|linkedin|acme ai|ai engineer"
@@ -286,7 +361,10 @@ def test_run_bulk_dm_followup_invokes_connect_check_then_send(mock_run):
         connect_cmd,
         must_include=["dm_apply.py", "--send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
     )
-    assert expect_action(check_cmd, must_include=["dm_followup.py", "--phase", "check", "--track", "ai-engineer", "--job-keys"])
+    assert expect_action(
+        check_cmd,
+        must_include=["dm_followup.py", "--send", "--phase", "check", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
+    )
     assert expect_action(
         send_cmd,
         must_include=["dm_followup.py", "--send", "--phase", "send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],

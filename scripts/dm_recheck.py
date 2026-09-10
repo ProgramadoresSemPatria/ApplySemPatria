@@ -15,8 +15,7 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 from browser_session import close_session, launch_context  # noqa: E402
-
-CONNECT_RE = re.compile(r"connect|invite.*to connect", re.I)
+from linkedin_ui import CONNECT_BUTTON_NAME_RE, is_connect_affordance_label  # noqa: E402
 MESSAGE_RE = re.compile(r"^message", re.I)
 
 PROFILES = [
@@ -54,7 +53,7 @@ async def check(page, url: str) -> None:
     print("  top-card buttons:", names)
 
     # Direct Connect on top card?
-    connect = page.locator("main section").first.get_by_role("button", name=CONNECT_RE)
+    connect = page.locator("main section").first.get_by_role("button", name=CONNECT_BUTTON_NAME_RE)
     if await connect.count() > 0:
         print("  -> HAS top-card Connect/Invite button:", await connect.first.get_attribute("aria-label") or await connect.first.inner_text())
         return
@@ -82,7 +81,7 @@ async def check(page, url: str) -> None:
         if nm:
             labels.append(nm)
     print("  More-menu items:", labels)
-    has_connect = any(CONNECT_RE.search(x) for x in labels)
+    has_connect = any(is_connect_affordance_label(x) for x in labels)
     print("  -> CONNECTABLE via More menu" if has_connect else "  -> follow-only (no Connect/Invite in menu)")
     await page.keyboard.press("Escape")
     await asyncio.sleep(0.5)

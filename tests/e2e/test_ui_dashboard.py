@@ -51,6 +51,7 @@ def test_research_prompt_when_no_research_today(mock_ui_server_needs_research, p
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     expect(page.locator("#researchPrompt")).to_be_visible()
     expect(page.locator("#runResearchBtn")).to_contain_text("Make a research today")
+    expect(page.locator("#researchPromptText")).to_contain_text("Last ingestion:")
     expect(page.locator("#listContent")).to_be_hidden()
     expect(page.locator(".card")).to_have_count(0)
     expect(page.locator('.day-btn.active')).to_have_attribute("data-day", "2026-09-07")
@@ -77,6 +78,26 @@ def test_research_button_shows_progress_and_completes(mock_ui_server_research_fl
     expect(page.locator("#researchPrompt")).to_be_hidden()
     expect(page.locator(".card")).to_have_count(1)
     assert captured.get("last_research", {}).get("ok") is True
+
+
+def test_research_progress_survives_day_tab_switch(mock_ui_server_research_slow, page: Page):
+    """Regression: returning to today must restore in-progress research UI."""
+    port, _captured = mock_ui_server_research_slow
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator("#runResearchBtn").click()
+    expect(page.locator("#runResearchBtn")).to_be_disabled(timeout=5000)
+    expect(page.locator("#researchProgressText")).to_contain_text("LinkedIn", timeout=5000)
+
+    page.locator('.day-btn[data-day="2026-09-06"]').click()
+    expect(page.locator("#researchPrompt")).to_be_hidden()
+    expect(page.locator("#listContent")).to_be_visible()
+    page.wait_for_selector(".card", timeout=10000)
+
+    page.locator('.day-btn[data-day="2026-09-07"]').click()
+    expect(page.locator("#researchPrompt")).to_be_visible()
+    expect(page.locator("#listContent")).to_be_hidden()
+    expect(page.locator("#runResearchBtn")).to_be_disabled()
+    expect(page.locator("#researchProgressText")).to_contain_text("LinkedIn", timeout=5000)
 
 
 def test_dm_message_pill_done_when_already_sent(mock_ui_server_dm_sent, page: Page):
@@ -110,6 +131,21 @@ def test_bulk_dm_legacy_profile_key_runs_full_pipeline(mock_ui_server_bulk_dm_le
         assert any("dm_followup.py" in str(part) for part in cmd)
     assert "--job-keys" in captured["apply_cmds"][1]
     assert "--send" in captured["apply_cmds"][2]
+
+
+def test_bulk_dm_includes_review_dm_and_shows_connect_count(mock_ui_server_review_dm_connect, page: Page):
+    port, captured = mock_ui_server_review_dm_connect
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    btn = page.locator("#bulkDmBtn")
+    expect(btn).to_be_enabled()
+    expect(btn.locator(".bulk-btn-label")).to_contain_text("Connect (1)")
+    expect(btn.locator(".bulk-btn-label")).to_contain_text("check (1)")
+    expect(btn).to_have_attribute("title", re.compile(r"1 new connection\(s\), 1 to recheck"))
+    page.locator("#bulkDmBtn").click()
+    bulk = wait_for_mock_bulk_action(captured, page)
+    assert bulk["action"] == "dm_process_all"
+    assert "gabriela-rayo" in " ".join(bulk["job_keys"]).lower()
+    assert "mariana-vilela" in " ".join(bulk["job_keys"]).lower()
 
 
 def test_bulk_dm_button_passes_all_dm_job_keys(mock_ui_server_multi_dm, page: Page):

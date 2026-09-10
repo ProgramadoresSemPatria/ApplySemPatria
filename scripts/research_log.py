@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -12,7 +12,14 @@ SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
 TZ = ZoneInfo("America/Sao_Paulo")
 LOG_PATH = ROOT / "state" / "research-log.json"
+INGESTION_HISTORY_PATH = ROOT / "state" / "ingestion-history.json"
 RUN_PATH = ROOT / "state" / "research-run.json"
+STALE_RUN_MINUTES = 25
+DEFAULT_INGESTION_LOOKBACK_DAYS = 7
+
+
+class ResearchRunInProgressError(RuntimeError):
+    """Raised when a research run is already active and not stale."""
 
 
 def today_local() -> str:
@@ -39,6 +46,73 @@ def save_log(data: dict[str, Any]) -> None:
     LOG_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _default_ingestion_history() -> dict[str, Any]:
+    return {"entries": [], "version": 1}
+
+
+def load_ingestion_history() -> dict[str, Any]:
+    if not INGESTION_HISTORY_PATH.exists():
+        return _default_ingestion_history()
+    try:
+        data = json.loads(INGESTION_HISTORY_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return _default_ingestion_history()
+    data.setdefault("entries", [])
+    return data
+
+
+def ensure_ingestion_history_migrated() -> dict[str, Any]:
+    """One-time backfill from research-log.json when history file is missing."""
+    if INGESTION_HISTORY_PATH.exists():
+        return load_ingestion_history()
+    return _backfill_ingestion_history_from_log()
+
+
+def save_ingestion_history(data: dict[str, Any]) -> None:
+    INGESTION_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    INGESTION_HISTORY_PATH.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _backfill_ingestion_history_from_log() -> dict[str, Any]:
+    """One-time migration from research-log.json day entries."""
+    log = load_log()
+    entries: list[dict[str, Any]] = []
+    for day, meta in log.get("days", {}).items():
+        completed_at = meta.get("completed_at")
+        if not completed_at:
+            continue
+        entries.append(
+            {
+                "day": day,
+                "completed_at": completed_at,
+                "job_count": meta.get("job_count"),
+                "since": meta.get("since"),
+            }
+        )
+    entries.sort(key=lambda e: e["completed_at"])
+    data = {"entries": entries, "version": 1}
+    if entries:
+        save_ingestion_history(data)
+    return data
+
+
+def append_ingestion_record(day: str, entry: dict[str, Any]) -> dict[str, Any]:
+    """Append one completed ingestion (every run, including same-day catch-up)."""
+    hist = load_ingestion_history()
+    record = {
+        "day": day,
+        "completed_at": entry.get("completed_at") or datetime.now(TZ).isoformat(),
+        "job_count": entry.get("job_count"),
+        "since": entry.get("since"),
+    }
+    hist.setdefault("entries", []).append(record)
+    save_ingestion_history(hist)
+    return record
+
+
 def mark_research_day(day: str | None = None, **meta: Any) -> dict[str, Any]:
     """Record that research completed for ``day`` (default: today local)."""
     day = day or today_local()
@@ -49,6 +123,7 @@ def mark_research_day(day: str | None = None, **meta: Any) -> dict[str, Any]:
     }
     log["days"][day] = entry
     save_log(log)
+    append_ingestion_record(day, entry)
     return entry
 
 
@@ -69,7 +144,69 @@ def latest_research_day() -> str | None:
     return days[0] if days else None
 
 
+def last_ingestion_completed_at() -> datetime | None:
+    """Timestamp of the most recent completed ingestion."""
+    log = load_log()
+    today = today_local()
+    if has_research(today):
+        latest: datetime | None = None
+        for entry in load_ingestion_history().get("entries", []):
+            if entry.get("day") != today:
+                continue
+            ts = _parse_run_timestamp(entry.get("completed_at"))
+            if ts is not None and (latest is None or ts > latest):
+                latest = ts
+        if latest is not None:
+            return latest
+    days = list_research_days()
+    if not days:
+        return None
+    raw = log.get("days", {}).get(days[0], {}).get("completed_at")
+    return _parse_run_timestamp(raw)
+
+
+def ingestion_since_datetime(*, now: datetime | None = None) -> datetime:
+    """Collect from last ingestion completion, or 7 days ago when none."""
+    now = now or datetime.now(TZ)
+    last = last_ingestion_completed_at()
+    if last is None:
+        return now - timedelta(days=DEFAULT_INGESTION_LOOKBACK_DAYS)
+    return last
+
+
+def default_ingestion_since(*, now: datetime | None = None) -> str:
+    """``since`` flag for collect/discover scripts."""
+    last = last_ingestion_completed_at()
+    if last is None:
+        return f"{DEFAULT_INGESTION_LOOKBACK_DAYS}d"
+    return ingestion_since_datetime(now=now).isoformat()
+
+
+def ingestion_window_meta(*, now: datetime | None = None) -> dict[str, Any]:
+    """UI + API fields describing the next ingestion window."""
+    now = now or datetime.now(TZ)
+    last_at = last_ingestion_completed_at()
+    since_dt = ingestion_since_datetime(now=now)
+    last_day = latest_research_day()
+    if last_at is None:
+        return {
+            "ingestion_has_prior": False,
+            "ingestion_last_at": None,
+            "ingestion_last_day": None,
+            "ingestion_since_at": since_dt.isoformat(),
+            "ingestion_since": f"{DEFAULT_INGESTION_LOOKBACK_DAYS}d",
+        }
+    return {
+        "ingestion_has_prior": True,
+        "ingestion_last_at": last_at.isoformat(),
+        "ingestion_last_day": last_day,
+        "ingestion_since_at": since_dt.isoformat(),
+        "ingestion_since": since_dt.isoformat(),
+    }
+
+
 def research_status() -> dict[str, Any]:
+    ensure_ingestion_history_migrated()
     log = load_log()
     days = list_research_days()
     today = today_local()
@@ -89,6 +226,7 @@ def research_status() -> dict[str, Any]:
             for d in days
         ],
         "run": research_run_status(),
+        **ingestion_window_meta(),
     }
 
 
@@ -111,8 +249,52 @@ def _save_research_run(data: dict[str, Any]) -> None:
     RUN_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def start_research_run(day: str | None = None) -> None:
+def _parse_run_timestamp(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
+def research_run_is_stale(run: dict[str, Any] | None = None) -> bool:
+    """True when a run is marked running but has not updated recently."""
+    run = run or load_research_run()
+    if not run.get("running"):
+        return False
+    ts = _parse_run_timestamp(run.get("updated_at")) or _parse_run_timestamp(run.get("started_at"))
+    if ts is None:
+        return True
+    age_sec = (datetime.now(TZ) - ts).total_seconds()
+    return age_sec > STALE_RUN_MINUTES * 60
+
+
+def clear_stale_research_run(*, reason: str = "") -> bool:
+    """Mark a stuck run as failed so a new research can start."""
+    run = load_research_run()
+    if not run.get("running") or not research_run_is_stale(run):
+        return False
+    finish_research_run(
+        ok=False,
+        message=reason or "Previous research run timed out or was interrupted.",
+    )
+    return True
+
+
+def start_research_run(day: str | None = None, *, force: bool = False) -> None:
     day = day or today_local()
+    run = load_research_run()
+    if run.get("running"):
+        if research_run_is_stale(run):
+            clear_stale_research_run(reason="Stale research run cleared — starting fresh.")
+        elif not force:
+            raise ResearchRunInProgressError(
+                "Research is already running. Wait for it to finish or retry after "
+                f"{STALE_RUN_MINUTES} minutes without progress."
+            )
+        else:
+            finish_research_run(ok=False, message="Previous research run replaced.")
     now = datetime.now(TZ).isoformat()
     _save_research_run(
         {
@@ -170,9 +352,26 @@ def research_status_meta_only() -> dict[str, Any]:
 
 
 def remove_research_day(day: str) -> None:
+    """Drop research log entry, ingestion history, and snapshot files for ``day``."""
     log = load_log()
     log.get("days", {}).pop(day, None)
     save_log(log)
+
+    hist = load_ingestion_history()
+    hist["entries"] = [e for e in hist.get("entries", []) if e.get("day") != day]
+    save_ingestion_history(hist)
+
+    from applications_ui_data import _snapshot_path_for_md  # noqa: WPS433
+    from table_paths import APPLICATIONS_TABLES_DIR  # noqa: WPS433
+
+    for md in APPLICATIONS_TABLES_DIR.glob(f"applications-{day}-full.md"):
+        js = _snapshot_path_for_md(md)
+        md.unlink(missing_ok=True)
+        js.unlink(missing_ok=True)
+
+    run = load_research_run()
+    if run.get("day") == day:
+        _save_research_run(_default_run())
 
 
 def repair_spurious_snapshot_days() -> list[str]:

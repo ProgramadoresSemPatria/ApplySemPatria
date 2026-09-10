@@ -103,17 +103,46 @@ def _locator(page, step: dict[str, Any], variables: dict[str, str]):
     raise ValueError(f"step needs selector or role: {step}")
 
 
-async def _exists(page, cond: dict[str, Any], variables: dict[str, str]) -> bool:
-    if cond.get("always"):
-        return True
-    spec = cond.get("exists")
-    if not spec:
-        return False
+async def _spec_exists(page, spec: dict[str, Any], variables: dict[str, str]) -> bool:
     try:
         loc = _locator(page, spec, variables)
         return await loc.count() > 0
     except Exception:  # noqa: BLE001
         return False
+
+
+async def _exists(page, cond: dict[str, Any], variables: dict[str, str]) -> bool:
+    if cond.get("always"):
+        return True
+    spec = cond.get("exists")
+    if spec is None and ("role" in cond or "selector" in cond):
+        spec = cond
+    if not spec:
+        return False
+    return await _spec_exists(page, spec, variables)
+
+
+async def _branch_when_matches(page, when: dict[str, Any], variables: dict[str, str]) -> bool:
+    """Evaluate branch ``when`` — side-effect free (never opens More during matching)."""
+    if when.get("always"):
+        return True
+    from linkedin_ui import has_connect_on_main  # noqa: WPS433
+
+    if when.get("connect_on_main"):
+        return await has_connect_on_main(page)
+    if when.get("not_connect_on_main") and await has_connect_on_main(page):
+        return False
+    if when.get("more_on_top_card"):
+        from linkedin_ui import has_more_on_top_card  # noqa: WPS433
+
+        return await has_more_on_top_card(page)
+    exists = when.get("exists")
+    not_exists = when.get("not_exists")
+    if exists and not await _spec_exists(page, exists, variables):
+        return False
+    if not_exists and await _spec_exists(page, not_exists, variables):
+        return False
+    return bool(exists or not_exists or when.get("not_connect_on_main") or when.get("more_on_top_card"))
 
 
 async def _run_steps(
@@ -146,14 +175,18 @@ async def _run_steps(
                     await pause_page_settle()
                     await drift_mouse(page)
             elif action == "sleep":
-                from human_pacing import MIN_HUMAN_PAUSE, pause_human  # noqa: WPS433
+                from human_pacing import MAX_HUMAN_PAUSE, cap_pause, pause_human  # noqa: WPS433
 
-                sec = max(float(step.get("seconds", MIN_HUMAN_PAUSE)), MIN_HUMAN_PAUSE)
-                await pause_human(base=sec)
+                sec = cap_pause(float(step.get("seconds", 1.0)))
+                await pause_human(base=min(sec, MAX_HUMAN_PAUSE))
             elif action == "press":
                 await page.keyboard.press(step.get("key", "Escape"))
                 rec["note"] = step.get("key", "Escape")
             elif action == "click":
+                if step.get("role"):
+                    rec["role"] = step["role"]
+                if step.get("name_regex"):
+                    rec["name_regex"] = step["name_regex"]
                 loc = _locator(page, step, variables)
                 if await loc.count() == 0:
                     rec["ok"] = optional
@@ -242,6 +275,22 @@ async def _run_steps(
                 path.parent.mkdir(parents=True, exist_ok=True)
                 await page.screenshot(path=str(path))
                 rec["note"] = str(path)
+            elif action == "click_connect":
+                from linkedin_ui import click_connect_on_main  # noqa: E402
+
+                if await click_connect_on_main(page):
+                    rec["note"] = "connect clicked"
+                else:
+                    rec["ok"] = optional
+                    rec["note"] = "connect not found" + ("" if optional else " (required)")
+            elif action == "abort_if_connect_on_main":
+                from linkedin_ui import has_connect_on_main  # noqa: E402
+
+                if await has_connect_on_main(page):
+                    rec["note"] = "connect on top card — skip More menu path"
+                    log.append(rec)
+                    break
+                rec["note"] = "no top-card connect"
             elif action == "dismiss_premium":
                 from linkedin_ui import dismiss_premium_modal  # noqa: E402
 
@@ -311,9 +360,12 @@ async def run_recipe(
 
     branches = recipe.get("branches")
     if branches:
+        from linkedin_ui import wait_for_profile_top_card  # noqa: WPS433
+
+        await wait_for_profile_top_card(page)
         chosen = None
         for br in branches:
-            if await _exists(page, br.get("when", {}), variables):
+            if await _branch_when_matches(page, br.get("when", {}), variables):
                 chosen = br
                 break
         if chosen is None:
@@ -321,6 +373,9 @@ async def run_recipe(
         branch_name = chosen.get("name", "branch")
         await _run_steps(page, chosen.get("steps", []), variables=variables, profile=profile, send=send, log=log)
     else:
+        from linkedin_ui import wait_for_profile_top_card  # noqa: WPS433
+
+        await wait_for_profile_top_card(page)
         await _run_steps(page, recipe.get("steps", []), variables=variables, profile=profile, send=send, log=log)
 
     committed = any(s.get("committed") for s in log)

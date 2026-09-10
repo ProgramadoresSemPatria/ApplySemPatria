@@ -1,13 +1,13 @@
-# ApplySemPatria
+# JobSemPatria
 
-[![CI](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml)
+[![CI](https://github.com/ProgramadoresSemPatria/JobSemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/JobSemPatria/actions/workflows/ci.yml)
 
 Local-first job discovery and application tooling (boards, LinkedIn posts, email/DM/form apply channels, applications UI).
 
 ## Quick start
 
 ```bash
-git clone https://github.com/ProgramadoresSemPatria/ApplySemPatria.git job-search
+git clone https://github.com/ProgramadoresSemPatria/JobSemPatria.git job-search
 cd job-search
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt

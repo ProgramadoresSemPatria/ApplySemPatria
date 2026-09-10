@@ -74,6 +74,8 @@ def _ui_subprocess_env() -> dict[str, str]:
 
 
 def _browser_deps_ok() -> tuple[bool, str]:
+    from browser_session import headless_chromium_missing_message, headless_chromium_ready  # noqa: WPS433
+
     proc = subprocess.run(
         [PY, "-c", "import patchright"],
         cwd=str(ROOT),
@@ -86,6 +88,8 @@ def _browser_deps_ok() -> tuple[bool, str]:
             f"Run: {ROOT / '.venv-test' / 'bin' / 'pip'} install -r requirements-dev.txt "
             "&& patchright install chromium"
         )
+    if not headless_chromium_ready():
+        return False, headless_chromium_missing_message()
     return True, ""
 
 
@@ -341,6 +345,9 @@ def run_bulk_dm_followup(
     check_cmd = [
         PY,
         str(SCRIPTS / "dm_followup.py"),
+        "--send",
+        *UI_APPROVE,
+        "--force-send",
         "--phase",
         "check",
         "--track",
@@ -390,6 +397,7 @@ def run_bulk_dm_followup(
     ok = True
 
     for label, cmd in phases:
+        print(f"[bulk-dm] ▶ {label} — {' '.join(cmd[2:6])}…", flush=True)
         try:
             proc = _run_apply_cmd(cmd, inherit_stdio=True)
         except subprocess.TimeoutExpired:
@@ -404,8 +412,10 @@ def run_bulk_dm_followup(
         phase_ok, phase_msg = _proc_summary(proc, streamed=True)
         ok = ok and phase_ok
         summaries.append(f"[{label}] {phase_msg}")
+        print(f"[bulk-dm] ✓ {label}: {phase_msg[:120]}", flush=True)
 
     scope = f"{len(keys)} role(s)" if keys else "all DM candidates"
+    print(f"[bulk-dm] done — {scope}", flush=True)
     return {
         "ok": ok,
         "message": "\n\n".join(summaries) + f"\n\nProcessed list scope: {scope}",
@@ -589,7 +599,7 @@ def set_form_status(job_key: str, applied: bool) -> dict[str, Any]:
 
 
 class ApplicationsUIHandler(BaseHTTPRequestHandler):
-    server_version = "ApplySemPatriaUI/1.0"
+    server_version = "JobSemPatriaUI/1.0"
 
     def log_message(self, fmt: str, *args: Any) -> None:
         print(f"[ui] {self.address_string()} {fmt % args}")
@@ -706,8 +716,34 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
         if path == "/api/research":
             body = self._read_json()
             track = body.get("track")
-            since = str(body.get("since") or "7d")
+            from research_log import default_ingestion_since  # noqa: E402
+
+            since = str(body.get("since") or default_ingestion_since())
             skip_linkedin = bool(body.get("skip_linkedin"))
+
+            from research_log import (  # noqa: E402
+                clear_stale_research_run,
+                load_research_run,
+                research_run_is_stale,
+                research_run_status,
+            )
+
+            if bool(body.get("clear_stale")):
+                clear_stale_research_run(reason="Stale research run cleared from UI.")
+            elif research_run_is_stale():
+                clear_stale_research_run(reason="Stale research run cleared — starting fresh.")
+
+            run = load_research_run()
+            if run.get("running") and not research_run_is_stale(run):
+                self._json(
+                    409,
+                    {
+                        "ok": False,
+                        "message": "Research is already running. Wait for progress to finish.",
+                        "run": research_run_status(),
+                    },
+                )
+                return
 
             result_holder: dict[str, Any] = {}
 

@@ -95,6 +95,23 @@ def application_steps_enabled(job: dict[str, Any]) -> bool:
     return get_disposition(job) in (DISPOSITION_BEST_FIT, DISPOSITION_REAL_ROLE)
 
 
+def dm_apply_steps_enabled(job: dict[str, Any]) -> bool:
+    """Allow LinkedIn connect/check/message even when salary review disabled other steps."""
+    if application_steps_enabled(job):
+        return True
+    if get_disposition(job) != DISPOSITION_HUMAN_REVIEW:
+        return False
+    from application_channel import classify_channel, list_application_formats, needs_recruiter_connect  # noqa: WPS433
+    from generate_applications import dm_profile_url  # noqa: WPS433
+
+    if not needs_recruiter_connect(job) or not dm_profile_url(job):
+        return False
+    if classify_channel(job) == "dm":
+        return True
+    formats = {f["id"] for f in list_application_formats(job)}
+    return "direct_message" in formats
+
+
 def clear_job_disposition(job: dict[str, Any]) -> str:
     job.pop("position_disposition", None)
     return get_disposition(job)

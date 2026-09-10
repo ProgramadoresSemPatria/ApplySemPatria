@@ -38,7 +38,7 @@ python scripts/generate_linkedin_hars.py
 |----------|---------|------|
 | `.github/workflows/ci.yml` | `main`, `ci/tests` push/PR, manual | **unit** → **browser** → **ci gate** |
 
-Badge: [![CI](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/ApplySemPatria/actions/workflows/ci.yml)
+Badge: [![CI](https://github.com/ProgramadoresSemPatria/JobSemPatria/actions/workflows/ci.yml/badge.svg)](https://github.com/ProgramadoresSemPatria/JobSemPatria/actions/workflows/ci.yml)
 
 Observe: `gh run list --workflow=ci.yml` · `gh run watch`
 

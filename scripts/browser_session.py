@@ -16,6 +16,14 @@ BROWSERS_PATH = Path.home() / ".linkedin-mcp/patchright-browsers"
 PROFILE_DIR = Path.home() / ".linkedin-mcp/profile"
 COOKIES_PATH = Path.home() / ".linkedin-mcp/cookies.json"
 
+# Headless LinkedIn collectors require Patchright's chromium_headless_shell bundle.
+HEADLESS_SHELL_EXECUTABLE_CANDIDATES = (
+    "chrome-headless-shell-mac-arm64/chrome-headless-shell",
+    "chrome-headless-shell-mac-x64/chrome-headless-shell",
+    "chrome-linux/headless_shell",
+    "chrome-win/headless_shell.exe",
+)
+
 # Patchright bundle — automation build; avoid unless explicitly requested.
 TEST_CHROME_EXECUTABLE = (
     BROWSERS_PATH
@@ -30,6 +38,37 @@ REAL_CHROME_CANDIDATES = (
     Path("/usr/bin/google-chrome-stable"),
     Path("/usr/bin/chromium-browser"),
 )
+
+
+def headless_browsers_root() -> Path:
+    raw = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
+    return Path(raw).expanduser() if raw else BROWSERS_PATH
+
+
+def headless_chromium_executable() -> Path | None:
+    """Return the Patchright headless shell binary when installed."""
+    root = headless_browsers_root()
+    if not root.is_dir():
+        return None
+    for shell_dir in sorted(root.glob("chromium_headless_shell-*"), reverse=True):
+        for rel in HEADLESS_SHELL_EXECUTABLE_CANDIDATES:
+            candidate = shell_dir / rel
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def headless_chromium_ready() -> bool:
+    return headless_chromium_executable() is not None
+
+
+def headless_chromium_missing_message() -> str:
+    root = headless_browsers_root()
+    return (
+        "Patchright headless Chromium is not installed "
+        f"(expected under {root}/chromium_headless_shell-*). "
+        f"Run: PLAYWRIGHT_BROWSERS_PATH={root} patchright install chromium"
+    )
 
 
 def resolve_chrome_executable() -> str | None:
@@ -49,11 +88,15 @@ def resolve_chrome_executable() -> str | None:
 
 
 def browser_launch_kwargs(*, headless: bool) -> dict[str, Any]:
-    """Launch options: real Chrome > channel=chrome > Patchright default chromium."""
+    """Launch options: headed real Chrome; headless Patchright Chromium."""
     kwargs: dict[str, Any] = {
         "headless": headless,
         "args": ["--disable-blink-features=AutomationControlled"],
     }
+    if headless:
+        # Headless collectors: bundled Chromium (parallel-safe, no profile lock).
+        return kwargs
+
     executable = resolve_chrome_executable()
     if executable:
         kwargs["executable_path"] = executable

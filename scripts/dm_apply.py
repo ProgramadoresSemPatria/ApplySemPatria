@@ -190,11 +190,20 @@ async def classify_affordance(page, prof_url: str) -> str:
         await dismiss_blocking_dialogs(page)
     except Exception:  # noqa: BLE001
         return "error"
+    from linkedin_ui import (  # noqa: WPS433
+        CONNECT_BUTTON_NAME_RE,
+        has_connect_on_main,
+        is_connect_affordance_label,
+        more_menu_has_connect,
+    )
+
+    if await has_connect_on_main(page):
+        return "connect_top"
+    if await more_menu_has_connect(page):
+        return "connect_more"
     main = page.locator("main").first
     if await main.get_by_role("button", name=re.compile(r"^Message", re.I)).count() > 0:
         return "message"
-    if await main.get_by_role("button", name=re.compile(r"^Connect$", re.I)).count() > 0:
-        return "connect_top"
     more = main.get_by_role("button", name=re.compile(r"^More", re.I))
     if await more.count() > 0:
         try:
@@ -211,8 +220,6 @@ async def classify_affordance(page, prof_url: str) -> str:
             await page.keyboard.press("Escape")
             if any(re.search(r"remove connection|^following$", x, re.I) for x in labels):
                 return "connected"
-            if any(re.search(r"\bconnect\b|invite", x, re.I) for x in labels):
-                return "connect_more"
         except Exception:  # noqa: BLE001
             pass
     return "follow_only"
@@ -283,6 +290,9 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
                 await pause_page_settle()
                 await drift_mouse(page)
                 await dismiss_blocking_dialogs(page)
+                from linkedin_ui import wait_for_profile_top_card  # noqa: WPS433
+
+                await wait_for_profile_top_card(page)
                 result = await run_recipe(page, recipe, variables=variables, profile=profile, send=send)
             except Exception as exc:  # noqa: BLE001
                 result = {"branch": "error", "steps": [{"action": "goto", "ok": False, "note": str(exc)[:160]}]}

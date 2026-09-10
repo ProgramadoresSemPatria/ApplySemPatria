@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -32,11 +33,66 @@ def _resolve_python() -> str:
 
 PY = _resolve_python()
 
+# Wall-clock limits for external collect scripts (avoid stuck research-run.json).
+STEP_TIMEOUT_SEC = {
+    "linkedin_collect": int(os.environ.get("JOBSEARCH_LINKEDIN_COLLECT_TIMEOUT", "3600")),
+    "linkedin_jobs_collect": int(os.environ.get("JOBSEARCH_LINKEDIN_JOBS_TIMEOUT", "2700")),
+    "discover": int(os.environ.get("JOBSEARCH_DISCOVER_TIMEOUT", "900")),
+    "generate_table": int(os.environ.get("JOBSEARCH_TABLE_TIMEOUT", "600")),
+}
+
+
+def _linkedin_steps_planned(*, table_only: bool, skip_linkedin: bool, skip_linkedin_jobs: bool) -> bool:
+    if table_only:
+        return False
+    return not skip_linkedin or not skip_linkedin_jobs
+
+
+def _ensure_headless_browser(*, step_key: str, steps: list[str], errors: list[str]) -> bool:
+    from browser_session import headless_chromium_missing_message, headless_chromium_ready  # noqa: WPS433
+
+    if step_key not in steps:
+        steps.append(step_key)
+    set_research_step(step_key, detail="checking browser")
+    if headless_chromium_ready():
+        return True
+    msg = headless_chromium_missing_message()
+    errors.append(f"{step_key}: {msg}")
+    return False
+
+
+def _run_step(
+    cmd: list[str],
+    *,
+    step_key: str,
+    steps: list[str],
+    errors: list[str],
+    cwd: Path | None = None,
+    step_label: str | None = None,
+    detail: str = "",
+) -> subprocess.CompletedProcess[str] | None:
+    label = step_label or step_key
+    if label not in steps:
+        steps.append(label)
+    set_research_step(step_key, detail=detail)
+    timeout = STEP_TIMEOUT_SEC.get(step_key, 1800)
+    try:
+        return subprocess.run(
+            cmd,
+            cwd=str(cwd or ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        errors.append(f"{step_key}: timed out after {timeout}s")
+        return None
+
 
 def run_daily_research(
     *,
     track: str | None = None,
-    since: str = "7d",
+    since: str | None = None,
     skip_linkedin: bool = False,
     skip_linkedin_jobs: bool = False,
     skip_discover: bool = False,
@@ -44,11 +100,11 @@ def run_daily_research(
 ) -> dict[str, Any]:
     """Discover jobs and build today's researched applications snapshot."""
     from table_paths import applications_table_for_day, applications_table_path, ensure_table_dirs  # noqa: E402
-    from table_window import load_window, save_window  # noqa: E402
     from track_readiness import ready_track_ids  # noqa: E402
-    from research_log import has_research, load_log  # noqa: E402
+    from research_log import default_ingestion_since, has_research, load_log  # noqa: E402
     from track_store import resolve_track  # noqa: E402
 
+    since = since or default_ingestion_since()
     day = today_local()
     ensure_table_dirs()
     steps: list[str] = []
@@ -57,24 +113,51 @@ def run_daily_research(
     if has_research(day):
         prev_steps = list(load_log().get("days", {}).get(day, {}).get("steps") or [])
 
-    start_research_run(day)
+    try:
+        start_research_run(day)
+    except Exception as exc:
+        from research_log import ResearchRunInProgressError  # noqa: WPS433
+
+        if isinstance(exc, ResearchRunInProgressError):
+            return {"ok": False, "message": str(exc), "day": day}
+        raise
 
     try:
         track_ids: list[str] = []
+
+        linkedin_planned = _linkedin_steps_planned(
+            table_only=table_only,
+            skip_linkedin=skip_linkedin,
+            skip_linkedin_jobs=skip_linkedin_jobs,
+        )
+        linkedin_browser_ok = True
+        if linkedin_planned:
+            linkedin_browser_ok = _ensure_headless_browser(
+                step_key="browser_preflight",
+                steps=steps,
+                errors=errors,
+            )
+            if not linkedin_browser_ok:
+                msg = "\n".join(errors)
+                finish_research_run(ok=False, message=msg)
+                return {
+                    "ok": False,
+                    "message": msg,
+                    "day": day,
+                    "steps": steps,
+                }
 
         if not table_only:
             if not skip_linkedin:
                 li_script = SCRIPTS / "linkedin-deep-collect.sh"
                 if li_script.is_file():
-                    steps.append("linkedin_collect")
-                    set_research_step("linkedin_collect")
-                    proc = subprocess.run(
+                    proc = _run_step(
                         [str(li_script), "--all-queries", "--merge", "--since", since],
-                        cwd=str(ROOT),
-                        capture_output=True,
-                        text=True,
+                        step_key="linkedin_collect",
+                        steps=steps,
+                        errors=errors,
                     )
-                    if proc.returncode != 0:
+                    if proc is not None and proc.returncode != 0:
                         tail = (proc.stderr or proc.stdout or "").strip().splitlines()
                         errors.append("LinkedIn collect: " + (tail[-1] if tail else f"exit {proc.returncode}"))
                 else:
@@ -83,15 +166,13 @@ def run_daily_research(
             if not skip_linkedin_jobs:
                 li_jobs_script = SCRIPTS / "linkedin-jobs-collect.sh"
                 if li_jobs_script.is_file():
-                    steps.append("linkedin_jobs_collect")
-                    set_research_step("linkedin_jobs_collect")
-                    proc = subprocess.run(
+                    proc = _run_step(
                         [str(li_jobs_script), "--all-queries", "--merge", "--since", since],
-                        cwd=str(ROOT),
-                        capture_output=True,
-                        text=True,
+                        step_key="linkedin_jobs_collect",
+                        steps=steps,
+                        errors=errors,
                     )
-                    if proc.returncode != 0:
+                    if proc is not None and proc.returncode != 0:
                         tail = (proc.stderr or proc.stdout or "").strip().splitlines()
                         errors.append("LinkedIn jobs: " + (tail[-1] if tail else f"exit {proc.returncode}"))
                 else:
@@ -109,15 +190,15 @@ def run_daily_research(
 
             if not skip_discover:
                 for tid in track_ids:
-                    steps.append(f"discover:{tid}")
-                    set_research_step("discover", detail=tid)
-                    proc = subprocess.run(
+                    proc = _run_step(
                         [PY, str(SCRIPTS / "discover.py"), "--since", since, "--track", tid],
-                        cwd=str(ROOT),
-                        capture_output=True,
-                        text=True,
+                        step_key="discover",
+                        step_label=f"discover:{tid}",
+                        detail=tid,
+                        steps=steps,
+                        errors=errors,
                     )
-                    if proc.returncode != 0:
+                    if proc is not None and proc.returncode != 0:
                         tail = (proc.stderr or proc.stdout or "").strip().splitlines()
                         errors.append(f"Discover {tid}: " + (tail[-1] if tail else f"exit {proc.returncode}"))
         else:
@@ -125,28 +206,33 @@ def run_daily_research(
             if not track_ids:
                 track_ids = ["ai-engineer"]
 
-        li_since, bd_since = load_window()
-        save_window(linkedin_since=li_since, board_since=bd_since)
-        out = applications_table_for_day(day) if has_research(day) else applications_table_path()
+        from table_window import save_window_for_day  # noqa: WPS433
 
-        if "generate_table" not in steps:
-            steps.append("generate_table")
-        set_research_step("generate_table")
-        proc = subprocess.run(
+        save_window_for_day(day)
+        out = applications_table_for_day(day)
+
+        proc = _run_step(
             [
                 PY,
                 str(SCRIPTS / "generate_applications.py"),
-                "--linkedin-since",
-                li_since.date().isoformat(),
-                "--board-since",
-                bd_since.date().isoformat(),
+                "--research-day",
+                day,
                 "--output",
                 str(out),
             ],
-            cwd=str(ROOT),
-            capture_output=True,
-            text=True,
+            step_key="generate_table",
+            steps=steps,
+            errors=errors,
         )
+        if proc is None:
+            msg = "\n".join(errors) or "Table generation timed out."
+            finish_research_run(ok=False, message=msg)
+            return {
+                "ok": False,
+                "message": msg,
+                "day": day,
+                "steps": steps,
+            }
         if proc.returncode != 0:
             tail = (proc.stderr or proc.stdout or "").strip().splitlines()
             errors.append("Table: " + (tail[-1] if tail else f"exit {proc.returncode}"))

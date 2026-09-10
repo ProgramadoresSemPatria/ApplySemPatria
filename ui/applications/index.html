@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ApplySemPatria · Applications</title>
+  <title>JobSemPatria · Applications</title>
   <link rel="icon" href="logo.jpg" type="image/jpeg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -920,7 +920,7 @@
       <div class="brand">
         <img class="brand-logo" src="logo.jpg" alt="" width="40" height="40" />
         <div>
-          <h1>ApplySemPatria</h1>
+          <h1>JobSemPatria</h1>
           <p>Applications dashboard</p>
         </div>
         <a href="settings.html" class="config-link" title="Configuration &amp; setup" aria-label="Configuration">
@@ -969,7 +969,7 @@
       <div class="cards-wrap" id="cardsWrap">
         <div class="research-prompt" id="researchPrompt" hidden>
           <h3>No research for today yet</h3>
-          <p id="researchPromptText">Run discovery to build today's apply list from LinkedIn posts and job boards. Past snapshot days stay available in the sidebar.</p>
+          <p id="researchPromptText"></p>
           <p class="research-progress" id="researchProgressText" hidden></p>
           <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
         </div>
@@ -977,7 +977,10 @@
           <div class="list-header">
             <h2 id="viewTitle">Applications <span id="viewSubtitle"></span></h2>
             <div class="list-header-actions">
-              <button class="bulk-action-btn bulk-dm-btn" id="bulkDmBtn" type="button">⟳ Connect · check · send DMs</button>
+              <button class="bulk-action-btn bulk-dm-btn" id="bulkDmBtn" type="button">
+                <span class="bulk-btn-icon" id="bulkDmBtnIcon">⟳</span>
+                <span class="bulk-btn-label">Connect · check · send DMs</span>
+              </button>
               <button class="bulk-action-btn bulk-email-btn" id="bulkEmailBtn" type="button">
                 <span class="bulk-btn-icon" id="bulkEmailBtnIcon">✉</span>
                 <span class="bulk-btn-label">Send email candidature</span>
@@ -1025,7 +1028,15 @@
     }
     let searchQuery = "";
     let serverUiApproval = false;
-    let serverMeta = { today: "", has_research_today: false, last_research_day: null, chameleon: { ready: false } };
+    let serverMeta = {
+      today: "",
+      has_research_today: false,
+      last_research_day: null,
+      ingestion_has_prior: false,
+      ingestion_last_at: null,
+      ingestion_since: "7d",
+      chameleon: { ready: false },
+    };
 
     const UI_CLIENT_VERSION = 7;
     const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
@@ -1103,6 +1114,8 @@
     };
 
     let researchPollTimer = null;
+    let researchWasRunning = false;
+    let researchExpectRunning = false;
 
     function formatResearchElapsed(iso) {
       if (!iso) return "";
@@ -1117,31 +1130,92 @@
         clearInterval(researchPollTimer);
         researchPollTimer = null;
       }
+    }
+
+    function resetResearchProgressText() {
       researchProgressText.hidden = true;
       researchProgressText.textContent = "";
     }
 
-    async function pollResearchProgress(btn) {
+    async function fetchResearchStatus() {
       try {
         const res = await fetch("/api/research/status");
-        if (!res.ok) return;
-        const run = await res.json();
-        if (!run.running) return;
-        const step = RESEARCH_STEP_LABELS[run.step] || run.step || "Researching";
-        const detail = run.detail ? ` · ${run.detail}` : "";
-        const elapsed = formatResearchElapsed(run.started_at);
-        researchProgressText.hidden = false;
-        researchProgressText.textContent = `${step}${detail}${elapsed ? ` · ${elapsed}` : ""}`;
-        btn.textContent = elapsed ? `Researching · ${elapsed}` : "Researching…";
+        if (!res.ok) return null;
+        return await res.json();
       } catch {
-        /* ignore transient poll errors */
+        return null;
       }
     }
 
-    function startResearchPoll(btn) {
+    function applyResearchProgress(run, btn) {
+      const step = RESEARCH_STEP_LABELS[run.step] || run.step || "Researching";
+      const detail = run.detail ? ` · ${run.detail}` : "";
+      const elapsed = formatResearchElapsed(run.started_at);
+      btn.disabled = true;
+      btn.textContent = elapsed ? `Researching · ${elapsed}` : "Researching…";
+      if (viewingTodayOrLive() && needsResearchPrompt()) {
+        researchProgressText.hidden = false;
+        researchProgressText.textContent = `${step}${detail}${elapsed ? ` · ${elapsed}` : ""}`;
+      }
+    }
+
+    function resetResearchButton(btn) {
+      btn.disabled = false;
+      btn.textContent = "Make a research today";
+      resetResearchProgressText();
+    }
+
+    function ensureResearchPoll(btn) {
+      if (researchPollTimer) return;
+      researchPollTimer = setInterval(() => syncResearchRunState(btn), 500);
+    }
+
+    async function syncResearchRunState(btn = runResearchBtn) {
+      const run = await fetchResearchStatus();
+      if (!run) return;
+
+      if (run.running) {
+        researchExpectRunning = false;
+        researchWasRunning = true;
+        applyResearchProgress(run, btn);
+        ensureResearchPoll(btn);
+        if (viewingTodayOrLive() && needsResearchPrompt()) {
+          showResearchView();
+        }
+        return;
+      }
+
+      if (researchExpectRunning) {
+        ensureResearchPoll(btn);
+        return;
+      }
+
       stopResearchPoll();
-      pollResearchProgress(btn);
-      researchPollTimer = setInterval(() => pollResearchProgress(btn), 500);
+      const justFinished = researchWasRunning;
+      researchWasRunning = false;
+
+      if (justFinished) {
+        await checkServerMeta();
+        await loadDays();
+        if (run.ok) {
+          showToast(run.message || "Research complete", true);
+          if (viewingTodayOrLive()) {
+            activeDay = run.day || serverMeta.today || activeDay;
+            highlightSidebarDay(activeDay);
+            try {
+              await loadSnapshot(activeDay);
+            } catch (e) {
+              showToast(String(e.message || e), false);
+            }
+          }
+        } else if (viewingTodayOrLive() && needsResearchPrompt()) {
+          showToast(run.message || "Research failed", false);
+        }
+      }
+
+      if (!researchExpectRunning) {
+        resetResearchButton(btn);
+      }
     }
 
     function viewingTodayOrLive() {
@@ -1154,7 +1228,41 @@
       return !serverMeta.has_research_today && viewingTodayOrLive();
     }
 
+    function formatIngestionWhen(iso) {
+      if (!iso) return "";
+      return new Date(iso).toLocaleString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    function resolveIngestionMeta(meta = serverMeta) {
+      const lastAt = meta.ingestion_last_at || meta.last_research_at || null;
+      const hasPrior = meta.ingestion_has_prior === true
+        || (meta.ingestion_has_prior !== false && Boolean(lastAt));
+      const since = meta.ingestion_since || meta.ingestion_since_at || lastAt || "7d";
+      return { hasPrior, lastAt, since };
+    }
+
+    function updateResearchPromptText() {
+      if (!researchPromptText) return;
+      const { hasPrior, lastAt } = resolveIngestionMeta();
+      if (!hasPrior) {
+        researchPromptText.textContent =
+          "No previous ingestion yet. This run searches LinkedIn posts, LinkedIn jobs, and job boards for the last 7 days and builds today's apply list. Past snapshot days stay in the sidebar.";
+        return;
+      }
+      const lastLabel = formatIngestionWhen(lastAt);
+      researchPromptText.textContent =
+        `Last ingestion: ${lastLabel}. This run collects new roles from that moment through when you tap the button. Past snapshot days stay in the sidebar.`;
+    }
+
     function showResearchView() {
+      updateResearchPromptText();
       researchPrompt.hidden = false;
       listContent.hidden = true;
     }
@@ -1182,6 +1290,7 @@
         }
         const meta = await res.json();
         serverMeta = meta;
+        updateResearchPromptText();
         serverUiApproval = serverSupportsClient(meta);
         serverStale.hidden = serverUiApproval;
       } catch {
@@ -1246,6 +1355,7 @@
       highlightSidebarDay(day);
       if (needsResearchPrompt()) {
         syncMainView();
+        syncResearchRunState();
         return;
       }
       loadSnapshot(day).catch(e => showToast(e.message, false));
@@ -1303,16 +1413,28 @@
       });
     }
 
+    function dmApplyEligible(job) {
+      if (!hasFormat(job, "direct_message")) return false;
+      if (job.application_steps_enabled !== false) return true;
+      return job.dm_apply_steps_enabled === true;
+    }
+
     function dmJobsInList() {
-      return filteredJobs().filter(j =>
-        j.application_steps_enabled !== false && hasFormat(j, "direct_message")
-      );
+      return filteredJobs().filter(dmApplyEligible);
     }
 
     function dmJobsNeedingConnect() {
       return dmJobsInList().filter(j => {
         const s = j.actions?.dm_connect || {};
         return s.available && !s.done && !s.in_progress;
+      });
+    }
+
+    function dmJobsNeedingCheck() {
+      return dmJobsInList().filter(j => {
+        const connect = j.actions?.dm_connect || {};
+        const check = j.actions?.dm_check || {};
+        return check.available || connect.in_progress;
       });
     }
 
@@ -1333,15 +1455,56 @@
       return profiles;
     }
 
+    function dmBulkActionLabel(dmJobs) {
+      const needConnect = dmJobsNeedingConnect().length;
+      const needCheck = dmJobsNeedingCheck().length;
+      if (!dmJobs.length) return "Connect · check · send DMs";
+      if (needConnect > 0) {
+        let label = `Connect (${needConnect})`;
+        if (needCheck) label += ` · check (${needCheck})`;
+        return label;
+      }
+      if (needCheck > 0) return `Check pending (${needCheck})`;
+      const readyMsg = dmJobsInList().filter(j => {
+        const msg = j.actions?.dm_message || {};
+        return msg.available && !msg.done;
+      }).length;
+      if (readyMsg > 0) return `Send DMs (${readyMsg})`;
+      return "Connect · check · send DMs";
+    }
+
     function dmBulkActionTitle(dmJobs) {
       if (!dmJobs.length) return "No direct-message roles in this list";
       const needConnect = dmJobsNeedingConnect().length;
+      const needCheck = dmJobsNeedingCheck().length;
       const followUp = dmJobsInFollowUp().length;
       const unique = dmUniqueProfiles(dmJobs).size;
       let title = `Connect (if needed), check accepts, and send DMs for ${dmJobs.length} role(s)`;
       if (unique < dmJobs.length) title += ` · ${unique} unique profile(s)`;
-      if (needConnect || followUp) title += ` — ${needConnect} new connection(s), ${followUp} follow-up(s)`;
+      if (needConnect === 0 && needCheck > 0) {
+        title += ` — 0 new connects · recheck ${needCheck} pending accept(s)`;
+      } else if (needConnect || needCheck || followUp) {
+        title += ` — ${needConnect} new connection(s), ${needCheck} to recheck, ${followUp} follow-up(s)`;
+      }
       return title;
+    }
+
+    function updateBulkDmBtn() {
+      const dmBtn = document.getElementById("bulkDmBtn");
+      const dmJobs = dmJobsInList();
+      const icon = dmBtn.querySelector(".bulk-btn-icon");
+      const label = dmBtn.querySelector(".bulk-btn-label");
+      if (!serverUiApproval) {
+        dmBtn.disabled = true;
+        if (icon) icon.textContent = "⟳";
+        if (label) label.textContent = "Connect · check · send DMs";
+        dmBtn.title = "Restart the UI server (jobsearch ui) — server is outdated";
+        return;
+      }
+      dmBtn.disabled = dmJobs.length === 0;
+      if (icon) icon.textContent = "⟳";
+      if (label) label.textContent = dmBulkActionLabel(dmJobs);
+      dmBtn.title = dmBulkActionTitle(dmJobs);
     }
 
     function emailRolesInList() {
@@ -1430,12 +1593,7 @@
     function updateListHeader() {
       const jobs = filteredJobs();
       viewSubtitle.textContent = `· ${jobs.length} roles · ${listDayLabel()}`;
-      const dmJobs = dmJobsInList();
-      const dmBtn = document.getElementById("bulkDmBtn");
-      dmBtn.disabled = dmJobs.length === 0 || !serverUiApproval;
-      dmBtn.title = !serverUiApproval
-        ? "Restart the UI server (jobsearch ui) — server is outdated"
-        : dmBulkActionTitle(dmJobs);
+      updateBulkDmBtn();
       updateBulkEmailBtn();
     }
 
@@ -1846,6 +2004,7 @@
       highlightSidebarDay(activeDay);
       if (needsResearchPrompt()) {
         syncMainView();
+        syncResearchRunState();
         return;
       }
       loadSnapshot("live").catch(e => showToast(e.message, false));
@@ -1853,19 +2012,32 @@
 
     async function runResearchToday() {
       const btn = runResearchBtn;
+      const active = await fetchResearchStatus();
+      if (active?.running) {
+        syncMainView();
+        await syncResearchRunState(btn);
+        return;
+      }
       if (btn.disabled) return;
+      researchExpectRunning = true;
       btn.disabled = true;
       btn.textContent = "Researching…";
-      startResearchPoll(btn);
+      ensureResearchPoll(btn);
+      syncResearchRunState(btn);
       try {
         const res = await fetch("/api/research", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ since: "7d" }),
+          body: JSON.stringify({ since: resolveIngestionMeta().since }),
         });
         const data = await res.json();
-        showToast(data.message || (data.ok ? "Research done" : "Failed"), data.ok);
+        if (res.status === 409 && data.run?.running) {
+          showToast("Research already in progress…", true);
+          await syncResearchRunState(btn);
+          return;
+        }
         if (data.ok) {
+          researchWasRunning = false;
           serverMeta.has_research_today = true;
           serverMeta.today = data.day || serverMeta.today;
           await loadDays();
@@ -1877,13 +2049,15 @@
             await loadSnapshot(activeDay);
           }
           syncMainView();
+          showToast(data.message || "Research done", true);
+        } else {
+          showToast(data.message || "Failed", false);
         }
       } catch (e) {
         showToast(String(e), false);
       } finally {
-        stopResearchPoll();
-        btn.disabled = false;
-        btn.textContent = "Make a research today";
+        researchExpectRunning = false;
+        await syncResearchRunState(btn);
       }
     }
 
@@ -1986,6 +2160,15 @@
     (async () => {
       await checkServerMeta();
       await loadDays();
+      const run = await fetchResearchStatus();
+      if (run?.running) {
+        researchWasRunning = true;
+        activeDay = serverMeta.today || "live";
+        highlightSidebarDay(activeDay);
+        syncMainView();
+        await syncResearchRunState();
+        return;
+      }
       if (needsResearchPrompt()) {
         activeDay = serverMeta.today || "live";
         highlightSidebarDay(activeDay);

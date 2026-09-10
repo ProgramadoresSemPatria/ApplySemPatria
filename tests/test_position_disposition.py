@@ -19,6 +19,7 @@ from position_disposition import (  # noqa: E402
     auto_disposition_for_job,
     clear_job_disposition,
     disposition_label,
+    dm_apply_steps_enabled,
     get_disposition,
     include_in_apply_table,
     set_job_disposition,
@@ -37,6 +38,7 @@ def test_needs_review_auto_no_steps():
     job = {"role": "AI Engineer", "filter_result": "needs_review"}
     assert auto_disposition_for_job(job) == DISPOSITION_HUMAN_REVIEW
     assert application_steps_enabled(job) is False
+    assert dm_apply_steps_enabled(job) is False
 
 
 def test_skipped_job_seeker_auto_not_real():

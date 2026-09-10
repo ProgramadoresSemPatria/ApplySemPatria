@@ -40,7 +40,7 @@ from linkedin_posts_merge import (  # noqa: E402
 )
 from registry import load_json, job_key  # noqa: E402
 
-from browser_session import PROFILE_DIR, browser_launch_kwargs, load_cookies  # noqa: E402
+from browser_session import BROWSERS_PATH, PROFILE_DIR, browser_launch_kwargs, load_cookies  # noqa: E402
 RUNS = ROOT / "runs"
 TZ = ZoneInfo("America/Sao_Paulo")
 

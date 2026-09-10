@@ -54,10 +54,10 @@ class LinkedInJobsTableTests(unittest.TestCase):
         self.assertEqual(classify_channel(job), CHANNEL_URL)
 
     def test_collect_jobs_includes_linkedin_jobs(self):
-        since = datetime.now(TZ) - timedelta(days=1)
+        day = datetime.now(TZ).date().isoformat()
         with patch("applications_ui_data.load_registry") as mock_reg:
             mock_reg.return_value = {"jobs": [_sample_job()]}
-            cards = collect_jobs_for_ui(linkedin_since=since, board_since=since)
+            cards = collect_jobs_for_ui(research_day=day)
         self.assertEqual(len(cards), 1)
         self.assertEqual(cards[0]["role_from"], "linkedin_jobs")
         self.assertTrue(cards[0]["linkedin_easy_apply"])

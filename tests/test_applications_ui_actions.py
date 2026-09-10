@@ -59,10 +59,8 @@ def test_dm_message_sent():
     assert actions["dm_connect"]["done"] is True
 
 
-def test_human_review_disables_steps_in_card():
+def test_human_review_keeps_dm_steps_when_profile_present():
     from applications_ui_data import job_to_card
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
 
     job = linkedin_dm_job(filter_result="needs_review")
     card = job_to_card(
@@ -75,5 +73,6 @@ def test_human_review_disables_steps_in_card():
         li_cfg={"form_link_message_enabled": True},
     )
     assert card["application_steps_enabled"] is False
-    for state in card["actions"].values():
-        assert state["available"] is False
+    assert card["dm_apply_steps_enabled"] is True
+    assert card["actions"]["dm_connect"]["available"] is True
+    assert card["actions"]["email"]["available"] is False

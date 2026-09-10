@@ -72,7 +72,11 @@ def gmail_deps_ok() -> bool:
 
 
 def browser_deps_ok() -> bool:
-    return package_installed("patchright")
+    if not package_installed("patchright"):
+        return False
+    from browser_session import headless_chromium_ready  # noqa: WPS433
+
+    return headless_chromium_ready()
 
 
 def gmail_auth_ok() -> bool:
@@ -178,17 +182,23 @@ def install_deps(
         if not ok:
             return False, [err]
 
-    if browser and browser_deps_ok():
-        if not quiet:
-            print("  Installing Patchright Chromium (one-time, ~150MB) …")
-        try:
-            subprocess.run(
-                [str(python), "-m", "patchright", "install", "chromium"],
-                cwd=str(ROOT),
-                check=False,
-            )
-        except OSError as exc:
-            messages.append(f"patchright browser install skipped: {exc}")
+    if browser and package_installed("patchright"):
+        from browser_session import BROWSERS_PATH, headless_chromium_ready  # noqa: WPS433
+
+        if not headless_chromium_ready():
+            if not quiet:
+                print("  Installing Patchright Chromium (one-time, ~150MB) …")
+            env = os.environ.copy()
+            env.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(BROWSERS_PATH))
+            try:
+                subprocess.run(
+                    [str(python), "-m", "patchright", "install", "chromium"],
+                    cwd=str(ROOT),
+                    env=env,
+                    check=False,
+                )
+            except OSError as exc:
+                messages.append(f"patchright browser install skipped: {exc}")
 
     return True, messages
 
@@ -198,7 +208,13 @@ def print_environment_report() -> None:
     print(f"  Python {py_ver}: {'✓' if py_ok else '✗'}")
     print(f"  Virtualenv ({VENV_DIR.name}): {'✓ active' if in_project_venv() else ('✓ exists' if VENV_DIR.exists() else '○ not created')}")
     print(f"  Gmail packages: {'✓' if gmail_deps_ok() else '○ not installed'}")
-    print(f"  Browser (patchright): {'✓' if browser_deps_ok() else '○ not installed'}")
+    browser_ok = browser_deps_ok()
+    browser_label = "✓" if browser_ok else "○ not installed"
+    if package_installed("patchright") and not browser_ok:
+        from browser_session import headless_chromium_missing_message  # noqa: WPS433
+
+        browser_label = f"○ {headless_chromium_missing_message()}"
+    print(f"  Browser (patchright): {browser_label}")
     print(f"  Gmail auth: {'✓' if gmail_auth_ok() else '○ not configured'}")
     print(f"  LinkedIn cookies: {'✓' if linkedin_cookies_ok() else '○ not configured'}")
 

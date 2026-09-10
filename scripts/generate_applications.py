@@ -279,8 +279,32 @@ def board_row(job: dict) -> str:
     )
 
 
+def _job_in_table_scope(
+    job: dict,
+    *,
+    research_day: str | None,
+    linkedin_since: datetime,
+    board_since: datetime,
+    linkedin_source: bool,
+) -> bool:
+    from table_window import job_discovered_on_day  # noqa: WPS433
+
+    if research_day:
+        return job_discovered_on_day(job, research_day)
+    dt = discovered_at(job)
+    if not dt:
+        return False
+    since = linkedin_since if linkedin_source else board_since
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=TZ)
+    else:
+        dt = dt.astimezone(TZ)
+    return dt >= since
+
+
 def generate(
     *,
+    research_day: str | None = None,
     linkedin_since: datetime,
     board_since: datetime,
     output: Path,
@@ -302,8 +326,13 @@ def generate(
         j
         for j in all_jobs
         if j.get("source") in LINKEDIN_TABLE_SOURCES
-        and discovered_at(j)
-        and discovered_at(j) >= linkedin_since
+        and _job_in_table_scope(
+            j,
+            research_day=research_day,
+            linkedin_since=linkedin_since,
+            board_since=board_since,
+            linkedin_source=True,
+        )
     ]
     linkedin = [
         j
@@ -318,8 +347,13 @@ def generate(
         j
         for j in all_jobs
         if j.get("source") not in (*LINKEDIN_TABLE_SOURCES, "google")
-        and discovered_at(j)
-        and discovered_at(j) >= board_since
+        and _job_in_table_scope(
+            j,
+            research_day=research_day,
+            linkedin_since=linkedin_since,
+            board_since=board_since,
+            linkedin_source=False,
+        )
     ]
     boards = [j for j in boards if not NOISE.search((j.get("role", "") + j.get("company", "")))]
     boards_eligible = sorted(
@@ -365,16 +399,16 @@ def generate(
         "# Application list — full refresh",
         "",
         f"**Generated:** {now.strftime('%Y-%m-%d %H:%M %Z')}",
-        f"**LinkedIn window:** since {linkedin_since.strftime('%a %b %d')} · sort **latest → oldest**",
-        f"**Boards window:** since {board_since.strftime('%a %b %d')}",
+        f"**Research day:** {research_day or linkedin_since.date().isoformat()} · rows discovered on this day only",
+        f"**Sort:** latest → oldest",
         f"**Tracks shown:** {track_filter or 'all'}",
         "",
         "## Summary",
         "",
         "| Source | Window | Total | Eligible | In table |",
         "|--------|--------|------:|---------:|---------:|",
-        f"| **LinkedIn** (posts + jobs · registry) | {linkedin_since.strftime('%b %d')} → now | {len(linkedin)} | {len(linkedin_eligible)} | {len(li_apply) + len(li_review_apply)} |",
-        f"| **Boards** (Himalayas, RemoteOK, etc.) | {board_since.strftime('%b %d')} → now | {len(boards)} | {len(boards_eligible)} | {len(boards_eligible)} |",
+        f"| **LinkedIn** (posts + jobs · registry) | {research_day or linkedin_since.date()} | {len(linkedin)} | {len(linkedin_eligible)} | {len(li_apply) + len(li_review_apply)} |",
+        f"| **Boards** (Himalayas, RemoteOK, etc.) | {research_day or board_since.date()} | {len(boards)} | {len(boards_eligible)} | {len(boards_eligible)} |",
         "| Google jobs | — | — | — | skipped (no API key) |",
         *track_lines,
         "",
@@ -415,7 +449,7 @@ def generate(
         "",
         "---",
         "",
-        "## Boards — since window",
+        "## Boards — research day",
         "",
         "| ☐ | Track | Pri | Role | Company | Salary | Location | Disposition | Channel | Status | Apply | URL | Apply Email |",
         "|---|-------|-----|------|---------|--------|----------|-------------|---------|--------|-------|-----|-------------|",
@@ -456,6 +490,7 @@ def generate(
     from applications_ui_data import collect_jobs_for_ui, write_ui_snapshot  # noqa: E402
 
     ui_jobs = collect_jobs_for_ui(
+        research_day=research_day,
         linkedin_since=linkedin_since,
         board_since=board_since,
         track_filter=track_filter,
@@ -463,6 +498,7 @@ def generate(
     write_ui_snapshot(
         output,
         jobs=ui_jobs,
+        research_day=research_day,
         linkedin_since=linkedin_since,
         board_since=board_since,
         track_filter=track_filter,
@@ -488,8 +524,13 @@ def main() -> int:
     ensure_table_dirs()
     default_since = last_monday().date().isoformat()
     parser = argparse.ArgumentParser(description="Generate applications markdown table")
-    parser.add_argument("--linkedin-since", default=default_since, help="LinkedIn since date (YYYY-MM-DD)")
-    parser.add_argument("--board-since", default=default_since, help="Board jobs since date (YYYY-MM-DD)")
+    parser.add_argument(
+        "--research-day",
+        default=None,
+        help="Include only registry rows discovered on this calendar day (YYYY-MM-DD)",
+    )
+    parser.add_argument("--linkedin-since", default=default_since, help="Legacy cumulative window start")
+    parser.add_argument("--board-since", default=default_since, help="Legacy cumulative window start")
     parser.add_argument(
         "--linkedin-eligible-limit",
         type=int,
@@ -515,11 +556,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    linkedin_since = datetime.fromisoformat(args.linkedin_since).replace(tzinfo=TZ)
-    board_since = datetime.fromisoformat(args.board_since).replace(tzinfo=TZ)
+    from table_window import day_bounds, save_window_for_day  # noqa: WPS433
+
+    research_day = args.research_day or datetime.now(TZ).date().isoformat()
+    linkedin_since, _board_end = day_bounds(research_day)
+    board_since = linkedin_since
     output = args.output or applications_table_path()
-    save_window(linkedin_since=linkedin_since, board_since=board_since)
+    save_window_for_day(research_day)
     counts = generate(
+        research_day=research_day,
         linkedin_since=linkedin_since,
         board_since=board_since,
         output=output,

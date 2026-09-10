@@ -45,6 +45,7 @@ def _start_mock_ui_server(
     last_research_day: str | None = "2026-09-06",
     mock_research: bool = False,
     research_run_path: Path | None = None,
+    research_step_delay: float = 1.2,
     snapshot_override: dict[str, Any] | None = None,
     bulk_dm: str = "mock",
     meta_override: dict[str, Any] | None = None,
@@ -145,7 +146,7 @@ def _start_mock_ui_server(
         captured["last_research"] = {"started": True}
         start_research_run(today)
         set_research_step("linkedin_collect")
-        time.sleep(1.2)
+        time.sleep(research_step_delay)
         set_research_step("generate_table")
         time.sleep(0.2)
         msg = f"Research complete for {today}: 1 roles in apply table."
@@ -357,7 +358,12 @@ def _start_mock_ui_server(
             "today": today,
             "has_research_today": has_research_today,
             "last_research_day": last_research_day,
-            "last_research_at": f"{last_research_day}T12:00:00" if last_research_day else None,
+            "last_research_at": f"{last_research_day}T12:00:00-03:00" if last_research_day else None,
+            "ingestion_has_prior": bool(last_research_day),
+            "ingestion_last_at": f"{last_research_day}T12:00:00-03:00" if last_research_day else None,
+            "ingestion_last_day": last_research_day,
+            "ingestion_since_at": f"{last_research_day}T12:00:00-03:00" if last_research_day else None,
+            "ingestion_since": f"{last_research_day}T12:00:00-03:00" if last_research_day else "7d",
             "research_days": [
                 {
                     "day": last_research_day,
@@ -506,6 +512,36 @@ def mock_ui_server_research_flow(monkeypatch, tmp_path) -> Generator[tuple[int, 
         last_research_day="2026-09-06",
         mock_research=True,
         research_run_path=run_path,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_research_slow(monkeypatch, tmp_path) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Slow research so e2e can switch day tabs while ingestion is still running."""
+    run_path = tmp_path / "state" / "research-run.json"
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-07",
+        has_research_today=False,
+        last_research_day="2026-09-06",
+        mock_research=True,
+        research_run_path=run_path,
+        research_step_delay=6.0,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_review_dm_connect(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Review DM with profile + eligible pending connect — bulk label and job_keys regression."""
+    from tests.helpers.jobs import ui_snapshot_review_dm_connect
+
+    snapshot = ui_snapshot_review_dm_connect(day="2026-09-10")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-10",
+        has_research_today=True,
+        last_research_day="2026-09-10",
+        snapshot_override=snapshot,
     )
 
 
