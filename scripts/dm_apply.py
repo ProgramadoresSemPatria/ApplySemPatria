@@ -28,6 +28,8 @@ ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
 import dm_state  # noqa: E402
+from audit_log import info as audit_info  # noqa: E402
+from audit_log import warn as audit_warn  # noqa: E402
 from application_channel import (  # noqa: E402
     classify_channel,
     form_apply_url,
@@ -261,14 +263,17 @@ async def scan(candidates: list[dict[str, Any]], *, headless: bool) -> None:
     print(f"  saved: {out_path}")
 
 
-async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, track_id: str | None = None) -> None:
+async def run(
+    candidates: list[dict[str, Any]], *, send: bool, headless: bool, track_id: str | None = None
+) -> dict[str, int]:
     profile = load_track_profile(track_id)
     state = dm_state.load()
     recipe = resolve_recipe("linkedin.com/in/", name="linkedin-connect-or-message")
     if not recipe:
         print("ERROR: flows/linkedin-connect-or-message.json not found")
-        return
+        return {"sent_actions": 0, "skipped": 0}
     pw, browser, ctx = await launch_context(headless=headless)
+    skipped = 0
     try:
         page = await ctx.new_page()
         sent_actions = 0
@@ -277,9 +282,28 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
             existing = dm_state.status_for(state, prof_check)
             if existing != dm_state.STATUS_NONE:
                 print(f"  skip (already {dm_state.status_label(existing)}): {job.get('company')}")
+                audit_warn(
+                    "dm_apply",
+                    "profile_skipped",
+                    reason="already_actioned",
+                    prior_status=existing,
+                    job_key=job_key(job),
+                    company=job.get("company"),
+                    profile_url=prof_check,
+                )
+                skipped += 1
                 continue
             if is_applied_skip(job):
                 print(f"  skip (applied blocklist): {job.get('company')}")
+                audit_warn(
+                    "dm_apply",
+                    "profile_skipped",
+                    reason="applika_blocklist",
+                    job_key=job_key(job),
+                    company=job.get("company"),
+                    profile_url=prof_check,
+                )
+                skipped += 1
                 continue
             prof_url = profile_url_for(job)
             print(f"\n▶ {job.get('company')} — {job.get('role')}")
@@ -311,10 +335,35 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
                     print(f"     would: {'CONNECT (no note)' if kind == 'connect' else 'MESSAGE'}")
                 else:
                     print("     would: SKIP (follow-only — no connect/message)")
+            prior_status = dm_state.status_for(state, prof_url)
+            audit_info(
+                "dm_apply",
+                "profile_result",
+                mode="send" if send else "dry_run",
+                job_key=job_key(job),
+                company=job.get("company"),
+                profile_url=prof_url,
+                branch=branch,
+                committed=did_action,
+                commit_kind=kind,
+                prior_status=prior_status,
+                steps=result.get("steps"),
+            )
             if send and did_action:
                 if kind == "message":
                     dm_state.record_message(state, job, prof_url, already_connected=True)
                     print("  → MESSAGE sent (no connect available)")
+                    audit_info(
+                        "dm_apply",
+                        "message_sent",
+                        source="connect_or_message_recipe",
+                        already_connected=True,
+                        prior_status=prior_status,
+                        new_status=dm_state.STATUS_MESSAGE_SENT,
+                        job_key=job_key(job),
+                        company=job.get("company"),
+                        profile_url=prof_url,
+                    )
                 else:
                     dm_state.record_connect(state, job, prof_url)
                     try:
@@ -328,15 +377,35 @@ async def run(candidates: list[dict[str, Any]], *, send: bool, headless: bool, t
                         print("  → CONNECT request sent · ✓ Pending button confirmed")
                     else:
                         print("  → CONNECT request sent (no note) · Pending not shown (follow-primary; verify via Sent Invitations)")
+                    audit_info(
+                        "dm_apply",
+                        "connect_sent",
+                        pending_confirmed=pend > 0,
+                        prior_status=prior_status,
+                        new_status=dm_state.STATUS_CONNECT_PENDING,
+                        job_key=job_key(job),
+                        company=job.get("company"),
+                        profile_url=prof_url,
+                    )
                 dm_state.save(state)
                 sent_actions += 1
                 await pause_between_actions()
                 await maybe_session_break(sent_actions)
+            elif send and not did_action:
+                audit_warn(
+                    "dm_apply",
+                    "profile_no_action",
+                    branch=branch,
+                    job_key=job_key(job),
+                    company=job.get("company"),
+                    profile_url=prof_url,
+                )
     finally:
         await close_session(pw=pw, browser=browser, context=ctx)
     if send:
         from table_refresh import refresh_applications_table  # noqa: E402
         refresh_applications_table()
+    return {"sent_actions": sent_actions, "skipped": skipped}
 
 
 def main() -> int:
@@ -412,7 +481,26 @@ def main() -> int:
 
     mode = "SEND" if args.send else "DRY RUN"
     print(f"[{mode}] processing {len(candidates)} DM candidate(s)\n")
-    asyncio.run(run(candidates, send=args.send, headless=args.headless, track_id=args.track))
+    audit_info(
+        "dm_apply",
+        "batch_start",
+        mode=mode.lower().replace(" ", "_"),
+        candidates=len(candidates),
+        headless=args.headless,
+        track=args.track,
+        job_keys=key_list,
+        scan=args.scan,
+    )
+    counts = asyncio.run(run(candidates, send=args.send, headless=args.headless, track_id=args.track))
+    audit_info(
+        "dm_apply",
+        "batch_done",
+        mode=mode.lower().replace(" ", "_"),
+        candidates=len(candidates),
+        job_keys=key_list,
+        sent_actions=counts.get("sent_actions", 0),
+        skipped=counts.get("skipped", 0),
+    )
     return 0
 
 

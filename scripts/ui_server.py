@@ -259,11 +259,17 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
         if not ok_deps:
             return {"ok": False, "message": dep_reason}
 
+    from audit_log import error as audit_error  # noqa: E402
+    from audit_log import info as audit_info  # noqa: E402
+
+    audit_info("ui_server", "action_start", action=action, job_key=job_key, track=tid)
     try:
         proc = _run_apply_cmd(cmd, inherit_stdio=browser_action)
     except subprocess.TimeoutExpired:
+        audit_error("ui_server", "action_failed", action=action, job_key=job_key, error="timeout")
         return {"ok": False, "message": "Action timed out (browser may still be open)."}
     except OSError as exc:
+        audit_error("ui_server", "action_failed", action=action, job_key=job_key, error=str(exc))
         return {"ok": False, "message": str(exc)}
 
     tail = (proc.stdout or proc.stderr or "").strip().splitlines()
@@ -274,6 +280,14 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
     if proc.stdout is None and proc.stderr is None:
         ok = proc.returncode == 0
         summary = [f"Finished (exit {proc.returncode})"]
+    audit_info(
+        "ui_server",
+        "action_done" if ok else "action_failed",
+        action=action,
+        job_key=job_key,
+        exit_code=proc.returncode,
+        ok=ok,
+    )
     return {
         "ok": ok,
         "message": "\n".join(summary),
@@ -394,28 +408,81 @@ def run_bulk_dm_followup(
     else:
         summaries.append("[send_messages] skipped — no accepted connections ready to message in this list")
 
+    from audit_log import error as audit_error  # noqa: E402
+    from audit_log import info as audit_info  # noqa: E402
+
     ok = True
+    audit_info(
+        "ui_server",
+        "bulk_dm_start",
+        track=tid,
+        job_keys=keys,
+        phases=[label for label, _ in phases],
+        need_check=len(need_check),
+        need_send=len(need_send),
+    )
 
     for label, cmd in phases:
         print(f"[bulk-dm] ▶ {label} — {' '.join(cmd[2:6])}…", flush=True)
+        audit_info(
+            "ui_server",
+            "bulk_dm_phase_start",
+            phase=label,
+            track=tid,
+            job_keys=keys,
+            cmd=cmd[2:],
+        )
         try:
             proc = _run_apply_cmd(cmd, inherit_stdio=True)
         except subprocess.TimeoutExpired:
+            audit_error(
+                "ui_server",
+                "bulk_dm_phase_failed",
+                phase=label,
+                error="timeout",
+                track=tid,
+                job_keys=keys,
+            )
             return {
                 "ok": False,
                 "message": f"Bulk DM timed out during {label.replace('_', ' ')}.",
                 "action": "dm_process_all",
             }
         except OSError as exc:
+            audit_error(
+                "ui_server",
+                "bulk_dm_phase_failed",
+                phase=label,
+                error=str(exc),
+                track=tid,
+                job_keys=keys,
+            )
             return {"ok": False, "message": str(exc), "action": "dm_process_all"}
 
         phase_ok, phase_msg = _proc_summary(proc, streamed=True)
         ok = ok and phase_ok
         summaries.append(f"[{label}] {phase_msg}")
         print(f"[bulk-dm] ✓ {label}: {phase_msg[:120]}", flush=True)
+        audit_info(
+            "ui_server",
+            "bulk_dm_phase_done",
+            phase=label,
+            ok=phase_ok,
+            exit_code=proc.returncode,
+            track=tid,
+            job_keys=keys,
+        )
 
     scope = f"{len(keys)} role(s)" if keys else "all DM candidates"
     print(f"[bulk-dm] done — {scope}", flush=True)
+    audit_info(
+        "ui_server",
+        "bulk_dm_done",
+        ok=ok,
+        track=tid,
+        job_keys=keys,
+        scope=scope,
+    )
     return {
         "ok": ok,
         "message": "\n\n".join(summaries) + f"\n\nProcessed list scope: {scope}",
@@ -769,10 +836,26 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                         "message": f"Research error: {exc}",
                     }
 
+            from audit_log import info as audit_info  # noqa: E402
+
+            audit_info(
+                "ui_server",
+                "research_start",
+                track=track,
+                since=since,
+                skip_linkedin=skip_linkedin,
+                table_only=bool(body.get("table_only")),
+            )
             t = threading.Thread(target=_worker, daemon=True)
             t.start()
             t.join()
             result = result_holder.get("result")
+            if result:
+                audit_info(
+                    "ui_server",
+                    "research_done" if result.get("ok") else "research_failed",
+                    **{k: v for k, v in result.items() if k in ("ok", "day", "job_count", "message", "steps")},
+                )
             if not result:
                 from research_log import research_run_status  # noqa: E402
 

@@ -32,6 +32,9 @@ sys.path.insert(0, str(SCRIPTS))
 
 import dm_chat  # noqa: E402
 import dm_state  # noqa: E402
+from audit_log import error as audit_error  # noqa: E402
+from audit_log import info as audit_info  # noqa: E402
+from audit_log import warn as audit_warn  # noqa: E402
 from browser_session import close_session, launch_context  # noqa: E402
 from human_pacing import drift_mouse, maybe_session_break, pause_between_actions, pause_human, pause_page_settle, pause_poll  # noqa: E402
 from dm_apply import message_body  # noqa: E402
@@ -139,6 +142,21 @@ def filter_entries_by_job_keys(
     return matched
 
 
+def _profile_audit_context(entry: dict[str, Any]) -> dict[str, Any]:
+    """Snapshot prior DM state for audit lines."""
+    return {
+        "job_key": entry.get("job_key"),
+        "company": entry.get("company"),
+        "role": entry.get("role"),
+        "profile_url": entry.get("profile_url"),
+        "prior_status": dm_state.status_of(entry),
+        "connect_requested_at": entry.get("connect_requested_at"),
+        "accepted_at": entry.get("accepted_at"),
+        "message_sent_at": entry.get("message_sent_at"),
+        "already_connected": entry.get("already_connected"),
+    }
+
+
 async def run(
     entries: list[dict[str, Any]],
     *,
@@ -146,6 +164,7 @@ async def run(
     headless: bool,
     audit_sent: bool = False,
     track_id: str | None = None,
+    phase: str = "",
 ) -> None:
     profile = load_track_profile(track_id)
     state = dm_state.load()
@@ -159,29 +178,66 @@ async def run(
     accepted = messaged = recent_skipped = still_pending = 0
     sent_actions = 0
     print(f"  recipe: {recipe.get('name')}\n")
+    audit_info(
+        "dm_followup",
+        "batch_start",
+        mode="send" if send else "dry_run",
+        phase=phase or "all",
+        candidates=len(entries),
+        headless=headless,
+        track=track_id,
+        recipe=recipe.get("name"),
+    )
     try:
         page = await ctx.new_page()
         for entry in entries:
             prof_url = entry["profile_url"]
             job = {"role": entry.get("role"), "company": entry.get("company"), "job_key": entry.get("job_key")}
+            ctx_data = _profile_audit_context(entry)
+            audit_info("dm_followup", "profile_start", **ctx_data)
             print(f"\n▶ {entry.get('company')} — {entry.get('role')}")
             print(f"  profile: {prof_url}")
+            profile_outcome = "unknown"
             try:
                 connected, reason = await is_connected(page, prof_url)
+                audit_info(
+                    "dm_followup",
+                    "connect_check",
+                    connected=connected,
+                    reason=reason,
+                    **ctx_data,
+                )
                 if not connected:
                     print(f"  → skip: {reason}")
+                    profile_outcome = "still_pending" if "Pending" in reason else "not_connected"
                     if "Pending" in reason:
                         entry = dm_state.get(state, prof_url)
                         if entry and entry.get("accepted_at") and not entry.get("message_sent_at"):
                             entry["accepted_at"] = None
                             dm_state.save(state)
                             print("  → state corrected (cleared stale accepted_at)")
+                            audit_warn(
+                                "dm_followup",
+                                "state_corrected",
+                                correction="cleared_stale_accepted_at",
+                                **ctx_data,
+                            )
                     still_pending += 1
                     continue
 
                 accepted += 1
+                prior_status = dm_state.status_of(entry)
                 dm_state.record_accepted(state, job, prof_url)
                 dm_state.save(state)
+                new_status = dm_state.status_of(dm_state.get(state, prof_url) or entry)
+                audit_info(
+                    "dm_followup",
+                    "state_updated",
+                    update="accepted",
+                    prior_status=prior_status,
+                    new_status=new_status,
+                    **ctx_data,
+                )
                 print("  → ACCEPTED ✓ (no Pending on profile)")
 
                 thread = await dm_chat.inspect_thread(page)
@@ -189,39 +245,105 @@ async def run(
                 if hdrs:
                     print(f"  thread headers: {' → '.join(hdrs[-5:])}")
                 print(f"  thread check: {thread.get('reason', '?')}")
+                audit_info(
+                    "dm_followup",
+                    "thread_inspect",
+                    opened=thread.get("opened"),
+                    headers=thread.get("headers"),
+                    recent=thread.get("recent"),
+                    last_header=thread.get("last_header"),
+                    reason=thread.get("reason"),
+                    **ctx_data,
+                )
 
                 if thread.get("recent"):
                     recent_skipped += 1
                     note = f"skip recent: header '{thread.get('last_header')}'"
                     if audit_sent and dm_state.status_of(entry) == dm_state.STATUS_MESSAGE_SENT:
                         print(f"  → audit OK: recent header confirms message_sent state")
+                        audit_info(
+                            "dm_followup",
+                            "message_audit_ok",
+                            note=note,
+                            **ctx_data,
+                        )
+                        profile_outcome = "audit_ok"
                         continue
                     if send:
+                        prior_status = dm_state.status_of(entry)
                         dm_state.record_message(
                             state, job, prof_url, already_connected=False, note=note
                         )
                         dm_state.save(state)
                         print(f"  → RECENT MESSAGE — marked message_sent (no resend)")
+                        audit_warn(
+                            "dm_followup",
+                            "message_marked_sent",
+                            source="recent_header",
+                            send_confirmed=False,
+                            note=note,
+                            prior_status=prior_status,
+                            new_status=dm_state.STATUS_MESSAGE_SENT,
+                            **ctx_data,
+                        )
+                        profile_outcome = "marked_sent_recent_header"
                     else:
                         print(f"  → (dry) would mark message_sent — recent header, no resend")
+                        audit_info(
+                            "dm_followup",
+                            "message_would_mark_sent",
+                            source="recent_header",
+                            note=note,
+                            **ctx_data,
+                        )
+                        profile_outcome = "would_mark_sent_recent_header"
                     continue
 
                 msg = message_body(job, profile, track_id=track_id)
                 ok, note = await dm_chat.send_message(page, msg, send=send)
                 print(f"  send: {note}")
+                audit_info(
+                    "dm_followup",
+                    "message_attempt",
+                    ok=ok,
+                    note=note,
+                    send_mode=send,
+                    message_preview=msg[:120],
+                    **ctx_data,
+                )
                 if send and ok and note.startswith("sent"):
+                    prior_status = dm_state.status_of(entry)
                     dm_state.record_message(state, job, prof_url, already_connected=False)
                     dm_state.save(state)
                     messaged += 1
                     print("  → MESSAGE SENT ✓")
+                    audit_info(
+                        "dm_followup",
+                        "message_sent",
+                        source="composer",
+                        send_confirmed=True,
+                        prior_status=prior_status,
+                        new_status=dm_state.STATUS_MESSAGE_SENT,
+                        **ctx_data,
+                    )
+                    profile_outcome = "message_sent"
                     sent_actions += 1
                     await pause_between_actions()
                     await maybe_session_break(sent_actions)
                 elif not send and ok:
                     print("  → (dry) would send message")
+                    profile_outcome = "would_send"
                 elif send and not ok:
+                    audit_warn(
+                        "dm_followup",
+                        "message_failed",
+                        source="composer",
+                        note=note,
+                        **ctx_data,
+                    )
                     # Fallback: reload profile and use message-only recipe.
                     print("  → composer send failed — trying recipe fallback")
+                    audit_info("dm_followup", "recipe_fallback_start", prior_note=note, **ctx_data)
                     await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
                     await pause_page_settle()
                     await drift_mouse(page)
@@ -233,18 +355,59 @@ async def run(
                         result = {"committed": False, "steps": [{"note": str(exc)[:120]}]}
                     for s in result.get("steps", []):
                         print(f"     [{'ok' if s.get('ok') else '!!'}] {s.get('action')}: {s.get('note')}")
-                    if result.get("committed") and result.get("commit_kind") == "message":
+                    committed = bool(result.get("committed"))
+                    commit_kind = result.get("commit_kind")
+                    audit_info(
+                        "dm_followup",
+                        "recipe_fallback_result",
+                        committed=committed,
+                        commit_kind=commit_kind,
+                        branch=result.get("branch"),
+                        steps=result.get("steps"),
+                        **ctx_data,
+                    )
+                    if committed and commit_kind == "message":
+                        prior_status = dm_state.status_of(entry)
                         dm_state.record_message(state, job, prof_url, already_connected=False)
                         dm_state.save(state)
                         messaged += 1
                         print("  → MESSAGE SENT ✓ (recipe fallback)")
+                        audit_info(
+                            "dm_followup",
+                            "message_sent",
+                            source="recipe_fallback",
+                            send_confirmed=True,
+                            prior_status=prior_status,
+                            new_status=dm_state.STATUS_MESSAGE_SENT,
+                            **ctx_data,
+                        )
+                        profile_outcome = "message_sent_recipe_fallback"
                         sent_actions += 1
                         await pause_between_actions()
                         await maybe_session_break(sent_actions)
+                    else:
+                        audit_error(
+                            "dm_followup",
+                            "message_failed",
+                            source="recipe_fallback",
+                            committed=committed,
+                            commit_kind=commit_kind,
+                            **ctx_data,
+                        )
+                        profile_outcome = "message_failed"
+                elif send and ok and not note.startswith("sent"):
+                    audit_warn(
+                        "dm_followup",
+                        "message_not_confirmed",
+                        note=note,
+                        **ctx_data,
+                    )
+                    profile_outcome = "message_not_confirmed"
             finally:
                 closed = await cleanup_after_message(page)
                 if closed:
                     print(f"  cleanup: {', '.join(closed)}")
+                audit_info("dm_followup", "profile_done", outcome=profile_outcome, cleanup=closed, **ctx_data)
     finally:
         await close_session(pw=pw, browser=browser, context=ctx)
     if send:
@@ -253,6 +416,17 @@ async def run(
     print(
         f"\nSummary: accepted={accepted} messaged={messaged} "
         f"recent_skipped={recent_skipped} still_pending={still_pending}"
+    )
+    audit_info(
+        "dm_followup",
+        "batch_done",
+        mode="send" if send else "dry_run",
+        phase=phase or "all",
+        accepted=accepted,
+        messaged=messaged,
+        recent_skipped=recent_skipped,
+        still_pending=still_pending,
+        candidates=len(entries),
     )
 
 
@@ -329,7 +503,29 @@ def main() -> int:
         return 0
 
     mode = "SEND" if args.send else "DRY RUN"
+    phase = (args.phase or "").strip().lower()
     print(f"[{mode}] checking {len(entries)} profile(s)\n")
+    if not entries:
+        audit_info(
+            "dm_followup",
+            "batch_start",
+            mode="send" if args.send else "dry_run",
+            phase=phase or "all",
+            candidates=0,
+            job_keys=[k.strip() for k in args.job_keys.split(",") if k.strip()] if args.job_keys else None,
+        )
+        audit_info(
+            "dm_followup",
+            "batch_done",
+            mode="send" if args.send else "dry_run",
+            phase=phase or "all",
+            candidates=0,
+            accepted=0,
+            messaged=0,
+            recent_skipped=0,
+            still_pending=0,
+        )
+        return 0
     asyncio.run(
         run(
             entries,
@@ -337,6 +533,7 @@ def main() -> int:
             headless=args.headless,
             audit_sent=args.audit_sent,
             track_id=args.track,
+            phase=phase,
         )
     )
     return 0

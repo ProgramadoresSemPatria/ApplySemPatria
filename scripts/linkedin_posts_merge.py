@@ -114,6 +114,25 @@ def _slugify_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (name or "").casefold())
 
 
+def _author_matches_profile_slug(author: str, ref_slug: str) -> bool:
+    """True when a profile/post author slug aligns with the recruiter display name."""
+    author_slug = _slugify_name(re.sub(r"^~+\s*", "", (author or "").strip()))
+    ref_slug_norm = re.sub(r"[^a-z0-9]", "", (ref_slug or "").casefold())
+    if not author_slug or not ref_slug_norm:
+        return False
+    if author_slug in ref_slug_norm or ref_slug_norm in author_slug:
+        return True
+    tokens = [t for t in re.split(r"[\s·|/]+", author) if len(t) > 2]
+    if tokens:
+        first = _slugify_name(tokens[0])
+        last = _slugify_name(tokens[-1]) if len(tokens) > 1 else ""
+        if first and first in ref_slug_norm:
+            return True
+        if last and last in ref_slug_norm:
+            return True
+    return False
+
+
 def permalink_author_slug(post_url: str) -> str:
     """Extract author slug from linkedin.com/posts/{slug}_… URL."""
     match = re.search(r"linkedin\.com/posts/([a-z0-9-]+)_", (post_url or ""), re.I)
@@ -315,6 +334,250 @@ def resolve_feed_update_to_posts_permalink(url: str, *, timeout: float = 15.0) -
     return url
 
 
+def _author_map_key(author: str) -> str:
+    return _norm_author_name(author)
+
+
+def _html_post_matches_author(author: str, html_post: dict[str, Any]) -> bool:
+    author_key = _author_map_key(author)
+    if not author_key:
+        return False
+    ha = _author_map_key(html_post.get("author") or "")
+    if ha and (ha == author_key or ha in author_key or author_key in ha):
+        return True
+    slug = (html_post.get("author_slug") or "").strip()
+    return bool(slug and _author_matches_profile_slug(author, slug))
+
+
+def _closest_link_slug(text: str, pos: int, pattern: re.Pattern[str], *, before: int = 500, after: int = 1200) -> str:
+    """Return slug of the profile/company link nearest to ``pos`` in HTML."""
+    window = text[max(0, pos - before) : pos + after]
+    offset = max(0, pos - before)
+    best_slug = ""
+    best_dist = 10**9
+    for link in pattern.finditer(window):
+        dist = abs((offset + link.start()) - pos)
+        if dist < best_dist:
+            best_dist = dist
+            best_slug = link.group(0).rstrip("/").split("/")[-1]
+    return best_slug
+
+
+def _author_name_near_urn(text: str, pos: int) -> str:
+    """Extract display name from HTML immediately around a URN marker."""
+    window_before = text[max(0, pos - 700) : pos]
+    window_after = text[pos : pos + 500]
+    author_patterns = (
+        r'update-components-actor__title[^>]*>\s*<span[^>]*>([^<]{2,100})',
+        r'feed-shared-actor__name[^>]*>([^<]{2,100})',
+        r'aria-label="([^"]{2,100}?)\s*•',
+        r'<strong[^>]*>([^<]{2,100})</strong>',
+    )
+    skip = {"follow", "connect", "like", "comment", "share"}
+    for author_pat in author_patterns:
+        author_m = re.search(author_pat, window_after, re.I | re.S)
+        if not author_m:
+            matches = list(re.finditer(author_pat, window_before, re.I | re.S))
+            author_m = matches[-1] if matches else None
+        if not author_m:
+            continue
+        author = re.sub(r"\s+", " ", author_m.group(1)).strip()
+        if author.lower() not in skip:
+            return author
+    return ""
+
+
+def extract_feed_posts_from_html(html: str) -> list[dict[str, Any]]:
+    """Extract feed post cards from search HTML as author + feed/update URL pairs."""
+    posts: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    text = html or ""
+
+    patterns = (
+        r'data-urn="(urn:li:(?:activity|share|ugcPost):\d+)"',
+        r'"entityUrn"\s*:\s*"(urn:li:(?:activity|share|ugcPost):\d+)"',
+        r'"activityUrn"\s*:\s*"(urn:li:(?:activity|share|ugcPost):\d+)"',
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, text, re.I):
+            urn = match.group(1)
+            urn_m = re.search(r"urn:li:(activity|share|ugcPost):(\d+)", urn, re.I)
+            if not urn_m:
+                continue
+            act_id = urn_m.group(2)
+            if act_id in seen_ids:
+                continue
+            seen_ids.add(act_id)
+            pos = match.start()
+            author_slug = _closest_link_slug(text, pos, LINKEDIN_PROFILE_RE)
+            if not author_slug:
+                author_slug = _closest_link_slug(text, pos, LINKEDIN_COMPANY_RE)
+            author = _author_name_near_urn(text, pos)
+            posts.append(
+                {
+                    "kind": "feed_post",
+                    "author": author,
+                    "author_slug": author_slug,
+                    "url": build_feed_update_url(urn_m.group(1).lower(), act_id),
+                    "activity_id": act_id,
+                    "urn_kind": urn_m.group(1).lower(),
+                }
+            )
+    return posts
+
+
+def harvest_feed_posts_from_network_body(body: str) -> list[dict[str, Any]]:
+    """Extract activity URNs + nearby actor names from LinkedIn voyager/graphql JSON."""
+    posts: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    if not body or len(body) > 5_000_000:
+        return posts
+    skip_names = {"like", "comment", "share", "follow", "repost", "send", "true", "false"}
+    for match in re.finditer(r'"entityUrn"\s*:\s*"(urn:li:(?:activity|share|ugcPost):\d+)"', body):
+        urn = match.group(1)
+        urn_m = re.search(r"urn:li:(activity|share|ugcPost):(\d+)", urn, re.I)
+        if not urn_m:
+            continue
+        act_id = urn_m.group(2)
+        if act_id in seen_ids:
+            continue
+        seen_ids.add(act_id)
+        window = body[max(0, match.start() - 3000) : match.start() + 800]
+        author = ""
+        for name_m in re.finditer(r'"text"\s*:\s*"([^"\\]{2,120})"', window):
+            candidate = re.sub(r"\s+", " ", name_m.group(1)).strip()
+            if not candidate or candidate.lower() in skip_names:
+                continue
+            if any(x in candidate.lower() for x in ("urn:li", "http://", "https://", "• edited")):
+                continue
+            author = candidate
+            break
+        posts.append(
+            {
+                "kind": "feed_post",
+                "author": author,
+                "author_slug": "",
+                "url": build_feed_update_url(urn_m.group(1).lower(), act_id),
+                "activity_id": act_id,
+                "urn_kind": urn_m.group(1).lower(),
+            }
+        )
+    return posts
+
+
+def register_author_post_urls(
+    author_url_map: dict[str, str],
+    html_posts: list[dict[str, Any]],
+) -> None:
+    """Merge html/network post cards into author → feed/update map."""
+    for hp in html_posts:
+        url = (hp.get("url") or "").strip()
+        if not url:
+            continue
+        author = (hp.get("author") or "").strip()
+        if author:
+            author_url_map[_author_map_key(author)] = url
+        slug = (hp.get("author_slug") or "").strip().lower()
+        if slug:
+            author_url_map.setdefault(f"slug:{slug}", url)
+
+
+def resolve_author_post_url(
+    author: str,
+    *,
+    html_posts: list[dict[str, Any]] | None = None,
+    author_url_map: dict[str, str] | None = None,
+    profile_refs: list[dict[str, Any]] | None = None,
+    activity_refs: list[dict[str, Any]] | None = None,
+) -> tuple[str, str]:
+    """Best-effort post URL for one author using maps and visible HTML cards."""
+    html_posts = html_posts or []
+    author_url_map = author_url_map or {}
+    profile_refs = profile_refs or []
+    activity_refs = activity_refs or []
+
+    key = _author_map_key(author)
+    if key and author_url_map.get(key):
+        return author_url_map[key], "author_map"
+
+    prof = lookup_author_profile_ref(author, profile_refs)
+    if prof:
+        slug = prof.get("url", "").rstrip("/").split("/")[-1].lower()
+        if slug and author_url_map.get(f"slug:{slug}"):
+            return author_url_map[f"slug:{slug}"], "author_map_slug"
+
+    for hp in html_posts:
+        if _html_post_matches_author(author, hp) and hp.get("url"):
+            return hp["url"], "html_card_author"
+
+    matched_url, matched_source = match_author_activity_ref(author, activity_refs + html_posts)
+    if matched_url:
+        return matched_url, matched_source
+
+    if prof:
+        slug = prof.get("url", "").rstrip("/").split("/")[-1]
+        for hp in html_posts:
+            if hp.get("author_slug") == slug and hp.get("url"):
+                return hp["url"], "html_card_slug"
+
+    return "", ""
+
+
+def extract_ordered_feed_update_urls(html: str) -> list[str]:
+    """Extract feed/update (or /posts/) URLs from HTML in DOM order, deduped."""
+    hits: list[tuple[int, str]] = []
+    text = html or ""
+
+    for match in FEED_UPDATE_URL_RE.finditer(text):
+        url = match.group(0).split("?")[0]
+        if not url.endswith("/"):
+            url += "/"
+        hits.append((match.start(), url))
+
+    for match in ACTIVITY_URN_RE.finditer(text):
+        hits.append((match.start(), build_feed_update_url(match.group(1).lower(), match.group(2))))
+
+    for match in re.finditer(
+        r'"(?:activityUrn|updateUrn|shareUrn)"\s*:\s*"(urn:li:(?:activity|share|ugcPost):\d+)"',
+        text,
+        re.I,
+    ):
+        urn_match = re.search(r"urn:li:(activity|share|ugcPost):(\d+)", match.group(1), re.I)
+        if urn_match:
+            hits.append(
+                (
+                    match.start(),
+                    build_feed_update_url(urn_match.group(1).lower(), urn_match.group(2)),
+                )
+            )
+
+    for match in re.finditer(r'data-urn="(urn:li:(?:activity|share|ugcPost):\d+)"', text, re.I):
+        urn_match = re.search(r"urn:li:(activity|share|ugcPost):(\d+)", match.group(1), re.I)
+        if urn_match:
+            hits.append(
+                (
+                    match.start(),
+                    build_feed_update_url(urn_match.group(1).lower(), urn_match.group(2)),
+                )
+            )
+
+    for match in POSTS_PERMALINK_RE.finditer(text):
+        url = match.group(0).split("?")[0]
+        if not url.endswith("/"):
+            url += "/"
+        hits.append((match.start(), url))
+
+    hits.sort(key=lambda item: item[0])
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for _, url in hits:
+        if url in seen:
+            continue
+        seen.add(url)
+        ordered.append(url)
+    return ordered
+
+
 def extract_activity_refs_from_html(html: str) -> list[dict[str, Any]]:
     """Extract feed activity URNs (incl. URL-encoded) and nearby author slugs from search HTML."""
     refs: list[dict[str, Any]] = []
@@ -356,24 +619,96 @@ def extract_activity_refs_from_html(html: str) -> list[dict[str, Any]]:
 def match_author_feed_post_ref(author: str, refs: list[dict[str, Any]]) -> tuple[str, str]:
     """Match author to a feed_post ref (activity permalink)."""
     author_key = _norm_author_name(author)
-    author_slug = _slugify_name(author)
     if not author_key or author_key == "unknown":
         return "", ""
 
     for ref in refs:
         if ref.get("kind") != "feed_post" or not ref.get("url"):
             continue
+        url = (ref.get("url") or "").strip()
+        if is_profile_fallback_url(url):
+            continue
         ref_slug = ref.get("author_slug") or ref.get("text") or ""
-        ref_slug_norm = re.sub(r"[^a-z0-9]", "", ref_slug.casefold())
-        if ref_slug_norm and author_slug and (author_slug in ref_slug_norm or ref_slug_norm in author_slug):
-            return ref["url"], "feed_post_slug"
+        if _author_matches_profile_slug(author, ref_slug):
+            return url, "feed_post_slug"
 
     for ref in refs:
         if ref.get("kind") != "feed_post" or not ref.get("url"):
             continue
+        url = (ref.get("url") or "").strip()
+        if is_profile_fallback_url(url):
+            continue
         title = (ref.get("text") or "").strip()
         if title and title.lower() in author_key:
-            return ref["url"], "feed_post_title"
+            return url, "feed_post_title"
+
+    return "", ""
+
+
+def lookup_author_profile_ref(author: str, refs: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the person/company profile ref that best matches ``author``."""
+    author_key = _norm_author_name(author)
+    if not author_key or author_key == "unknown":
+        return None
+
+    best: dict[str, Any] | None = None
+    best_score = 0
+    for ref in refs:
+        if ref.get("kind") not in {"person", "company"} or not ref.get("url"):
+            continue
+        slug = ref.get("url", "").rstrip("/").split("/")[-1]
+        ref_name = _norm_author_name(ref.get("text") or "")
+        score = 0
+        if ref_name and (ref_name in author_key or author_key in ref_name):
+            score = 3
+        elif _author_matches_profile_slug(author, slug):
+            score = 2
+        elif ref_name and ref_name.split()[0] == author_key.split()[0]:
+            score = 1
+        if score > best_score:
+            best_score = score
+            best = ref
+    return best if best_score > 0 else None
+
+
+def match_author_activity_ref(author: str, refs: list[dict[str, Any]]) -> tuple[str, str]:
+    """Match author to a specific post URL (feed/update or /posts/) — never profile activity."""
+    feed_url, feed_source = match_author_feed_post_ref(author, refs)
+    if feed_url:
+        return feed_url, feed_source
+
+    if not _norm_author_name(author) or _norm_author_name(author) == "unknown":
+        return "", ""
+
+    profile = lookup_author_profile_ref(author, refs)
+    profile_slug = ""
+    if profile:
+        profile_slug = profile.get("url", "").rstrip("/").split("/")[-1]
+
+    for ref in refs:
+        activity_id = ref.get("activity_id")
+        if not activity_id:
+            continue
+        ref_slug = ref.get("author_slug") or ref.get("text") or ""
+        if not _author_matches_profile_slug(author, ref_slug):
+            if not profile_slug or ref_slug != profile_slug:
+                continue
+        url = (ref.get("url") or "").strip()
+        if url and not is_profile_fallback_url(url):
+            return url, "activity_ref_slug"
+        urn_kind = (ref.get("urn_kind") or "activity").lower()
+        return build_feed_update_url(urn_kind, str(activity_id)), "activity_ref_urn"
+
+    if profile_slug:
+        for ref in refs:
+            if ref.get("kind") != "feed_post":
+                continue
+            url = (ref.get("url") or "").strip()
+            if not url or is_profile_fallback_url(url):
+                continue
+            ref_slug = ref.get("author_slug") or ref.get("text") or ""
+            if ref_slug == profile_slug or _author_matches_profile_slug(author, ref_slug):
+                return url, "feed_post_profile"
 
     return "", ""
 
@@ -396,17 +731,17 @@ def normalize_linkedin_job_urls(
             job["apply_url"] = url
         url = ""
 
+    if is_profile_fallback_url(url):
+        url = ""
+
     if not is_posts_permalink(url) and not is_feed_update_url(url):
-        feed_url, feed_source = match_author_feed_post_ref(author, refs)
+        feed_url, feed_source = match_author_activity_ref(author, refs)
         if feed_url:
             url = feed_url
             job["url_source"] = feed_source
 
-    if not is_linkedin_post_url(url) or is_profile_fallback_url(url):
-        matched, source = match_author_profile_ref(author, refs)
-        if matched and not is_posts_permalink(url) and not is_feed_update_url(url):
-            url = matched
-            job["url_source"] = source
+    if is_profile_fallback_url(url):
+        url = ""
 
     if not is_linkedin_post_url(url):
         job["url"] = fallback_linkedin_post_search_url(author, role)
@@ -550,6 +885,8 @@ def resolve_post_urls(
     feed_idx: int,
     job_urls: list[str],
     job_idx: int,
+    author_url_map: dict[str, str] | None = None,
+    chunk_url: str = "",
 ) -> tuple[str, str, str, int, int]:
     """Resolve post URL, apply URL, and source label for one search result chunk."""
     text = chunk or ""
@@ -557,21 +894,44 @@ def resolve_post_urls(
     apply_url = ""
     source = ""
 
+    index_url = ""
     if feed_idx < len(feed_post_urls):
-        post_url = feed_post_urls[feed_idx]
-        source = "feed_post"
+        index_url = (feed_post_urls[feed_idx] or "").strip()
         feed_idx += 1
-    else:
+
+    post_url = _first_feed_update(text)
+    if post_url:
+        source = "text_feed_update"
+    elif (chunk_url or "").strip() and not is_profile_fallback_url(chunk_url):
+        post_url = chunk_url.strip()
+        source = "collect_chunk_url"
+    elif index_url and not is_profile_fallback_url(index_url):
+        post_url = index_url
+        source = "feed_post_index"
+
+    if not post_url and author_url_map:
+        mapped_url, mapped_source = resolve_author_post_url(
+            author,
+            author_url_map=author_url_map,
+            profile_refs=[r for r in refs if r.get("kind") in {"person", "company"}],
+            activity_refs=[r for r in refs if r.get("kind") == "feed_post"],
+        )
+        if mapped_url:
+            post_url = mapped_url
+            source = mapped_source
+
+    if not post_url:
+        matched_url, matched_source = match_author_activity_ref(author, refs)
+        if matched_url:
+            post_url = matched_url
+            source = matched_source
+
+    if not post_url:
         for title, url in feed_post_by_title.items():
-            if title and title.lower() in text.lower():
+            if title and title.lower() in text.lower() and not is_profile_fallback_url(url):
                 post_url = url
                 source = "feed_post_title"
                 break
-
-    if not post_url:
-        post_url = _first_feed_update(text)
-        if post_url:
-            source = "text_feed_update"
 
     if not post_url and "View job" in text and job_idx < len(job_urls):
         apply_url = job_urls[job_idx]
@@ -579,12 +939,6 @@ def resolve_post_urls(
 
     if not apply_url:
         apply_url = _first_lnkd_in(text)
-
-    if not post_url:
-        matched_url, matched_source = match_author_profile_ref(author, refs)
-        if matched_url:
-            post_url = matched_url
-            source = matched_source
 
     if not apply_url:
         apply_url = resolve_apply_url_from_text(text)
@@ -851,6 +1205,10 @@ def post_to_job(
     location_note = "LATAM" if region == "latam" else "Worldwide"
 
     post_url = url or ""
+    if is_profile_fallback_url(post_url):
+        post_url = _first_feed_update(text) or ""
+        if post_url:
+            url_source = url_source or "text_feed_update_repair"
     if not apply_url:
         apply_url = extract_role_apply_url(text, query_meta.get("role_keyword", "AI Engineer"))
         if not apply_url:
@@ -917,6 +1275,8 @@ def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]
     """Parse LinkedIn content-search innerText + refs (browser collect export)."""
     raw = (feed_payload.get("sections") or {}).get("search_results") or ""
     refs = (feed_payload.get("references") or {}).get("search_results") or []
+    author_url_map: dict[str, str] = dict(feed_payload.get("author_post_urls") or {})
+    chunk_urls: list[str] = list(feed_payload.get("chunk_post_urls") or [])
 
     if raw.startswith("Did you mean"):
         raw = re.sub(r"^Did you mean[^\n]*\n+", "", raw, count=1)
@@ -925,12 +1285,12 @@ def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]
     feed_post_by_title: dict[str, str] = {}
     job_urls: list[str] = []
     for ref in refs:
-        url = _abs_linkedin(ref.get("url") or "")
         kind = ref.get("kind")
-        if kind == "feed_post" and url:
+        url = _abs_linkedin(ref.get("url") or "")
+        if kind == "feed_post":
             feed_post_urls.append(url)
-            title = (ref.get("text") or "").strip()
-            if title:
+            title = (ref.get("text") or ref.get("author_slug") or "").strip()
+            if title and url:
                 feed_post_by_title[title] = url
         if kind == "job" and url:
             job_urls.append(url)
@@ -968,6 +1328,8 @@ def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]
             feed_idx=feed_idx,
             job_urls=job_urls,
             job_idx=job_idx,
+            author_url_map=author_url_map,
+            chunk_url=chunk_urls[discovery_index] if discovery_index < len(chunk_urls) else "",
         )
 
         posts.append(
@@ -1018,6 +1380,17 @@ def normalize_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
         for post in payload["posts"]:
             if isinstance(post, dict):
                 items.append({"query_meta": meta, "post": post})
+        return items
+
+    if payload.get("sections") and payload.get("references"):
+        meta = {
+            "query": payload.get("query", ""),
+            "role_keyword": payload.get("role_keyword", ""),
+            "region": payload.get("region", ""),
+            "track": payload.get("track"),
+        }
+        for post in parse_feed_search_posts(payload):
+            items.append({"query_meta": meta, "post": post})
         return items
 
     return items
@@ -1148,7 +1521,7 @@ def merge_payload(
     )
     save_json(LINKEDIN_STATE_PATH, {"last_run_at": now.isoformat()})
 
-    return {
+    result = {
         "run_path": str(run_path),
         "registry_path": str(REGISTRY_PATH),
         "period_days": period_days,
@@ -1159,6 +1532,11 @@ def merge_payload(
         "eligible": len([j for j in new_jobs if j.get("filter_result") == "eligible"]),
         "needs_review": len([j for j in new_jobs if j.get("filter_result") == "needs_review"]),
     }
+    from audit_log import info as audit_info  # noqa: WPS433
+
+    since_label = since.isoformat() if isinstance(since, datetime) else since
+    audit_info("linkedin_posts_merge", "merge_complete", since=since_label, **result)
+    return result
 
 
 def main() -> int:

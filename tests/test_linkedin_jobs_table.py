@@ -46,6 +46,27 @@ class LinkedInJobsTableTests(unittest.TestCase):
         job = _sample_job()
         self.assertEqual(post_url_for(job), job["url"])
 
+    def test_post_url_for_rejects_recent_activity_fallback(self):
+        job = {
+            "source": "linkedin_posts",
+            "url": "https://www.linkedin.com/in/kimberlymembrillo/recent-activity/all/",
+            "company": "Kimberly Membrillo",
+            "role": "AI Engineer",
+        }
+        url = post_url_for(job)
+        self.assertIn("search/results/content", url)
+        self.assertNotIn("recent-activity", url)
+
+    def test_post_url_for_keeps_feed_update_permalink(self):
+        feed = "https://www.linkedin.com/feed/update/urn:li:activity:7503481913303584769/"
+        job = {
+            "source": "linkedin_posts",
+            "url": feed,
+            "company": "Manuela Sánchez González",
+            "role": "AI Engineer",
+        }
+        self.assertEqual(post_url_for(job), feed)
+
     def test_role_from_label(self):
         self.assertEqual(role_from_label(_sample_job()), "LinkedIn Job")
 

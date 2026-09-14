@@ -7,6 +7,7 @@ import argparse
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,9 @@ SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
+from audit_log import error as audit_error  # noqa: E402
+from audit_log import info as audit_info  # noqa: E402
+from audit_log import warn as audit_warn  # noqa: E402
 from research_log import (  # noqa: E402
     finish_research_run,
     mark_research_day,
@@ -76,8 +80,18 @@ def _run_step(
         steps.append(label)
     set_research_step(step_key, detail=detail)
     timeout = STEP_TIMEOUT_SEC.get(step_key, 1800)
+    audit_info(
+        "daily_research",
+        "step_start",
+        step=step_key,
+        label=label,
+        detail=detail,
+        cmd=cmd,
+        timeout_sec=timeout,
+    )
+    t0 = time.monotonic()
     try:
-        return subprocess.run(
+        proc = subprocess.run(
             cmd,
             cwd=str(cwd or ROOT),
             capture_output=True,
@@ -85,8 +99,39 @@ def _run_step(
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        audit_error(
+            "daily_research",
+            "step_timeout",
+            step=step_key,
+            label=label,
+            timeout_sec=timeout,
+            duration_ms=duration_ms,
+        )
         errors.append(f"{step_key}: timed out after {timeout}s")
         return None
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    if proc.returncode == 0:
+        audit_info(
+            "daily_research",
+            "step_done",
+            step=step_key,
+            label=label,
+            exit_code=0,
+            duration_ms=duration_ms,
+        )
+    else:
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+        audit_warn(
+            "daily_research",
+            "step_failed",
+            step=step_key,
+            label=label,
+            exit_code=proc.returncode,
+            duration_ms=duration_ms,
+            tail=tail[-1] if tail else "",
+        )
+    return proc
 
 
 def run_daily_research(
@@ -107,6 +152,17 @@ def run_daily_research(
     since = since or default_ingestion_since()
     day = today_local()
     ensure_table_dirs()
+    audit_info(
+        "daily_research",
+        "research_start",
+        day=day,
+        since=since,
+        table_only=table_only,
+        skip_linkedin=skip_linkedin,
+        skip_linkedin_jobs=skip_linkedin_jobs,
+        skip_discover=skip_discover,
+        track=track,
+    )
     steps: list[str] = []
     errors: list[str] = []
     prev_steps: list[str] = []
@@ -119,6 +175,7 @@ def run_daily_research(
         from research_log import ResearchRunInProgressError  # noqa: WPS433
 
         if isinstance(exc, ResearchRunInProgressError):
+            audit_warn("daily_research", "research_blocked", day=day, reason=str(exc))
             return {"ok": False, "message": str(exc), "day": day}
         raise
 
@@ -139,6 +196,7 @@ def run_daily_research(
             )
             if not linkedin_browser_ok:
                 msg = "\n".join(errors)
+                audit_error("daily_research", "research_failed", day=day, message=msg, steps=steps)
                 finish_research_run(ok=False, message=msg)
                 return {
                     "ok": False,
@@ -266,6 +324,16 @@ def run_daily_research(
         msg = f"Research complete for {day}: {job_count} roles in apply table."
         if errors:
             msg += "\nWarnings:\n" + "\n".join(errors)
+        audit_info(
+            "daily_research",
+            "research_complete",
+            day=day,
+            job_count=job_count,
+            steps=merged_steps,
+            warnings=errors or None,
+            since=since,
+            tracks=track_ids,
+        )
         finish_research_run(ok=True, message=msg)
         return {
             "ok": True,
@@ -277,6 +345,7 @@ def run_daily_research(
         }
     except Exception as exc:  # noqa: BLE001
         msg = f"Research error: {exc}"
+        audit_error("daily_research", "research_failed", day=day, message=msg, steps=steps)
         finish_research_run(ok=False, message=msg)
         return {"ok": False, "message": msg, "day": day, "steps": steps}
 

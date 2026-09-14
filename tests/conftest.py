@@ -27,6 +27,18 @@ def disable_human_pacing_in_tests(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JOBSEARCH_HUMAN_PACING", "0")
 
 
+@pytest.fixture(autouse=True)
+def isolate_audit_log(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep test audit events out of ~/job-search/logs/."""
+    log_dir = tmp_path / "audit-logs"
+    monkeypatch.setenv("JOBSEARCH_AUDIT_LOG_DIR", str(log_dir))
+    from audit_log import reset_audit_log
+
+    reset_audit_log()
+    yield
+    reset_audit_log()
+
+
 @pytest.fixture
 def linkedin_html_dir() -> Path:
     return FIXTURES / "linkedin"

@@ -23,6 +23,9 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 from apply_email import apply_email_for_job  # noqa: E402
+from audit_log import error as audit_error  # noqa: E402
+from audit_log import info as audit_info  # noqa: E402
+from audit_log import warn as audit_warn  # noqa: E402
 from registry import job_key, load_registry  # noqa: E402
 from track_store import filter_jobs_by_track, load_email_config, resolve_track  # noqa: E402
 
@@ -58,11 +61,9 @@ def sent_recipient_emails(sent_log: dict[str, Any]) -> set[str]:
 
 
 def already_sent(job: dict[str, Any], sent_log: dict[str, Any]) -> bool:
+    """True only when this exact registry row was logged — not shared recruiter email."""
     key = job_key(job)
-    if any(entry.get("job_key") == key for entry in sent_log.get("sent", [])):
-        return True
-    email = (apply_email_for_job(job) or "").strip().lower()
-    return bool(email and email in sent_recipient_emails(sent_log))
+    return any(entry.get("job_key") == key for entry in sent_log.get("sent", []))
 
 
 def pending_send_candidates(
@@ -83,13 +84,7 @@ def pending_send_candidates(
         track_id=tid,
         job_keys=key_list,
     )
-    sent_emails = sent_recipient_emails(log)
-    return [
-        job
-        for job in candidates
-        if not already_sent(job, log)
-        and (apply_email_for_job(job) or "").strip().lower() not in sent_emails
-    ]
+    return [job for job in candidates if not already_sent(job, log)]
 
 
 def is_applied_skip(job: dict[str, Any]) -> bool:
@@ -359,13 +354,37 @@ def main() -> int:
     if dry_run:
         print("DRY RUN — pass --send to deliver\n")
 
+    audit_info(
+        "email_apply",
+        "batch_start",
+        mode="dry_run" if dry_run else "send",
+        candidates=len(candidates),
+        table_only=args.table_only,
+        track=args.track,
+        job_keys=key_list,
+    )
+
     sent_count = 0
     for job in candidates:
         if not args.force and already_sent(job, sent_log):
             print(f"  skip (already sent): {job.get('company')}")
+            audit_warn(
+                "email_apply",
+                "email_skipped",
+                reason="already_sent",
+                job_key=job_key(job),
+                company=job.get("company"),
+            )
             continue
         if cfg.get("skip_if_already_applied_in_applika") and is_applied_skip(job):
             print(f"  skip (applika blocklist): {job.get('company')}")
+            audit_warn(
+                "email_apply",
+                "email_skipped",
+                reason="applika_blocklist",
+                job_key=job_key(job),
+                company=job.get("company"),
+            )
             continue
 
         to_email = apply_email_for_job(job)
@@ -384,12 +403,29 @@ def main() -> int:
         print(f"  Company: {job.get('company')} | Role: {job.get('role')}")
 
         if dry_run:
+            audit_info(
+                "email_apply",
+                "email_preview",
+                job_key=job_key(job),
+                to=to_email,
+                company=job.get("company"),
+                role=job.get("role"),
+                subject=subject,
+            )
             continue
 
         try:
             msg_id = send_smtp(cfg, msg) if args.smtp else send_gmail_api(cfg, msg)
         except Exception as exc:
             print(f"  FAILED: {exc}")
+            audit_error(
+                "email_apply",
+                "email_failed",
+                job_key=job_key(job),
+                to=to_email,
+                company=job.get("company"),
+                error=str(exc),
+            )
             continue
 
         sent_log.setdefault("sent", []).append(
@@ -407,8 +443,25 @@ def main() -> int:
         log_applika(cfg, job, to_email)
         sent_count += 1
         print(f"  SENT (id={msg_id})")
+        audit_info(
+            "email_apply",
+            "email_sent",
+            job_key=job_key(job),
+            to=to_email,
+            company=job.get("company"),
+            role=job.get("role"),
+            subject=subject,
+            message_id=msg_id,
+        )
         time.sleep(float(cfg.get("rate_limit_seconds", 45)))
 
+    audit_info(
+        "email_apply",
+        "batch_done",
+        mode="dry_run" if dry_run else "send",
+        sent_count=sent_count,
+        candidates=len(candidates),
+    )
     if not dry_run:
         print(f"\nSent {sent_count} email(s). Log: {sent_path}")
         if sent_count:

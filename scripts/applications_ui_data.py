@@ -123,8 +123,7 @@ def _status_kind(
 ) -> str:
     channel = classify_channel(job)
     if channel == CHANNEL_EMAIL:
-        email = (apply_email_for_job(job) or "").strip().lower()
-        if (email and email in email_to) or job_key(job) in email_keys:
+        if job_key(job) in email_keys:
             return "email_sent"
         return "pending"
     if channel == CHANNEL_URL:
@@ -236,10 +235,7 @@ def _action_states(
     formats = {f["id"] for f in list_application_formats(job)}
     prof = dm_profile_url(job)
     jk = job_key(job)
-    email_addr = (apply_email_for_job(job) or "").strip().lower()
-    email_sent = bool(formats & {"email"}) and (
-        (email_addr and email_addr in email_to) or jk in email_keys
-    )
+    email_sent = bool(formats & {"email"}) and jk in email_keys
 
     au = apply_url_for(job)
     resolved = (job.get("apply_url") or "").strip()

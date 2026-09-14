@@ -30,13 +30,18 @@ sys.path.insert(0, str(SCRIPTS))
 from linkedin_posts_merge import (  # noqa: E402
     build_queries,
     extract_activity_refs_from_html,
+    extract_feed_posts_from_html,
+    extract_ordered_feed_update_urls,
     extract_profile_refs_from_html,
+    harvest_feed_posts_from_network_body,
     linkedin_content_search_url,
     load_linkedin_config,
     merge_payload,
     parse_feed_search_posts,
     period_to_recency,
     post_to_job,
+    register_author_post_urls,
+    resolve_author_post_url,
 )
 from registry import load_json, job_key  # noqa: E402
 
@@ -128,13 +133,27 @@ async def collect_feed_text(
 
         page = context.pages[0] if context.pages else await context.new_page()
 
-        def on_response(resp: Any) -> None:
+        network_bodies: list[str] = []
+
+        async def _capture_response(resp: Any) -> None:
             try:
                 if "linkedin.com" not in resp.url:
                     return
-                # fire-and-forget body read in background not needed sync
+                if not any(token in resp.url for token in ("voyager", "graphql", "search/dash")):
+                    return
+                ctype = (resp.headers.get("content-type") or "").lower()
+                if "json" not in ctype and "application/" not in ctype:
+                    return
+                if not resp.ok:
+                    return
+                body = await resp.text()
+                if body and len(body) < 5_000_000:
+                    network_bodies.append(body)
             except Exception:
-                pass
+                return
+
+        def on_response(resp: Any) -> None:
+            asyncio.create_task(_capture_response(resp))
 
         page.on("response", on_response)
 
@@ -153,6 +172,10 @@ async def collect_feed_text(
         await page.mouse.move(cx, cy)
 
         stale = 0
+        ordered_activity_urls: list[str] = []
+        ordered_seen: set[str] = set()
+        author_url_map: dict[str, str] = {}
+        chunk_post_urls: list[str] = []
         for i in range(max_scrolls):
             stats["scrolls"] = i + 1
             try:
@@ -175,10 +198,18 @@ async def collect_feed_text(
 
             # capture activity URNs and profile links from HTML for URL fallback
             html = await page.content()
-            for urn_kind, urn in re.findall(r"urn(?:%3A|:)li(?:%3A|:)(activity|share|ugcPost)(?:%3A|:)(\d+)", html, re.I):
-                u = f"https://www.linkedin.com/feed/update/urn:li:{urn_kind.lower()}:{urn}/"
-                if u not in activity_urls:
-                    activity_urls.append(u)
+            html_posts = extract_feed_posts_from_html(html)
+            register_author_post_urls(author_url_map, html_posts)
+            for body in network_bodies:
+                register_author_post_urls(author_url_map, harvest_feed_posts_from_network_body(body))
+            network_bodies.clear()
+
+            for url in extract_ordered_feed_update_urls(html):
+                if url not in ordered_seen:
+                    ordered_seen.add(url)
+                    ordered_activity_urls.append(url)
+                if url not in activity_urls:
+                    activity_urls.append(url)
             for ref in extract_profile_refs_from_html(html):
                 key = ref["url"]
                 if key in profile_seen:
@@ -191,8 +222,19 @@ async def collect_feed_text(
                     continue
                 activity_seen.add(str(key))
                 activity_refs.append(ref)
+                register_author_post_urls(author_url_map, [ref])
 
             if len(chunks) > before:
+                for chunk in chunks[before:]:
+                    author = _extract_author(chunk)
+                    url, _source = resolve_author_post_url(
+                        author,
+                        html_posts=html_posts,
+                        author_url_map=author_url_map,
+                        profile_refs=profile_refs,
+                        activity_refs=activity_refs,
+                    )
+                    chunk_post_urls.append(url)
                 stale = 0
             else:
                 stale += 1
@@ -203,14 +245,49 @@ async def collect_feed_text(
             await page.mouse.wheel(0, wheel_delta)
             await asyncio.sleep(pause)
 
+        while len(chunk_post_urls) < len(chunks):
+            chunk = chunks[len(chunk_post_urls)]
+            author = _extract_author(chunk)
+            url, _source = resolve_author_post_url(
+                author,
+                author_url_map=author_url_map,
+                profile_refs=profile_refs,
+                activity_refs=activity_refs,
+            )
+            chunk_post_urls.append(url)
+
         final_raw = "Feed post\n\n" + "\nFeed post\n\n".join(chunks)
-        refs: list[dict[str, Any]] = activity_refs + profile_refs + [
-            {"kind": "feed_post", "url": u, "text": ""} for u in activity_urls[: len(chunks)]
-        ]
+        aligned_feed_refs: list[dict[str, Any]] = []
+        for i, chunk in enumerate(chunks):
+            author = _extract_author(chunk)
+            url = (chunk_post_urls[i] if i < len(chunk_post_urls) else "") or (
+                ordered_activity_urls[i] if i < len(ordered_activity_urls) else ""
+            )
+            if not url:
+                url, _source = resolve_author_post_url(
+                    author,
+                    author_url_map=author_url_map,
+                    profile_refs=profile_refs,
+                    activity_refs=activity_refs,
+                )
+            aligned_feed_refs.append(
+                {
+                    "kind": "feed_post",
+                    "url": url,
+                    "text": author,
+                    "author_slug": author,
+                }
+            )
+        refs = aligned_feed_refs + profile_refs
+        stats["author_post_urls"] = len(author_url_map)
+        stats["chunk_urls_resolved"] = sum(1 for u in chunk_post_urls if u)
+        stats["chunk_post_urls"] = chunk_post_urls
+        stats["author_url_map"] = author_url_map
         await context.close()
 
     stats["raw_posts"] = len(chunks)
     stats["activity_urls"] = len(activity_urls)
+    stats["ordered_activity_urls"] = len(ordered_activity_urls)
     stats["profile_refs"] = len(profile_refs)
     stats["activity_refs"] = len(activity_refs)
     return final_raw, refs, stats
@@ -281,6 +358,8 @@ async def run_query(
         "elapsed_sec": round(elapsed, 1),
         "sections": {"search_results": raw},
         "references": {"search_results": refs},
+        "author_post_urls": scroll_stats.get("author_url_map") or {},
+        "chunk_post_urls": scroll_stats.get("chunk_post_urls") or [],
         "jobs": jobs,
     }
     raw_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -298,6 +377,8 @@ async def run_query(
                         "url": url,
                         "sections": {"search_results": raw},
                         "references": {"search_results": refs},
+                        "author_post_urls": scroll_stats.get("author_url_map") or {},
+                        "chunk_post_urls": scroll_stats.get("chunk_post_urls") or [],
                     },
                 }
             ],

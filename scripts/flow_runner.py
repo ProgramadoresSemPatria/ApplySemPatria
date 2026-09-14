@@ -380,7 +380,24 @@ async def run_recipe(
 
     committed = any(s.get("committed") for s in log)
     commit_kind = next((s.get("commit_kind") for s in log if s.get("committed")), None)
-    return {"branch": branch_name, "steps": log, "committed": committed, "commit_kind": commit_kind}
+    result = {"branch": branch_name, "steps": log, "committed": committed, "commit_kind": commit_kind}
+    try:
+        from audit_log import info as audit_info  # noqa: WPS433
+
+        audit_info(
+            "flow_runner",
+            "recipe_done",
+            recipe=recipe.get("name"),
+            branch=branch_name,
+            send=send,
+            committed=committed,
+            commit_kind=commit_kind,
+            step_count=len(log),
+            steps=[{"action": s.get("action"), "ok": s.get("ok"), "note": s.get("note")} for s in log],
+        )
+    except Exception:  # noqa: BLE001
+        pass
+    return result
 
 
 def save_learned_flow(recipe: dict[str, Any]) -> Path:

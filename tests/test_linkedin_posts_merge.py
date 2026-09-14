@@ -11,19 +11,30 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
+FIXTURES = ROOT / "tests" / "fixtures" / "linkedin"
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(SCRIPTS))
 
 from linkedin_posts_merge import (  # noqa: E402
     build_feed_update_url,
     build_queries,
+    extract_feed_posts_from_html,
+    extract_ordered_feed_update_urls,
     fallback_linkedin_post_search_url,
+    harvest_feed_posts_from_network_body,
+    is_feed_update_url,
+    is_profile_fallback_url,
     merge_payload,
+    match_author_activity_ref,
     match_author_profile_ref,
+    parse_feed_search_posts,
     parse_linkedin_relative_posted_at,
     period_to_recency,
     post_to_job,
+    register_author_post_urls,
+    resolve_author_post_url,
     resolve_feed_update_to_posts_permalink,
+    resolve_post_urls,
     sort_jobs_by_recency,
     write_linkedin_run_markdown,
 )
@@ -216,6 +227,217 @@ class LinkedInPostsMergeTests(unittest.TestCase):
         url = fallback_linkedin_post_search_url("Agustin Bellini", "ai engineer")
         self.assertIn("linkedin.com/search/results/content", url)
         self.assertIn("Agustin", url)
+
+    def test_resolve_post_urls_prefers_feed_update_over_recent_activity(self):
+        refs = [
+            {
+                "kind": "feed_post",
+                "url": "https://www.linkedin.com/feed/update/urn:li:activity:7503481913303584769/",
+                "author_slug": "manuela-g",
+                "activity_id": "7503481913303584769",
+                "urn_kind": "activity",
+            },
+            {
+                "kind": "person",
+                "url": "https://www.linkedin.com/in/manuela-g%C3%A9nova/",
+                "text": "Manuela Sánchez González",
+            },
+        ]
+        chunk = (
+            "Manuela Sánchez González\n\n"
+            "1d • \n\nFollow\n\n"
+            "We're hiring an AI Engineer remote LATAM. USD 120k."
+        )
+        post_url, _apply, source, _feed_idx, _job_idx = resolve_post_urls(
+            chunk,
+            "Manuela Sánchez González",
+            refs,
+            feed_post_urls=[],
+            feed_post_by_title={},
+            feed_idx=0,
+            job_urls=[],
+            job_idx=0,
+        )
+        self.assertTrue(is_feed_update_url(post_url), post_url)
+        self.assertNotIn("recent-activity", post_url)
+        self.assertIn("7503481913303584769", post_url)
+        self.assertIn(source, {"feed_post_slug", "activity_ref_slug", "activity_ref_urn"})
+
+    def test_resolve_post_urls_never_uses_profile_activity_page(self):
+        refs = [
+            {
+                "kind": "person",
+                "url": "https://www.linkedin.com/in/kimberlymembrillo/",
+                "text": "Kimberly Membrillo",
+            }
+        ]
+        chunk = "Kimberly Membrillo\n\n2d • \n\nFollow\n\nHiring AI Engineer LATAM."
+        post_url, _apply, source, _feed_idx, _job_idx = resolve_post_urls(
+            chunk,
+            "Kimberly Membrillo",
+            refs,
+            feed_post_urls=[],
+            feed_post_by_title={},
+            feed_idx=0,
+            job_urls=[],
+            job_idx=0,
+        )
+        self.assertEqual(post_url, "")
+        self.assertEqual(source, "none")
+
+    def test_parse_feed_search_posts_assigns_feed_update_urls(self):
+        raw = (
+            "Feed post\n\n"
+            "Manuela Sánchez González\n\n1d • \n\nFollow\n\nHiring AI Engineer LATAM USD 120k\n\n"
+            "Feed post\n\n"
+            "Kimberly Membrillo\n\n2d • \n\nFollow\n\nHiring AI Engineer remote\n"
+        )
+        refs = [
+            {
+                "kind": "feed_post",
+                "url": "https://www.linkedin.com/feed/update/urn:li:activity:7503481913303584769/",
+                "author_slug": "manuela-g",
+                "activity_id": "7503481913303584769",
+                "urn_kind": "activity",
+            },
+            {
+                "kind": "feed_post",
+                "url": "https://www.linkedin.com/feed/update/urn:li:activity:7503200610150973442/",
+                "author_slug": "kimberlymembrillo",
+                "activity_id": "7503200610150973442",
+                "urn_kind": "activity",
+            },
+            {
+                "kind": "person",
+                "url": "https://www.linkedin.com/in/kimberlymembrillo/",
+                "text": "Kimberly Membrillo",
+            },
+        ]
+        posts = parse_feed_search_posts({"sections": {"search_results": raw}, "references": {"search_results": refs}})
+        self.assertEqual(len(posts), 2)
+        manuela = posts[0]
+        kimberly = posts[1]
+        self.assertIn("/feed/update/", manuela["url"])
+        self.assertNotIn("recent-activity", manuela["url"])
+        self.assertIn("7503481913303584769", manuela["url"])
+        self.assertIn("/feed/update/", kimberly["url"])
+        self.assertNotIn("recent-activity", kimberly["url"])
+
+    def test_match_author_activity_ref_builds_feed_update_from_urn(self):
+        refs = [
+            {
+                "kind": "feed_post",
+                "url": "",
+                "author_slug": "gabriela-rayo-10b6a262",
+                "activity_id": "7501660025132589056",
+                "urn_kind": "activity",
+            }
+        ]
+        url, source = match_author_activity_ref("Gabriela Rayo", refs)
+        self.assertEqual(
+            url,
+            "https://www.linkedin.com/feed/update/urn:li:activity:7501660025132589056/",
+        )
+        self.assertEqual(source, "activity_ref_urn")
+
+    def test_extract_feed_posts_from_html_pairs_two_authors(self):
+        html = (FIXTURES / "content_search_two_posts.html").read_text(encoding="utf-8")
+        posts = extract_feed_posts_from_html(html)
+        by_slug = {p["author_slug"]: p["url"] for p in posts}
+        self.assertIn("monikakuqi", by_slug)
+        self.assertIn("kimberlymembrillo", by_slug)
+        self.assertIn("7503481913303584769", by_slug["monikakuqi"])
+        self.assertIn("7503200610150973442", by_slug["kimberlymembrillo"])
+
+    def test_extract_feed_posts_from_html_pairs_author_and_urn(self):
+        html = """
+        <article data-urn="urn:li:activity:7503481913303584769">
+          <a href="https://www.linkedin.com/in/monikakuqi/">Monika Kuqi</a>
+          <span class="update-components-actor__title"><span>Monika Kuqi</span></span>
+        </article>
+        """
+        posts = extract_feed_posts_from_html(html)
+        self.assertEqual(len(posts), 1)
+        self.assertIn("7503481913303584769", posts[0]["url"])
+        self.assertIn("monikakuqi", posts[0]["author_slug"])
+
+    def test_harvest_feed_posts_from_network_body(self):
+        body = (
+            '{"actor":{"name":{"text":"Monika Kuqi"}},"commentary":{"text":"Hiring"},'
+            '"entityUrn":"urn:li:activity:7503481913303584769"}'
+        )
+        posts = harvest_feed_posts_from_network_body(body)
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0]["author"], "Monika Kuqi")
+        self.assertIn("7503481913303584769", posts[0]["url"])
+
+    def test_resolve_author_post_url_uses_author_map(self):
+        author_map = {"monika kuqi": "https://www.linkedin.com/feed/update/urn:li:activity:123/"}
+        url, source = resolve_author_post_url("Monika Kuqi", author_url_map=author_map)
+        self.assertIn("/feed/update/", url)
+        self.assertEqual(source, "author_map")
+
+    def test_parse_feed_search_posts_uses_chunk_post_urls(self):
+        raw = "Feed post\n\nMonika Kuqi\n\n1h • \n\nFollow\n\nHiring AI Engineer LATAM\n"
+        posts = parse_feed_search_posts(
+            {
+                "sections": {"search_results": raw},
+                "references": {"search_results": []},
+                "chunk_post_urls": [
+                    "https://www.linkedin.com/feed/update/urn:li:activity:7503481913303584769/"
+                ],
+            }
+        )
+        self.assertEqual(len(posts), 1)
+        self.assertIn("7503481913303584769", posts[0]["url"])
+        self.assertEqual(posts[0]["url_source"], "collect_chunk_url")
+
+    def test_extract_ordered_feed_update_urls_dedupes_in_order(self):
+        html = (
+            'href="https://www.linkedin.com/feed/update/urn:li:activity:111/" '
+            '"activityUrn":"urn:li:activity:222" '
+            'https://www.linkedin.com/feed/update/urn:li:activity:111/'
+        )
+        urls = extract_ordered_feed_update_urls(html)
+        self.assertEqual(len(urls), 2)
+        self.assertIn("111", urls[0])
+        self.assertIn("222", urls[1])
+
+    def test_parse_feed_search_posts_preserves_index_aligned_urls(self):
+        raw = (
+            "Feed post\n\n"
+            "Alice Recruiter\n\n1h • \n\nFollow\n\nHiring AI Engineer LATAM\n\n"
+            "Feed post\n\n"
+            "Bob Recruiter\n\n2h • \n\nFollow\n\nHiring AI Engineer remote\n"
+        )
+        refs = [
+            {
+                "kind": "feed_post",
+                "url": "https://www.linkedin.com/feed/update/urn:li:activity:100/",
+                "text": "Alice Recruiter",
+            },
+            {
+                "kind": "feed_post",
+                "url": "https://www.linkedin.com/feed/update/urn:li:activity:200/",
+                "text": "Bob Recruiter",
+            },
+        ]
+        posts = parse_feed_search_posts({"sections": {"search_results": raw}, "references": {"search_results": refs}})
+        self.assertEqual(posts[0]["url"], refs[0]["url"])
+        self.assertEqual(posts[1]["url"], refs[1]["url"])
+
+    def test_post_to_job_strips_recent_activity_url(self):
+        cfg = load_example_linkedin_config()
+        post = {
+            "text": "We're hiring an AI Engineer remote LATAM. USD 120k. urn:li:activity:7503481913303584769",
+            "url": "https://www.linkedin.com/in/kimberlymembrillo/recent-activity/all/",
+            "author": {"name": "Kimberly Membrillo"},
+        }
+        meta = {"query": '"ai engineer" + "latam"', "role_keyword": "ai engineer", "region": "latam"}
+        job = post_to_job(post, meta, cfg, {})
+        self.assertIsNotNone(job)
+        self.assertFalse(is_profile_fallback_url(job["url"]))
+        self.assertIn("/feed/update/", job["url"])
 
 
 if __name__ == "__main__":

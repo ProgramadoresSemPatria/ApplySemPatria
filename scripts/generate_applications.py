@@ -99,8 +99,7 @@ def status_cell(job: dict) -> str:
     load_progress_state()
     channel = classify_channel(job)
     if channel == "email":
-        email = (apply_email_for_job(job) or "").strip().lower()
-        if (email and email in _EMAIL_TO) or job_key(job) in _EMAIL_KEYS:
+        if job_key(job) in _EMAIL_KEYS:
             return "✅ email sent"
         return "☐ pending"
     if channel == "dm":
@@ -178,7 +177,9 @@ def post_url_for(job: dict) -> str:
         return url if permalink_matches_author(url, author) else fallback_linkedin_post_search_url(author, role)
     if is_feed_update_url(url):
         return url
-    if is_linkedin_post_url(url) and not is_profile_fallback_url(url):
+    if is_profile_fallback_url(url):
+        return fallback_linkedin_post_search_url(author, role)
+    if is_linkedin_post_url(url):
         return url
     if url.startswith("http"):
         return url
@@ -563,6 +564,8 @@ def main() -> int:
     board_since = linkedin_since
     output = args.output or applications_table_path()
     save_window_for_day(research_day)
+    from audit_log import info as audit_info  # noqa: E402
+
     counts = generate(
         research_day=research_day,
         linkedin_since=linkedin_since,
@@ -571,6 +574,14 @@ def main() -> int:
         linkedin_eligible_limit=args.linkedin_eligible_limit,
         linkedin_review_limit=args.linkedin_review_limit,
         track_filter=args.track or "all",
+    )
+    audit_info(
+        "generate_applications",
+        "table_generated",
+        research_day=research_day,
+        output=str(output),
+        track=args.track or "all",
+        **counts,
     )
     print(f"Wrote {output}")
     print(counts)

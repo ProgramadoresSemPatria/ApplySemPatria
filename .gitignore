@@ -12,6 +12,10 @@ state/
 /registry/**
 !/registry/.gitkeep
 
+# Daily audit logs (local debugging / test verification)
+/logs/**
+!/logs/.gitkeep
+
 # Generated runs, tables, audits, raw collect JSON
 /runs/**
 !/runs/tables/

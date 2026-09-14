@@ -58,9 +58,11 @@ def test_collect_candidates_dedupes_shared_apply_email(email_registry_job):
     assert len(out) == 1
 
 
-def test_already_sent_matches_recipient_email(email_registry_job):
+def test_already_sent_requires_matching_job_key(email_registry_job):
     from email_apply import already_sent
+    from registry import job_key
 
+    jk = job_key(email_registry_job)
     sent_log = {
         "sent": [
             {
@@ -69,20 +71,30 @@ def test_already_sent_matches_recipient_email(email_registry_job):
             }
         ]
     }
+    assert already_sent(email_registry_job, sent_log) is False
+
+    sent_log["sent"].append({"job_key": jk, "to": "recruiter@acme.ai"})
     assert already_sent(email_registry_job, sent_log) is True
 
 
-def test_pending_send_candidates_excludes_sent_recipient(email_registry_job):
+def test_pending_send_candidates_allows_same_recipient_new_post(email_registry_job):
     from registry import job_key
     from email_apply import pending_send_candidates
 
     dup = {
         **email_registry_job,
-        "url": "https://www.linkedin.com/posts/dup-activity-789",
+        "url": "https://www.linkedin.com/feed/update/urn:li:activity:7503200610150973442/",
     }
     reg = {"jobs": [email_registry_job, dup]}
-    keys = [job_key(email_registry_job), job_key(dup)]
-    sent_log = {"sent": [{"job_key": "other-key", "to": "recruiter@acme.ai"}]}
+    keys = [job_key(dup)]
+    sent_log = {
+        "sent": [
+            {
+                "job_key": job_key(email_registry_job),
+                "to": "recruiter@acme.ai",
+            }
+        ]
+    }
 
     with patch("email_apply.load_registry", return_value=reg):
         pending = pending_send_candidates(
@@ -91,4 +103,37 @@ def test_pending_send_candidates_excludes_sent_recipient(email_registry_job):
             sent_log=sent_log,
         )
 
-    assert pending == []
+    assert len(pending) == 1
+    assert pending[0]["url"] == dup["url"]
+
+
+def test_action_states_email_done_only_for_matching_job_key():
+    from applications_ui_data import _action_states
+    from registry import job_key
+
+    job = {
+        "source": "linkedin_posts",
+        "company": "Luis Hernandez",
+        "role": "Ai Engineer",
+        "url": "https://www.linkedin.com/feed/update/urn:li:activity:7503200610150973442/",
+        "apply_email": "luis@mexicoteksol.com",
+        "filter_result": "eligible",
+    }
+    other_key = "https://www.linkedin.com/in/luis-hernandez-75ba5399/recent-activity/all"
+    actions = _action_states(
+        job,
+        {"profiles": {}},
+        email_to={"luis@mexicoteksol.com"},
+        email_keys={other_key},
+        url_done=set(),
+    )
+    assert actions["email"]["done"] is False
+
+    actions_sent = _action_states(
+        job,
+        {"profiles": {}},
+        email_to={"luis@mexicoteksol.com"},
+        email_keys={job_key(job)},
+        url_done=set(),
+    )
+    assert actions_sent["email"]["done"] is True
