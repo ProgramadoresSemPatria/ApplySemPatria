@@ -46,6 +46,138 @@ def job_key(job: dict[str, Any]) -> str:
     return prefix + f"{source}|{company}|{role}"
 
 
+PLACEHOLDER_KEY_RE = re.compile(r"^linkedin-post:[0-9a-f]+$", re.IGNORECASE)
+
+
+def is_placeholder_job_key(key: str) -> bool:
+    bare = (key or "").split("|")[-1].strip()
+    return bool(PLACEHOLDER_KEY_RE.match(bare))
+
+
+def remember_legacy_job_key(job: dict[str, Any], old_url: str) -> None:
+    """Preserve linkedin-post:… keys after URL repair so stale UI snapshots still resolve."""
+    old = (old_url or "").strip()
+    if not old or not PLACEHOLDER_KEY_RE.match(old.split("|")[-1].strip()):
+        return
+    legacy = normalize_url(old)
+    if legacy and not job.get("legacy_job_key"):
+        job["legacy_job_key"] = legacy
+
+
+def find_job_by_key(jobs: list[dict[str, Any]], key: str) -> dict[str, Any] | None:
+    """Resolve a registry row by current or legacy (placeholder) job_key."""
+    target = (key or "").strip().lower()
+    if not target:
+        return None
+    track_prefix = ""
+    bare = target
+    if "|" in target:
+        track_prefix, bare = target.split("|", 1)
+
+    for job in jobs:
+        if job_key(job) == target:
+            return job
+        legacy = (job.get("legacy_job_key") or "").strip().lower()
+        if legacy and (legacy == target or legacy == bare):
+            return job
+
+    if not is_placeholder_job_key(bare):
+        return None
+
+    mapping = _placeholder_collect_mapping()
+    meta = mapping.get(bare)
+    if not meta:
+        return None
+
+    best: dict[str, Any] | None = None
+    best_score = -1
+    for job in jobs:
+        if (job.get("company") or "").strip() != meta.get("company"):
+            continue
+        if (job.get("role") or "").casefold() != (meta.get("role") or "").casefold():
+            continue
+        score = 0
+        if meta.get("search_query") and job.get("search_query") == meta["search_query"]:
+            score += 4
+        if meta.get("discovery_index") is not None and job.get("discovery_index") == meta["discovery_index"]:
+            score += 8
+        if meta.get("region_tag") and job.get("region_tag") == meta["region_tag"]:
+            score += 2
+        if score > best_score:
+            best_score = score
+            best = job
+    if best and not best.get("legacy_job_key"):
+        best["legacy_job_key"] = bare
+    return best
+
+
+def _placeholder_collect_mapping() -> dict[str, dict[str, Any]]:
+    cached = getattr(find_job_by_key, "_placeholder_map", None)
+    if cached is not None:
+        return cached
+
+    from linkedin_posts_merge import is_placeholder_post_url  # noqa: WPS433
+
+    mapping: dict[str, dict[str, Any]] = {}
+    for path in sorted(RUNS_DIR.glob("browser-collect*/**/*.json")):
+        if not path.exists():
+            continue
+        try:
+            with path.open(encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        for job in data.get("jobs") or []:
+            if not isinstance(job, dict):
+                continue
+            url = (job.get("url") or "").strip()
+            if not is_placeholder_post_url(url):
+                continue
+            pid = normalize_url(url)
+            mapping[pid] = {
+                "company": (job.get("company") or "").strip(),
+                "role": (job.get("role") or "Ai Engineer").strip(),
+                "search_query": job.get("search_query"),
+                "discovery_index": job.get("discovery_index"),
+                "region_tag": job.get("region_tag"),
+            }
+    find_job_by_key._placeholder_map = mapping  # type: ignore[attr-defined]
+    return mapping
+
+
+def backfill_legacy_job_keys(registry: dict[str, Any] | None = None) -> int:
+    """Attach legacy_job_key from browser-collect placeholders to repaired registry rows."""
+    data = registry if registry is not None else load_registry()
+    jobs = data.get("jobs") or []
+    mapping = _placeholder_collect_mapping()
+    updated = 0
+    for pid, meta in mapping.items():
+        matches = [
+            j
+            for j in jobs
+            if (j.get("company") or "").strip() == meta.get("company")
+            and (j.get("role") or "").casefold() == (meta.get("role") or "").casefold()
+        ]
+        if not matches:
+            continue
+        target = matches[0]
+        if len(matches) > 1:
+            for j in matches:
+                if j.get("discovery_index") == meta.get("discovery_index"):
+                    target = j
+                    break
+                if meta.get("search_query") and j.get("search_query") == meta["search_query"]:
+                    target = j
+        if target.get("legacy_job_key") != pid:
+            target["legacy_job_key"] = pid
+            updated += 1
+    if registry is None and updated:
+        save_registry(data)
+    return updated
+
+
 def load_registry() -> dict[str, Any]:
     data = load_json(REGISTRY_PATH, {"jobs": []})
     if "jobs" not in data:

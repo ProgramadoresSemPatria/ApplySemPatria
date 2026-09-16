@@ -7,7 +7,14 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
+from tests.helpers.jobs import linkedin_dm_job
 from tests.helpers.ui_e2e import wait_for_mock_action, wait_for_mock_bulk_action, wait_for_toast_text
+
+
+def _default_dm_job_key() -> str:
+    from registry import job_key
+
+    return job_key(linkedin_dm_job())
 
 pytestmark = pytest.mark.playwright
 
@@ -109,28 +116,82 @@ def test_dm_message_pill_done_when_already_sent(mock_ui_server_dm_sent, page: Pa
     expect(msg_pill.locator(".step-status")).to_contain_text("sent")
 
 
-def test_bulk_dm_empty_queue_still_runs_full_pipeline(mock_ui_server_bulk_dm_empty_queue, page: Page):
+def test_bulk_dm_explains_when_no_profile_url(mock_ui_server_dm_no_profile, page: Page):
+    port, _captured = mock_ui_server_dm_no_profile
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    btn = page.locator("#bulkDmBtn")
+    expect(btn).to_be_enabled()
+    expect(btn.locator(".bulk-btn-label")).to_contain_text("Connect manually")
+    expect(page.locator("#pageCallouts")).to_be_visible()
+    expect(page.locator(".page-callouts-title")).to_have_text("Callouts")
+    expect(page.locator(".page-callouts-list li")).to_contain_text("Manual LinkedIn connect")
+    expect(page.locator(".page-callouts-list li")).to_contain_text("Post ↗")
+    connect_pill = page.locator('.step-pill[data-action="dm_connect"]')
+    expect(connect_pill).to_be_visible()
+    expect(connect_pill.locator(".step-status")).to_contain_text("via Post ↗")
+    btn.click()
+    wait_for_toast_text(page, "connect on LinkedIn")
+
+
+def test_email_linkedin_post_shows_email_and_dm_steps(mock_ui_server_email_dm_steps, page: Page):
+    port, _captured = mock_ui_server_email_dm_steps
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    expect(page.locator(".badge-channel-email")).to_be_visible()
+    expect(page.locator(".badge-channel-dm")).to_be_visible()
+    expect(page.locator('.step-pill[data-action="email"]')).to_be_visible()
+    expect(page.locator('.step-pill[data-action="dm_connect"]')).to_be_visible()
+    expect(page.locator('.step-pill[data-action="dm_message"]')).to_be_visible()
+    expect(page.locator("#bulkDmBtn")).to_be_enabled()
+    expect(page.locator("#bulkDmBtn .bulk-btn-label")).to_contain_text("Connect (1)")
+
+
+def test_form_email_linkedin_post_shows_all_apply_steps(mock_ui_server_form_email_dm_steps, page: Page):
+    port, _captured = mock_ui_server_form_email_dm_steps
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    for action in ("email", "form", "dm_connect", "dm_message"):
+        expect(page.locator(f'.step-pill[data-action="{action}"]')).to_be_visible()
+
+
+def test_bulk_dm_no_profile_api_skips_browser_subprocess(mock_ui_server_bulk_dm_no_profile_real, page: Page):
+    port, captured = mock_ui_server_bulk_dm_no_profile_real
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    result = page.evaluate(
+        """async () => {
+            const r = await fetch('/api/bulk-action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    action: 'dm_process_all',
+                    job_keys: ['linkedin-post:366db93d'],
+                }),
+            });
+            return await r.json();
+        }"""
+    )
+    assert result["ok"] is False
+    assert "Can't auto-connect" in result["message"]
+    assert captured["apply_cmds"] == []
+
+
+def test_bulk_dm_empty_queue_still_runs_connect_when_profile_exists(mock_ui_server_bulk_dm_empty_queue, page: Page):
     port, captured = mock_ui_server_bulk_dm_empty_queue
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.locator("#bulkDmBtn").click()
     wait_for_toast_text(page, "send_connections")
-    assert len(captured["apply_cmds"]) == 3
+    assert len(captured["apply_cmds"]) == 1
     assert any("dm_apply.py" in str(part) for part in captured["apply_cmds"][0])
-    assert any("dm_followup.py" in str(part) for part in captured["apply_cmds"][1])
-    assert "--send" in captured["apply_cmds"][2]
+    assert all("dm_followup.py" not in str(part) for part in captured["apply_cmds"][0])
 
 
-def test_bulk_dm_legacy_profile_key_runs_full_pipeline(mock_ui_server_bulk_dm_legacy_match, page: Page):
+def test_bulk_dm_legacy_profile_key_runs_connect_and_followup(mock_ui_server_bulk_dm_legacy_match, page: Page):
     port, captured = mock_ui_server_bulk_dm_legacy_match
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.locator("#bulkDmBtn").click()
     wait_for_toast_text(page, "send_connections")
-    assert len(captured["apply_cmds"]) == 3
+    assert len(captured["apply_cmds"]) >= 2
     assert any("dm_apply.py" in str(part) for part in captured["apply_cmds"][0])
-    for cmd in captured["apply_cmds"][1:]:
-        assert any("dm_followup.py" in str(part) for part in cmd)
+    assert any("dm_followup.py" in str(part) for part in captured["apply_cmds"][1])
     assert "--job-keys" in captured["apply_cmds"][1]
-    assert "--send" in captured["apply_cmds"][2]
 
 
 def test_bulk_dm_includes_review_dm_and_shows_connect_count(mock_ui_server_review_dm_connect, page: Page):
@@ -164,14 +225,14 @@ def test_bulk_dm_button_passes_all_dm_job_keys(mock_ui_server_multi_dm, page: Pa
 def test_bulk_dm_button_triggers_process_all(mock_ui_server, page: Page):
     port, captured = mock_ui_server
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
-    expect(page.locator(".list-header #viewTitle")).to_contain_text("Applications")
+    expect(page.locator(".list-header #viewTitle")).to_contain_text("Jobs")
     expect(page.locator(".list-header #bulkDmBtn")).to_be_visible()
     bulk_btn = page.locator(".list-header #bulkDmBtn")
     bulk_btn.click()
     bulk = wait_for_mock_bulk_action(captured, page)
 
     assert bulk["action"] == "dm_process_all"
-    assert bulk["job_keys"] == ["ai-engineer|linkedin|acme ai|ai engineer"]
+    assert bulk["job_keys"] == [_default_dm_job_key()]
     expect(page.locator("#bulkDmBtn")).not_to_be_disabled()
 
 

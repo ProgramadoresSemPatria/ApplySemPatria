@@ -47,6 +47,7 @@ from application_channel import (  # noqa: E402
     recruiter_message_enabled,
 )
 from apply_email import apply_email_display, apply_email_for_job  # noqa: E402
+from email_apply import email_apply_done  # noqa: E402
 from generate_applications import (  # noqa: E402
     apply_url_for,
     dm_profile_url,
@@ -123,7 +124,7 @@ def _status_kind(
 ) -> str:
     channel = classify_channel(job)
     if channel == CHANNEL_EMAIL:
-        if job_key(job) in email_keys:
+        if email_apply_done(job, email_keys=email_keys, email_to=email_to):
             return "email_sent"
         return "pending"
     if channel == CHANNEL_URL:
@@ -235,7 +236,9 @@ def _action_states(
     formats = {f["id"] for f in list_application_formats(job)}
     prof = dm_profile_url(job)
     jk = job_key(job)
-    email_sent = bool(formats & {"email"}) and jk in email_keys
+    email_sent = bool(formats & {"email"}) and email_apply_done(
+        job, email_keys=email_keys, email_to=email_to
+    )
 
     au = apply_url_for(job)
     resolved = (job.get("apply_url") or "").strip()
@@ -385,10 +388,14 @@ def job_to_card(
     dm_on = dm_apply_steps_enabled(job)
     if not steps_on:
         for key, state in actions.items():
+            if not isinstance(state, dict):
+                continue
             if key.startswith("dm_") and dm_on:
                 continue
             state["available"] = False
             state["in_progress"] = False
+    formats = {f["id"] for f in list_application_formats(job)}
+    dm_profile_missing = bool(formats & {"direct_message"}) and not (dm_profile_url(job) or "").strip()
     return {
         "job_key": job_key(job),
         "track": job.get("track") or "",
@@ -417,6 +424,7 @@ def job_to_card(
         "apply_url": apply_url,
         "apply_email": apply_email_display(job) or "",
         "profile_url": dm_profile_url(job) or "",
+        "dm_profile_missing": dm_profile_missing,
         "application_formats": list_application_formats(job),
         "form_link_message_enabled": recruiter_message_enabled(job, li_cfg or {}),
         "linkedin_easy_apply": bool(job.get("linkedin_easy_apply")),

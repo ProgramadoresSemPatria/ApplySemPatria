@@ -14,7 +14,7 @@ TZ = ZoneInfo("America/Sao_Paulo")
 LOG_PATH = ROOT / "state" / "research-log.json"
 INGESTION_HISTORY_PATH = ROOT / "state" / "ingestion-history.json"
 RUN_PATH = ROOT / "state" / "research-run.json"
-STALE_RUN_MINUTES = 25
+STALE_RUN_MINUTES = 10
 DEFAULT_INGESTION_LOOKBACK_DAYS = 7
 
 
@@ -314,8 +314,7 @@ def set_research_step(step: str, *, detail: str = "") -> None:
     if not run.get("running"):
         return
     run["step"] = step
-    if detail:
-        run["detail"] = detail
+    run["detail"] = detail
     run["updated_at"] = datetime.now(TZ).isoformat()
     _save_research_run(run)
 

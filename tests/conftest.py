@@ -66,9 +66,13 @@ def _start_mock_ui_server(
     """HTTP server with mocked action/snapshot handlers for UI e2e."""
     from tests.helpers.jobs import ui_snapshot
 
-    job_key = "ai-engineer|linkedin|acme ai|ai engineer"
-    snapshot = snapshot_override or ui_snapshot(job_key, day=today if has_research_today else last_research_day or today)
-    research_snapshot = ui_snapshot(job_key, day=today)
+    from registry import job_key as registry_job_key
+    from tests.helpers.jobs import linkedin_dm_job
+
+    _default_reg = linkedin_dm_job()
+    _default_jk = registry_job_key(_default_reg)
+    snapshot = snapshot_override or ui_snapshot(_default_jk, day=today if has_research_today else last_research_day or today)
+    research_snapshot = ui_snapshot(_default_jk, day=today)
     captured: dict[str, Any] = {
         "last_action": None,
         "last_bulk_action": None,
@@ -178,16 +182,8 @@ def _start_mock_ui_server(
         captured["apply_cmds"].append(list(cmd))
         return MagicMock(returncode=0, stdout="[DRY RUN] checking 1 profile(s)\nSummary: ok", stderr="")
 
-    def fake_find_job(job_key_value: str):
-        from registry import job_key as registry_job_key
-        from tests.helpers.jobs import linkedin_dm_job
-
-        job = linkedin_dm_job()
-        aliases = {
-            registry_job_key(job),
-            "ai-engineer|linkedin|acme ai|ai engineer",
-        }
-        return job if job_key_value in aliases else None
+    def fake_find_job(job_key_value: str, *, _reg=_default_reg, _jk=_default_jk):
+        return _reg if job_key_value == _jk else None
 
     monkeypatch.setattr(ui_server, "_find_job", fake_find_job)
     monkeypatch.setattr(ui_server, "run_action", fake_run_action)
@@ -200,44 +196,76 @@ def _start_mock_ui_server(
         from registry import job_key as registry_job_key
         from tests.helpers.jobs import linkedin_dm_job
 
-        reg_job = linkedin_dm_job()
-        reg_jk = registry_job_key(reg_job)
-        if snapshot_override is None:
-            snapshot = ui_snapshot(reg_jk, day=today if has_research_today else last_research_day or today)
-            research_snapshot = ui_snapshot(reg_jk, day=today)
-        else:
-            research_snapshot = snapshot_override
+        if bulk_dm == "real_no_profile":
+            from tests.helpers.jobs import ui_snapshot_dm_no_profile
 
-        profile = "https://www.linkedin.com/in/recruiter-test/"
-        prof_key = dm_state_mod.normalize_profile_url(profile)
-        if bulk_dm == "real":
-            dm_data = {
-                "profiles": {
-                    prof_key: {
-                        "company": "Acme AI",
-                        "role": "AI Engineer",
-                        "job_key": profile.rstrip("/"),  # legacy URL key — regression case
-                        "profile_url": profile,
-                        "connect_requested_at": "2026-09-07T12:00:00",
-                        "accepted_at": None,
-                        "message_sent_at": None,
+            snap = snapshot_override or ui_snapshot_dm_no_profile(day=today)
+            card = snap["jobs"][0]
+            reg_jk = card["job_key"]
+            reg_job = {
+                "track": "ai-engineer",
+                "source": "linkedin_posts",
+                "company": card["company"],
+                "role": card["role"],
+                "url": reg_jk,
+                "apply_channel": "external_url",
+                "filter_result": "eligible",
+            }
+            if snapshot_override is None:
+                snapshot = snap
+            research_snapshot = snap
+            dm_data: dict[str, Any] = {"profiles": {}}
+        else:
+            reg_job = linkedin_dm_job()
+            reg_jk = registry_job_key(reg_job)
+            if snapshot_override is None:
+                snapshot = ui_snapshot(reg_jk, day=today if has_research_today else last_research_day or today)
+                research_snapshot = ui_snapshot(reg_jk, day=today)
+            else:
+                research_snapshot = snapshot_override
+
+            profile = "https://www.linkedin.com/in/recruiter-test/"
+            prof_key = dm_state_mod.normalize_profile_url(profile)
+            if bulk_dm == "real":
+                dm_data = {
+                    "profiles": {
+                        prof_key: {
+                            "company": "Acme AI",
+                            "role": "AI Engineer",
+                            "job_key": profile.rstrip("/"),  # legacy URL key — regression case
+                            "profile_url": profile,
+                            "connect_requested_at": "2026-09-07T12:00:00",
+                            "accepted_at": None,
+                            "message_sent_at": None,
+                        }
                     }
                 }
-            }
-        else:
-            dm_data = {"profiles": {}}
+            else:
+                dm_data = {"profiles": {}}
 
         monkeypatch.setattr(dm_state_mod, "load", lambda: dm_data)
         monkeypatch.setattr("registry.load_registry", lambda: {"jobs": [reg_job]})
         monkeypatch.setattr(ui_server, "_browser_deps_ok", lambda: (True, ""))
         monkeypatch.setattr(ui_server, "_run_apply_cmd", fake_run_apply_cmd)
-        monkeypatch.setattr(ui_server, "_find_job", lambda jk: reg_job if jk == reg_jk else None)
+        monkeypatch.setattr(
+            ui_server,
+            "_find_job",
+            lambda jk, rk=reg_job, rjk=reg_jk: rk if jk == rjk else None,
+        )
     monkeypatch.setattr(applications_ui_data, "refresh_live_snapshot", fake_refresh)
     monkeypatch.setattr(applications_ui_data, "list_snapshot_days", lambda: sidebar_days)
     monkeypatch.setattr(applications_ui_data, "load_snapshot", fake_load_snapshot)
 
     if mock_research:
-        monkeypatch.setattr("daily_research.run_daily_research", fake_run_daily_research)
+
+        def fake_spawn_daily_research(**kwargs):
+            fake_run_daily_research(**kwargs)
+            mock_proc = MagicMock()
+            mock_proc.pid = 4242
+            mock_proc.poll.return_value = 0
+            return mock_proc
+
+        monkeypatch.setattr(ui_server, "spawn_daily_research", fake_spawn_daily_research)
 
     def fake_set_disposition(jk, disp):
         return {"ok": True, "message": "mock disposition", "job_key": jk}
@@ -581,6 +609,67 @@ def mock_ui_server_bulk_dm_legacy_match(monkeypatch) -> Generator[tuple[int, dic
         has_research_today=True,
         last_research_day="2026-09-06",
         bulk_dm="real",
+    )
+
+
+@pytest.fixture
+def mock_ui_server_email_dm_steps(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """LinkedIn post with email apply + recruiter profile — email and DM steps together."""
+    from tests.helpers.jobs import linkedin_email_dm_job, ui_snapshot_from_jobs
+
+    snapshot = ui_snapshot_from_jobs([linkedin_email_dm_job()], day="2026-09-14")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-14",
+        has_research_today=True,
+        last_research_day="2026-09-14",
+        snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_form_email_dm_steps(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """LinkedIn post with email, form, and DM connect/message steps."""
+    from tests.helpers.jobs import linkedin_form_email_dm_job, ui_snapshot_from_jobs
+
+    snapshot = ui_snapshot_from_jobs([linkedin_form_email_dm_job()], day="2026-09-14")
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-14",
+        has_research_today=True,
+        last_research_day="2026-09-14",
+        snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_dm_no_profile(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """DM card without profile URL — bulk button disabled, card shows manual hint."""
+    from tests.helpers.jobs import ui_snapshot_dm_no_profile
+
+    snapshot = ui_snapshot_dm_no_profile()
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-14",
+        has_research_today=True,
+        last_research_day="2026-09-14",
+        snapshot_override=snapshot,
+    )
+
+
+@pytest.fixture
+def mock_ui_server_bulk_dm_no_profile_real(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Real bulk DM handler — must not spawn browser subprocesses when profile is missing."""
+    from tests.helpers.jobs import ui_snapshot_dm_no_profile
+
+    snapshot = ui_snapshot_dm_no_profile()
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-14",
+        has_research_today=True,
+        last_research_day="2026-09-14",
+        snapshot_override=snapshot,
+        bulk_dm="real_no_profile",
     )
 
 

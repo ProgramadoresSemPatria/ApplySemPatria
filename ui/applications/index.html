@@ -574,6 +574,28 @@
       border: 1px dashed var(--border);
       line-height: 1.45;
     }
+    .page-callouts {
+      margin-top: 1.75rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .page-callouts-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+    .page-callouts-list {
+      margin: 0;
+      padding: 0 0 0 1rem;
+      list-style: disc;
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.45;
+    }
+    .page-callouts-list li + li { margin-top: 0.25rem; }
 
     .steps-block-review {
       margin-top: 0.15rem;
@@ -992,6 +1014,10 @@
           <div class="empty" id="emptyState" hidden>
             <h3>No roles for this day</h3>
             <p>Run <code>jobsearch table</code> to generate a snapshot.</p>
+          </div>
+          <div class="page-callouts" id="pageCallouts" hidden>
+            <div class="page-callouts-title">Callouts</div>
+            <ul class="page-callouts-list" id="pageCalloutsList"></ul>
           </div>
         </div>
       </div>
@@ -1415,8 +1441,17 @@
 
     function dmApplyEligible(job) {
       if (!hasFormat(job, "direct_message")) return false;
+      if (!(job.profile_url || "").trim()) return false;
       if (job.application_steps_enabled !== false) return true;
       return job.dm_apply_steps_enabled === true;
+    }
+
+    function dmJobsMissingProfile() {
+      return filteredJobs().filter(j =>
+        hasFormat(j, "direct_message")
+        && (j.application_steps_enabled !== false || j.dm_apply_steps_enabled === true)
+        && !(j.profile_url || "").trim()
+      );
     }
 
     function dmJobsInList() {
@@ -1455,9 +1490,39 @@
       return profiles;
     }
 
-    function dmBulkActionLabel(dmJobs) {
+    function dmRolesInList() {
+      return filteredJobs().filter(j =>
+        hasFormat(j, "direct_message")
+        && (j.application_steps_enabled !== false || j.dm_apply_steps_enabled === true)
+      );
+    }
+
+    function dmJobWord(count) {
+      return count === 1 ? "job" : "jobs";
+    }
+
+    /** Plain-language copy when we can't find the recruiter on a LinkedIn post. */
+    function dmMissingProfileCopy(count) {
+      const jobs = dmJobWord(count);
+      return {
+        bulkLabel: count === 1 ? "Connect manually (1 job)" : `Connect manually (${count} jobs)`,
+        bulkTitle:
+          `Recruiter profile missing on ${count} ${jobs}. Open Post ↗ and connect on LinkedIn manually.`,
+        callout:
+          count === 1
+            ? "Manual LinkedIn connect — recruiter not named on the post. Open Post ↗ on the card."
+            : `Manual LinkedIn connect — recruiter not named on ${count} posts. Open Post ↗ on each card.`,
+        toast:
+          `${count} ${jobs}: recruiter not found on the post. Open Post ↗ and connect on LinkedIn yourself.`,
+      };
+    }
+
+    function dmBulkActionLabel(dmJobs, missingProfile) {
       const needConnect = dmJobsNeedingConnect().length;
       const needCheck = dmJobsNeedingCheck().length;
+      if (!dmJobs.length && missingProfile.length) {
+        return dmMissingProfileCopy(missingProfile.length).bulkLabel;
+      }
       if (!dmJobs.length) return "Connect · check · send DMs";
       if (needConnect > 0) {
         let label = `Connect (${needConnect})`;
@@ -1489,9 +1554,39 @@
       return title;
     }
 
+    function buildPageCallouts() {
+      const items = [];
+      if (serverUiApproval) {
+        const missingProfile = dmJobsMissingProfile();
+        if (missingProfile.length) {
+          items.push({
+            id: "dm-manual-connect",
+            text: dmMissingProfileCopy(missingProfile.length).callout,
+          });
+        }
+      }
+      return items;
+    }
+
+    function updatePageCallouts() {
+      const wrap = document.getElementById("pageCallouts");
+      const list = document.getElementById("pageCalloutsList");
+      if (!wrap || !list) return;
+      const items = buildPageCallouts();
+      if (!items.length) {
+        wrap.hidden = true;
+        list.innerHTML = "";
+        return;
+      }
+      wrap.hidden = false;
+      list.innerHTML = items.map(item => `<li>${esc(item.text)}</li>`).join("");
+    }
+
     function updateBulkDmBtn() {
       const dmBtn = document.getElementById("bulkDmBtn");
       const dmJobs = dmJobsInList();
+      const missingProfile = dmJobsMissingProfile();
+      const dmRoles = dmRolesInList();
       const icon = dmBtn.querySelector(".bulk-btn-icon");
       const label = dmBtn.querySelector(".bulk-btn-label");
       if (!serverUiApproval) {
@@ -1501,10 +1596,17 @@
         dmBtn.title = "Restart the UI server (jobsearch ui) — server is outdated";
         return;
       }
-      dmBtn.disabled = dmJobs.length === 0;
+      // Keep clickable when DM roles exist but lack profile URLs (onclick explains why).
+      dmBtn.disabled = dmRoles.length === 0;
       if (icon) icon.textContent = "⟳";
-      if (label) label.textContent = dmBulkActionLabel(dmJobs);
-      dmBtn.title = dmBulkActionTitle(dmJobs);
+      if (label) label.textContent = dmBulkActionLabel(dmJobs, missingProfile);
+      let title = dmBulkActionTitle(dmJobs);
+      if (missingProfile.length && !dmJobs.length) {
+        title = dmMissingProfileCopy(missingProfile.length).bulkTitle;
+      } else if (missingProfile.length) {
+        title += ` · ${missingProfile.length} skipped (recruiter not on post)`;
+      }
+      dmBtn.title = title;
     }
 
     function emailRolesInList() {
@@ -1595,6 +1697,7 @@
       viewSubtitle.textContent = `· ${jobs.length} roles · ${listDayLabel()}`;
       updateBulkDmBtn();
       updateBulkEmailBtn();
+      updatePageCallouts();
     }
 
     const ACTION_ORDER = ["email", "form", "dm_connect", "dm_check", "dm_message"];
@@ -1609,20 +1712,34 @@
       return state.available;
     }
 
+    function dmProfileMissing(job) {
+      return !!(job.dm_profile_missing || (
+        hasFormat(job, "direct_message") && !(job.profile_url || "").trim()
+      ));
+    }
+
     function renderStepPill(key, state, job) {
-      if (!state.available && !state.done && !state.in_progress) return "";
+      const isDm = key.startsWith("dm_");
+      const forceShowDm = isDm && hasFormat(job, "direct_message");
+      if (!state.available && !state.done && !state.in_progress && !forceShowDm) return "";
       const done = state.done;
       const progress = state.in_progress && !done;
+      const missingProfile = dmProfileMissing(job);
       const icon = done ? "✓" : (progress ? "◐" : "○");
       let cls = "step-pill";
       if (done) cls += " done";
       else if (progress) cls += " progress";
-      const clickable = stepClickable(key, state, job);
+      else if (forceShowDm && missingProfile) cls += " warning";
+      const clickable = !missingProfile && stepClickable(key, state, job);
       if (clickable) cls += " clickable";
       if (!done && !progress && (state.status_kind === "closed" || state.status_kind === "external")) {
         cls += " warning";
       }
-      const statusText = state.status_text || (done ? "done" : "not applied");
+      let statusText = state.status_text || (done ? "done" : "not applied");
+      if (forceShowDm && missingProfile && !done && !progress) {
+        if (key === "dm_connect") statusText = "via Post ↗";
+        else if (!state.available) statusText = "after connect";
+      }
       const refreshOnly = key === "form" && (done || (job && job.linkedin_easy_apply));
       return `<button type="button" class="${cls}" data-action="${key}" data-job="${job.job_key}" ${refreshOnly ? 'data-refresh-only="1"' : ""} ${clickable ? "" : "disabled"}>
         <span class="step-icon">${icon}</span>
@@ -1690,7 +1807,15 @@
       if (!job.application_steps_enabled) return "";
 
       const pills = renderSteps(actions, job);
-      if (!pills.trim() || !hasAnyStepPill(actions)) return "";
+      if (!pills.trim() || !hasAnyStepPill(actions)) {
+        if (dmProfileMissing(job) && pills.trim()) {
+          return `<div class="steps-block">
+            <label>Application steps</label>
+            <div class="step-pills">${pills}</div>
+          </div>`;
+        }
+        return "";
+      }
 
       return `<div class="steps-block">
         <label>Application steps</label>
@@ -2036,6 +2161,12 @@
           await syncResearchRunState(btn);
           return;
         }
+        if (res.status === 202 || data.started) {
+          researchWasRunning = true;
+          showToast(data.message || "Research started…", true);
+          await syncResearchRunState(btn);
+          return;
+        }
         if (data.ok) {
           researchWasRunning = false;
           serverMeta.has_research_today = true;
@@ -2067,7 +2198,12 @@
       const btn = document.getElementById("bulkDmBtn");
       const dmJobs = dmJobsInList();
       if (!dmJobs.length) {
-        showToast("No direct-message roles in this list.", false);
+        const missing = dmJobsMissingProfile();
+        if (missing.length) {
+          showToast(dmMissingProfileCopy(missing.length).toast.replace(/<\/?strong>/g, ""), false);
+        } else {
+          showToast("No direct-message roles in this list.", false);
+        }
         return;
       }
       if (btn.classList.contains("loading")) return;

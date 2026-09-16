@@ -128,12 +128,9 @@ def set_job_disposition(job: dict[str, Any], disposition: str) -> str:
 
 
 def find_job_in_registry(registry: dict[str, Any], job_key: str) -> dict[str, Any] | None:
-    from registry import job_key as jk  # noqa: WPS433
+    from registry import find_job_by_key  # noqa: WPS433
 
-    for job in registry.get("jobs", []):
-        if jk(job) == job_key:
-            return job
-    return None
+    return find_job_by_key(registry.get("jobs", []), job_key)
 
 
 def update_disposition(registry: dict[str, Any], job_key: str, disposition: str) -> dict[str, Any] | None:

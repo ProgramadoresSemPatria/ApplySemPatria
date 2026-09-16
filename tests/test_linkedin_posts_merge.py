@@ -33,6 +33,7 @@ from linkedin_posts_merge import (  # noqa: E402
     post_to_job,
     register_author_post_urls,
     resolve_author_post_url,
+    resolve_chunk_authors,
     resolve_feed_update_to_posts_permalink,
     resolve_post_urls,
     sort_jobs_by_recency,
@@ -391,6 +392,61 @@ class LinkedInPostsMergeTests(unittest.TestCase):
         self.assertEqual(len(posts), 1)
         self.assertIn("7503481913303584769", posts[0]["url"])
         self.assertEqual(posts[0]["url_source"], "collect_chunk_url")
+
+    def test_resolve_chunk_authors_company_page_post(self):
+        chunk = (
+            "CtrlSkill Data & AI Training Hub\n\n"
+            "Shadab Barmare • 3rd+\n\n"
+            "9h\n\nJoin\n\n"
+            "We're building something bigger than a course.\n"
+        )
+        person, company = resolve_chunk_authors(chunk)
+        self.assertEqual(person, "Shadab Barmare")
+        self.assertEqual(company, "CtrlSkill Data & AI Training Hub")
+
+    def test_parse_feed_search_posts_company_page_uses_person_for_url(self):
+        raw = (
+            "Feed post\n\n"
+            "CtrlSkill Data & AI Training Hub\n\n"
+            "Shadab Barmare • 3rd+\n\n"
+            "9h\n\nJoin\n\n"
+            "We're building something bigger than a course.\n"
+        )
+        activity = "https://www.linkedin.com/feed/update/urn:li:activity:7501234567890123456/"
+        posts = parse_feed_search_posts(
+            {
+                "sections": {"search_results": raw},
+                "references": {"search_results": []},
+                "chunk_post_urls": [""],
+                "ordered_activity_urls": [activity],
+                "author_post_urls": {"shadab barmare": activity},
+            }
+        )
+        self.assertEqual(len(posts), 1)
+        self.assertIn("7501234567890123456", posts[0]["url"])
+        self.assertEqual(posts[0]["author"], "Shadab Barmare")
+        self.assertEqual(posts[0]["company_header"], "CtrlSkill Data & AI Training Hub")
+
+    def test_parse_feed_search_posts_falls_back_to_ordered_activity_urls(self):
+        raw = (
+            "Feed post\n\nAngela Hernández santamaría\n\n2h • \n\nFollow\n\n"
+            "WE'RE HIRING | ADVANCED TO BILINGUAL ENGLISH REQUIRED\n"
+        )
+        activity = "https://www.linkedin.com/feed/update/urn:li:activity:7505685397302284290/"
+        posts = parse_feed_search_posts(
+            {
+                "sections": {"search_results": raw},
+                "references": {"search_results": []},
+                "chunk_post_urls": [""],
+                "ordered_activity_urls": [activity],
+            }
+        )
+        self.assertEqual(len(posts), 1)
+        self.assertIn("7505685397302284290", posts[0]["url"])
+        self.assertIn(
+            posts[0]["url_source"],
+            {"ordered_activity_index", "collect_chunk_url", "text_feed_update"},
+        )
 
     def test_extract_ordered_feed_update_urls_dedupes_in_order(self):
         html = (

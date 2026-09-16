@@ -16,11 +16,16 @@ from linkedin_posts_merge import (  # noqa: E402
     extract_role_apply_url,
     fallback_linkedin_post_search_url,
     is_apply_only_url,
+    is_feed_update_url,
+    is_placeholder_post_url,
     is_posts_permalink,
+    normalize_linkedin_job_urls,
     permalink_matches_author,
     resolve_apply_url_from_text,
+    resolve_feed_update_to_posts_permalink,
     split_apply_email,
 )
+from repair_linkedin_urls import load_refs_from_runs  # noqa: E402
 from post_intent import classify_linkedin_post_filter, classify_post_intent  # noqa: E402
 from post_intent_classify import classify_post_llm  # noqa: E402
 from registry import load_registry, save_registry  # noqa: E402
@@ -30,11 +35,13 @@ from track_store import load_linkedin_config, resolve_track  # noqa: E402
 
 def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
     registry = load_registry()
+    refs = load_refs_from_runs(SCRIPTS.parent / "runs")
     stats = {
         "company_cleaned": 0,
         "salary_fixed": 0,
         "salary_cleared": 0,
         "post_url_reset": 0,
+        "post_url_fixed": 0,
         "apply_url_fixed": 0,
         "apply_email_set": 0,
     }
@@ -73,7 +80,28 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
         salary_for_filter = job.get("salary_usd") or new_salary
 
         url = (job.get("url") or "").strip()
-        if is_posts_permalink(url) and not permalink_matches_author(url, cleaned):
+        before_url = url
+        if is_placeholder_post_url(url) or is_feed_update_url(url):
+            if not dry_run:
+                from registry import remember_legacy_job_key  # noqa: WPS433
+
+                remember_legacy_job_key(job, before_url)
+            normalize_linkedin_job_urls(job, refs, resolve_posts=True)
+            url = (job.get("url") or "").strip()
+            if is_feed_update_url(url):
+                resolved = resolve_feed_update_to_posts_permalink(url)
+                if is_posts_permalink(resolved):
+                    if not dry_run:
+                        job["url"] = resolved
+                        job["url_source"] = job.get("url_source") or "posts_permalink"
+                    url = resolved
+            if before_url != url:
+                stats["post_url_fixed"] += 1
+
+        url = (job.get("url") or "").strip()
+        if is_posts_permalink(url) and not permalink_matches_author(
+            url, cleaned, recruiter_profile_url=job.get("recruiter_profile_url")
+        ):
             stats["post_url_reset"] += 1
             if not dry_run:
                 job["url"] = fallback_linkedin_post_search_url(cleaned, role)
@@ -90,6 +118,8 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
         apply_email, apply_url = split_apply_email(job.get("apply_url"), snippet, role)
         if not apply_email:
             apply_email = extract_apply_email_from_text(snippet, role)
+        if not apply_email:
+            apply_email = job.get("apply_email") or None
         if (job.get("apply_email") or None) != (apply_email or None):
             stats["apply_email_set"] += 1
             if not dry_run:

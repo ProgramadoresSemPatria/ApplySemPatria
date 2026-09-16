@@ -11,12 +11,14 @@ sys.path.insert(0, str(SCRIPTS))
 
 from application_channel import (  # noqa: E402
     classify_channel,
+    dm_automation_ready,
     has_direct_message_apply,
     list_application_formats,
     needs_recruiter_connect,
     recruiter_message_enabled,
     recruiter_profile_url,
 )
+from tests.helpers.jobs import linkedin_dm_job  # noqa: E402
 from dm_apply import message_body  # noqa: E402
 
 
@@ -53,11 +55,30 @@ def test_form_linkedin_post_has_both_formats():
     assert fmt_ids == {"form", "direct_message"}
 
 
+def test_email_linkedin_post_still_needs_recruiter_connect():
+    job = _form_linkedin_job(
+        apply_url=None,
+        url="https://www.linkedin.com/in/recruiter-test/recent-activity/all/",
+    )
+    job["apply_email"] = "recruiter@acme.ai"
+    assert classify_channel(job) == "email"
+    assert needs_recruiter_connect(job) is True
+    fmt_ids = {f["id"] for f in list_application_formats(job)}
+    assert fmt_ids == {"email", "direct_message"}
+
+
 def test_recruiter_profile_from_posts_slug():
     job = _form_linkedin_job(
         url="https://www.linkedin.com/posts/jane-doe_hiring-activity-123-abc/",
     )
     assert recruiter_profile_url(job) == "https://www.linkedin.com/in/jane-doe/"
+
+
+def test_dm_automation_ready_requires_profile():
+    job = linkedin_dm_job()
+    assert dm_automation_ready(job) is True
+    missing = {**job, "recruiter_profile_url": ""}
+    assert dm_automation_ready(missing) is False
 
 
 def test_dm_collect_includes_form_linkedin_posts():

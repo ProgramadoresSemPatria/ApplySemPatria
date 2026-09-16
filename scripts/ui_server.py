@@ -34,6 +34,44 @@ def _resolve_python() -> str:
     return sys.executable
 
 
+def spawn_daily_research(
+    *,
+    track: str | None = None,
+    since: str,
+    skip_linkedin: bool = False,
+    skip_linkedin_jobs: bool = False,
+    table_only: bool = False,
+) -> subprocess.Popen[str]:
+    """Launch daily research in a detached subprocess (survives UI server restarts)."""
+    log_dir = ROOT / "runs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    from research_log import today_local  # noqa: WPS433
+
+    log_path = log_dir / f"research-{today_local()}.log"
+    log_fp = log_path.open("a", encoding="utf-8")
+    log_fp.write(f"\n--- research spawn ---\n")
+    log_fp.flush()
+
+    cmd = [ _resolve_python(), str(SCRIPTS / "daily_research.py"), "--since", since]
+    if track:
+        cmd.extend(["--track", track])
+    if skip_linkedin:
+        cmd.append("--skip-linkedin")
+    if skip_linkedin_jobs:
+        cmd.append("--skip-linkedin-jobs")
+    if table_only:
+        cmd.append("--table-only")
+
+    return subprocess.Popen(
+        cmd,
+        cwd=str(ROOT),
+        stdout=log_fp,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+        text=True,
+    )
+
+
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
 UI_VERSION = 7
@@ -106,12 +144,9 @@ def _run_apply_cmd(cmd: list[str], *, inherit_stdio: bool = False) -> subprocess
 
 
 def _find_job(job_key: str) -> dict[str, Any] | None:
-    from registry import job_key as jk, load_registry  # noqa: E402
+    from registry import find_job_by_key, load_registry  # noqa: E402
 
-    for job in load_registry()["jobs"]:
-        if jk(job) == job_key:
-            return job
-    return None
+    return find_job_by_key(load_registry()["jobs"], job_key)
 
 
 def _match_company(job: dict[str, Any]) -> str:
@@ -334,6 +369,14 @@ def run_bulk_dm_followup(
             "action": "dm_process_all",
         }
 
+    from registry import job_key as registry_job_key  # noqa: WPS433
+
+    resolved_keys: list[str] = []
+    for jk in keys:
+        job = _find_job(jk)
+        resolved_keys.append(registry_job_key(job) if job else jk)
+    keys = resolved_keys
+
     tid = track or "ai-engineer"
     if keys:
         for jk in keys:
@@ -383,12 +426,30 @@ def run_bulk_dm_followup(
         *key_args,
     ]
 
+    from application_channel import dm_automation_ready  # noqa: WPS433
+    from dm_apply import collect_candidates  # noqa: WPS433
     from dm_followup import (  # noqa: WPS433
         filter_entries_by_job_keys,
         filter_entries_by_status,
         pending_profiles,
     )
     import dm_state  # noqa: WPS433
+
+    skipped_no_profile: list[str] = []
+    if keys:
+        for jk in keys:
+            job = _find_job(jk)
+            if job and not dm_automation_ready(job):
+                skipped_no_profile.append((job.get("company") or jk).strip())
+
+    connect_count = len(
+        collect_candidates(
+            table_only=False,
+            limit=0,
+            track_id=tid,
+            job_keys=keys if keys else None,
+        )
+    )
 
     state = dm_state.load()
     scoped = pending_profiles(state)
@@ -397,8 +458,12 @@ def run_bulk_dm_followup(
     need_check = filter_entries_by_status(scoped, phase="check")
     need_send = filter_entries_by_status(scoped, phase="send")
 
-    phases: list[tuple[str, list[str]]] = [("send_connections", connect_cmd)]
+    phases: list[tuple[str, list[str]]] = []
     summaries: list[str] = []
+    if connect_count > 0:
+        phases.append(("send_connections", connect_cmd))
+    else:
+        summaries.append("[send_connections] skipped — no new connections to send in this list")
     if need_check:
         phases.append(("check_connections", check_cmd))
     else:
@@ -408,10 +473,46 @@ def run_bulk_dm_followup(
     else:
         summaries.append("[send_messages] skipped — no accepted connections ready to message in this list")
 
+    if not phases:
+        from audit_log import warn as audit_warn  # noqa: WPS433
+
+        audit_warn(
+            "ui_server",
+            "bulk_dm_nothing_to_do",
+            track=tid,
+            job_keys=keys,
+            skipped_no_profile=skipped_no_profile,
+            connect_count=connect_count,
+        )
+        if skipped_no_profile:
+            names = ", ".join(skipped_no_profile[:5])
+            extra = f" (+{len(skipped_no_profile) - 5} more)" if len(skipped_no_profile) > 5 else ""
+            message = (
+                f"Can't auto-connect — recruiter not found on the post for: {names}{extra}. "
+                "Open Post ↗ on each job and connect on LinkedIn yourself."
+            )
+        else:
+            message = "Nothing to do — no connect, check, or message steps pending in this list."
+        return {
+            "ok": False,
+            "message": message,
+            "action": "dm_process_all",
+            "track": tid,
+            "limit": limit,
+            "job_keys": keys,
+            "skipped_no_profile": skipped_no_profile,
+        }
+
     from audit_log import error as audit_error  # noqa: E402
     from audit_log import info as audit_info  # noqa: E402
 
     ok = True
+    if skipped_no_profile:
+        summaries.insert(
+            0,
+            f"[skipped] {len(skipped_no_profile)} job(s) — recruiter not on post; connect via Post ↗",
+        )
+
     audit_info(
         "ui_server",
         "bulk_dm_start",
@@ -420,6 +521,8 @@ def run_bulk_dm_followup(
         phases=[label for label, _ in phases],
         need_check=len(need_check),
         need_send=len(need_send),
+        connect_count=connect_count,
+        skipped_no_profile=skipped_no_profile,
     )
 
     for label, cmd in phases:
@@ -812,71 +915,45 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                 )
                 return
 
-            result_holder: dict[str, Any] = {}
-
-            def _worker() -> None:
-                try:
-                    from daily_research import run_daily_research  # noqa: E402
-                    from research_log import has_research_today  # noqa: E402
-
-                    force_full = bool(body.get("force_full"))
-                    same_day_refresh = has_research_today() and not force_full
-
-                    result_holder["result"] = run_daily_research(
-                        track=track,
-                        since=since,
-                        skip_linkedin=skip_linkedin or same_day_refresh,
-                        skip_linkedin_jobs=bool(body.get("skip_linkedin_jobs")),
-                        skip_discover=bool(body.get("table_only")),
-                        table_only=bool(body.get("table_only")),
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    result_holder["result"] = {
-                        "ok": False,
-                        "message": f"Research error: {exc}",
-                    }
-
             from audit_log import info as audit_info  # noqa: E402
+            from research_log import has_research_today, research_run_status  # noqa: E402
+
+            force_full = bool(body.get("force_full"))
+            same_day_refresh = has_research_today() and not force_full
+            table_only = bool(body.get("table_only"))
 
             audit_info(
                 "ui_server",
-                "research_start",
+                "research_spawn",
                 track=track,
                 since=since,
-                skip_linkedin=skip_linkedin,
-                table_only=bool(body.get("table_only")),
+                skip_linkedin=skip_linkedin or same_day_refresh,
+                skip_linkedin_jobs=bool(body.get("skip_linkedin_jobs")),
+                table_only=table_only,
             )
-            t = threading.Thread(target=_worker, daemon=True)
-            t.start()
-            t.join()
-            result = result_holder.get("result")
-            if result:
-                audit_info(
-                    "ui_server",
-                    "research_done" if result.get("ok") else "research_failed",
-                    **{k: v for k, v in result.items() if k in ("ok", "day", "job_count", "message", "steps")},
+            try:
+                proc = spawn_daily_research(
+                    track=track,
+                    since=since,
+                    skip_linkedin=skip_linkedin or same_day_refresh,
+                    skip_linkedin_jobs=bool(body.get("skip_linkedin_jobs")),
+                    table_only=table_only,
                 )
-            if not result:
-                from research_log import research_run_status  # noqa: E402
+            except OSError as exc:
+                self._json(500, {"ok": False, "message": f"Could not start research: {exc}"})
+                return
 
-                run = research_run_status()
-                if run.get("running"):
-                    result = {
-                        "ok": False,
-                        "message": "Research stopped unexpectedly. Check server logs.",
-                    }
-                else:
-                    result = {
-                        "ok": bool(run.get("ok")),
-                        "message": run.get("message") or "Research finished.",
-                        "day": run.get("day"),
-                    }
-            if result.get("ok"):
-                from applications_ui_data import load_snapshot, refresh_live_snapshot  # noqa: E402
-
-                day = result.get("day")
-                result["snapshot"] = load_snapshot(day) if day else refresh_live_snapshot()
-            self._json(200 if result.get("ok") else 500, result)
+            audit_info("ui_server", "research_spawned", pid=proc.pid, since=since)
+            self._json(
+                202,
+                {
+                    "ok": True,
+                    "started": True,
+                    "message": "Research started — progress updates in the status bar.",
+                    "pid": proc.pid,
+                    "run": research_run_status(),
+                },
+            )
             return
 
         if path == "/api/bulk-action":

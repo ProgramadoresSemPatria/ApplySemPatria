@@ -39,3 +39,19 @@ def test_collect_candidates_filters_by_job_keys(dm_registry_job):
 
     assert len(out) == 1
     assert out[0]["company"] == "Acme AI"
+
+
+@pytest.mark.asyncio
+async def test_run_skips_browser_when_no_candidates(monkeypatch):
+    from dm_apply import run
+
+    called: list[int] = []
+
+    async def fake_launch(*args, **kwargs):
+        called.append(1)
+        raise AssertionError("browser should not launch")
+
+    monkeypatch.setattr("dm_apply.launch_context", fake_launch)
+    result = await run([], send=False, headless=False)
+    assert result == {"sent_actions": 0, "skipped": 0}
+    assert called == []

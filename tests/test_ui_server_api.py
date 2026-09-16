@@ -162,10 +162,17 @@ def test_research_post_clears_stale_run(monkeypatch, tmp_path):
     )
     monkeypatch.setattr("research_log.RUN_PATH", run_path)
     monkeypatch.setattr("research_log.STALE_RUN_MINUTES", 25)
-    monkeypatch.setattr(
-        "daily_research.run_daily_research",
-        lambda **_kwargs: {"ok": True, "message": "mock research", "day": "2026-09-09"},
-    )
+    def _fake_spawn(**_kwargs):
+        from research_log import finish_research_run, start_research_run
+
+        start_research_run("2026-09-09", force=True)
+        finish_research_run(ok=True, message="mock research")
+        mock = __import__("unittest.mock").mock.MagicMock()
+        mock.pid = 9999
+        mock.poll.return_value = 0
+        return mock
+
+    monkeypatch.setattr("ui_server.spawn_daily_research", _fake_spawn)
 
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), ui_server.ApplicationsUIHandler)
     port = httpd.server_address[1]
@@ -177,8 +184,9 @@ def test_research_post_clears_stale_run(monkeypatch, tmp_path):
     finally:
         httpd.shutdown()
 
-    assert status == 200
+    assert status == 202
     assert data.get("ok") is True
+    assert data.get("started") is True
 
 
 def test_action_dm_connect_mock(mock_ui_server):
@@ -338,15 +346,17 @@ def test_run_action_easy_apply_runs_status_check(mock_run):
 def test_run_bulk_dm_followup_invokes_connect_check_then_send(mock_run):
     mock_run.return_value = MagicMock(returncode=0, stdout="phase ok", stderr="")
     from ui_server import run_bulk_dm_followup
+    from tests.helpers.jobs import linkedin_dm_job
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
     pending = [
         {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": keys[0], "company": "Acme AI"},
     ]
-    with patch("dm_followup.pending_profiles", return_value=pending):
-        with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
-            with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
-                result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
+    with patch("dm_apply.collect_candidates", return_value=[linkedin_dm_job()]):
+        with patch("dm_followup.pending_profiles", return_value=pending):
+            with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
+                with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
+                    result = run_bulk_dm_followup(track="ai-engineer", limit=0, job_keys=keys)
 
     assert result["ok"] is True
     assert result["action"] == "dm_process_all"
@@ -385,10 +395,13 @@ def test_run_bulk_dm_followup_skips_send_when_none_accepted(mock_run):
     def _status(entries, *, phase):
         return entries if phase == "check" else []
 
-    with patch("dm_followup.pending_profiles", return_value=pending):
-        with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
-            with patch("dm_followup.filter_entries_by_status", side_effect=_status):
-                result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    from tests.helpers.jobs import linkedin_dm_job
+
+    with patch("dm_apply.collect_candidates", return_value=[linkedin_dm_job()]):
+        with patch("dm_followup.pending_profiles", return_value=pending):
+            with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
+                with patch("dm_followup.filter_entries_by_status", side_effect=_status):
+                    result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     assert result["ok"] is True
     assert mock_run.call_count == 2
@@ -401,9 +414,12 @@ def test_run_bulk_dm_followup_runs_connect_when_queue_empty(mock_run):
     from ui_server import run_bulk_dm_followup
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
-    with patch("dm_followup.pending_profiles", return_value=[]):
-        with patch("dm_followup.filter_entries_by_job_keys", return_value=[]):
-            result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    from tests.helpers.jobs import linkedin_dm_job
+
+    with patch("dm_apply.collect_candidates", return_value=[linkedin_dm_job()]):
+        with patch("dm_followup.pending_profiles", return_value=[]):
+            with patch("dm_followup.filter_entries_by_job_keys", return_value=[]):
+                result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     assert result["ok"] is True
     assert mock_run.call_count == 1

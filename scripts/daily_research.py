@@ -348,6 +348,15 @@ def run_daily_research(
         audit_error("daily_research", "research_failed", day=day, message=msg, steps=steps)
         finish_research_run(ok=False, message=msg)
         return {"ok": False, "message": msg, "day": day, "steps": steps}
+    finally:
+        from research_log import load_research_run  # noqa: WPS433
+
+        run = load_research_run()
+        if run.get("running"):
+            finish_research_run(
+                ok=False,
+                message="Research interrupted unexpectedly (process stopped before completion).",
+            )
 
 
 def main() -> int:

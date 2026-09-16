@@ -60,10 +60,32 @@ def sent_recipient_emails(sent_log: dict[str, Any]) -> set[str]:
     }
 
 
+def email_apply_done(
+    job: dict[str, Any],
+    *,
+    email_keys: set[str] | None = None,
+    email_to: set[str] | None = None,
+    sent_log: dict[str, Any] | None = None,
+) -> bool:
+    """True when this role was emailed (by job_key or shared apply_email address)."""
+    if sent_log is not None:
+        email_to = sent_recipient_emails(sent_log)
+        email_keys = {
+            entry.get("job_key")
+            for entry in sent_log.get("sent", [])
+            if entry.get("job_key")
+        }
+    keys = email_keys or set()
+    tos = email_to or set()
+    if job_key(job) in keys:
+        return True
+    to = (apply_email_for_job(job) or "").strip().lower()
+    return bool(to and to in tos)
+
+
 def already_sent(job: dict[str, Any], sent_log: dict[str, Any]) -> bool:
-    """True only when this exact registry row was logged — not shared recruiter email."""
-    key = job_key(job)
-    return any(entry.get("job_key") == key for entry in sent_log.get("sent", []))
+    """True when this role was already emailed (same job_key or apply_email)."""
+    return email_apply_done(job, sent_log=sent_log)
 
 
 def pending_send_candidates(

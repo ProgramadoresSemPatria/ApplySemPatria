@@ -174,6 +174,20 @@ async def run(
     if not recipe:
         print("ERROR: recipe not found")
         return
+    if not entries:
+        print("No DM follow-up profiles — skipping browser launch.")
+        audit_info(
+            "dm_followup",
+            "batch_done",
+            mode="send" if send else "dry_run",
+            phase=phase or "all",
+            accepted=0,
+            messaged=0,
+            recent_skipped=0,
+            still_pending=0,
+            candidates=0,
+        )
+        return
     pw, browser, ctx = await launch_context(headless=headless)
     accepted = messaged = recent_skipped = still_pending = 0
     sent_actions = 0

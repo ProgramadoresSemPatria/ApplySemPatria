@@ -58,7 +58,7 @@ def test_collect_candidates_dedupes_shared_apply_email(email_registry_job):
     assert len(out) == 1
 
 
-def test_already_sent_requires_matching_job_key(email_registry_job):
+def test_already_sent_matches_job_key_or_apply_email(email_registry_job):
     from email_apply import already_sent
     from registry import job_key
 
@@ -71,19 +71,22 @@ def test_already_sent_requires_matching_job_key(email_registry_job):
             }
         ]
     }
+    assert already_sent(email_registry_job, sent_log) is True
+
+    sent_log = {"sent": [{"job_key": "other-key", "to": "other@co.ai"}]}
     assert already_sent(email_registry_job, sent_log) is False
 
     sent_log["sent"].append({"job_key": jk, "to": "recruiter@acme.ai"})
     assert already_sent(email_registry_job, sent_log) is True
 
 
-def test_pending_send_candidates_allows_same_recipient_new_post(email_registry_job):
+def test_pending_send_candidates_skips_same_recipient_reingest(email_registry_job):
     from registry import job_key
     from email_apply import pending_send_candidates
 
     dup = {
         **email_registry_job,
-        "url": "https://www.linkedin.com/feed/update/urn:li:activity:7503200610150973442/",
+        "url": "linkedin-post:29cf7b73",
     }
     reg = {"jobs": [email_registry_job, dup]}
     keys = [job_key(dup)]
@@ -103,11 +106,10 @@ def test_pending_send_candidates_allows_same_recipient_new_post(email_registry_j
             sent_log=sent_log,
         )
 
-    assert len(pending) == 1
-    assert pending[0]["url"] == dup["url"]
+    assert pending == []
 
 
-def test_action_states_email_done_only_for_matching_job_key():
+def test_action_states_email_done_when_apply_email_was_sent():
     from applications_ui_data import _action_states
     from registry import job_key
 
@@ -127,7 +129,7 @@ def test_action_states_email_done_only_for_matching_job_key():
         email_keys={other_key},
         url_done=set(),
     )
-    assert actions["email"]["done"] is False
+    assert actions["email"]["done"] is True
 
     actions_sent = _action_states(
         job,

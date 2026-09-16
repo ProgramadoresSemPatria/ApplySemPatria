@@ -16,6 +16,7 @@ ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
 from apply_email import apply_email_display, apply_email_for_job, is_email_address  # noqa: E402
+from email_apply import email_apply_done  # noqa: E402
 from application_channel import (  # noqa: E402
     channel_label,
     classify_channel,
@@ -99,7 +100,7 @@ def status_cell(job: dict) -> str:
     load_progress_state()
     channel = classify_channel(job)
     if channel == "email":
-        if job_key(job) in _EMAIL_KEYS:
+        if email_apply_done(job, email_keys=_EMAIL_KEYS, email_to=_EMAIL_TO):
             return "✅ email sent"
         return "☐ pending"
     if channel == "dm":
@@ -174,8 +175,16 @@ def post_url_for(job: dict) -> str:
     if is_apply_only_url(url):
         return fallback_linkedin_post_search_url(author, role)
     if is_posts_permalink(url):
-        return url if permalink_matches_author(url, author) else fallback_linkedin_post_search_url(author, role)
+        prof = job.get("recruiter_profile_url") or job.get("profile_url")
+        if permalink_matches_author(url, author, recruiter_profile_url=prof):
+            return url
+        return fallback_linkedin_post_search_url(author, role)
     if is_feed_update_url(url):
+        from linkedin_posts_merge import resolve_feed_update_to_posts_permalink  # noqa: WPS433
+
+        resolved = resolve_feed_update_to_posts_permalink(url)
+        if is_posts_permalink(resolved):
+            return resolved
         return url
     if is_profile_fallback_url(url):
         return fallback_linkedin_post_search_url(author, role)

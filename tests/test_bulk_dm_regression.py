@@ -30,9 +30,12 @@ def test_regression_bulk_dm_never_returns_follow_up_only_errors(mock_run, msg: s
     from ui_server import run_bulk_dm_followup
 
     keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
-    with patch("dm_followup.pending_profiles", return_value=[]):
-        with patch("dm_followup.filter_entries_by_job_keys", return_value=[]):
-            result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    from tests.helpers.jobs import linkedin_dm_job
+
+    with patch("dm_apply.collect_candidates", return_value=[linkedin_dm_job()]):
+        with patch("dm_followup.pending_profiles", return_value=[]):
+            with patch("dm_followup.filter_entries_by_job_keys", return_value=[]):
+                result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     assert result["ok"] is True
     assert msg not in result.get("message", "")
@@ -47,10 +50,13 @@ def test_regression_bulk_dm_runs_connect_before_follow_up_phases(mock_run):
     pending = [
         {"profile_url": "https://www.linkedin.com/in/recruiter-test/", "job_key": keys[0], "company": "Acme AI"},
     ]
-    with patch("dm_followup.pending_profiles", return_value=pending):
-        with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
-            with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
-                result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    from tests.helpers.jobs import linkedin_dm_job
+
+    with patch("dm_apply.collect_candidates", return_value=[linkedin_dm_job()]):
+        with patch("dm_followup.pending_profiles", return_value=pending):
+            with patch("dm_followup.filter_entries_by_job_keys", return_value=pending):
+                with patch("dm_followup.filter_entries_by_status", side_effect=lambda entries, phase: entries):
+                    result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     assert result["ok"] is True
     assert mock_run.call_count == 3
@@ -74,7 +80,10 @@ def test_regression_bulk_dm_passes_all_list_job_keys_to_connect(mock_run):
     from ui_server import run_bulk_dm_followup
 
     keys = ["key-a", "key-b", "key-c"]
-    run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+    from tests.helpers.jobs import linkedin_dm_job
+
+    with patch("dm_apply.collect_candidates", return_value=[linkedin_dm_job()]):
+        run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
 
     connect_cmd = mock_run.call_args_list[0][0][0]
     joined = connect_cmd[connect_cmd.index("--job-keys") + 1]

@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -78,6 +78,8 @@ POSTS_PERMALINK_RE = re.compile(
     r"https?://(?:[\w-]+\.)?linkedin\.com/posts/[^?\s\"']+",
     re.IGNORECASE,
 )
+POSTS_SLUG_RE = re.compile(r"linkedin\.com/posts/([a-z0-9-]+)_", re.IGNORECASE)
+IN_SLUG_PATH_RE = re.compile(r"linkedin\.com/in/([^/?#]+)", re.IGNORECASE)
 
 
 def _abs_linkedin(path_or_url: str) -> str:
@@ -94,6 +96,78 @@ def _norm_author_name(name: str) -> str:
     cleaned = re.sub(r"[\U0001F300-\U0001FAFF\U00002700-\U000027BF]", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned.casefold()
+
+
+CHUNK_META_LINES = frozenset(
+    {
+        "Follow",
+        "Connect",
+        "Join",
+        "Show translation",
+        "Visit my website",
+        "View my services",
+    }
+)
+PERSON_LINE_RE = re.compile(r"^(.+?)\s*•\s*(?:1st|2nd|3rd\+?)\b", re.IGNORECASE)
+
+
+def resolve_chunk_authors(chunk: str) -> tuple[str, str | None]:
+    """Return (url_author, company_header) from LinkedIn search innerText chunk.
+
+    Company-page cards show the org on the first line and ``Person • 3rd+`` next.
+    URL/profile matching must use the person; the org name is returned as
+    company_header for display.
+    """
+    lines = [line.strip() for line in (chunk or "").split("\n") if line.strip()]
+
+    for i, line in enumerate(lines[:12]):
+        if line in CHUNK_META_LINES:
+            continue
+        match = PERSON_LINE_RE.match(line)
+        if not match:
+            continue
+        person = match.group(1).strip()
+        if not person:
+            continue
+        company_header = None
+        for j in range(i - 1, -1, -1):
+            prev = lines[j]
+            if prev in CHUNK_META_LINES or PERSON_LINE_RE.match(prev):
+                continue
+            if re.match(r"^\d+[hmdw]\b", prev, re.I) or "Edited •" in prev:
+                continue
+            if len(prev) > 2 and not prev.startswith("#"):
+                company_header = re.sub(r"\s+•.*", "", prev).strip()
+                break
+        return person, company_header
+
+    for line in lines[:12]:
+        if line in CHUNK_META_LINES:
+            continue
+        if PERSON_LINE_RE.match(line):
+            continue
+        if re.search(r"\b(1st|2nd|3rd\+?)\b", line):
+            continue
+        if re.match(r"^\d+[hmdw]\b", line) or "Edited •" in line:
+            continue
+        if len(line) > 2 and not line.startswith("#"):
+            return re.sub(r"\s+•.*", "", line).strip(), None
+    return "Unknown", None
+
+
+def url_match_author_for_job(job: dict[str, Any]) -> str:
+    """Author string used to match feed/update URLs (may differ from company label)."""
+    snippet = job.get("description_snippet") or ""
+    if snippet:
+        person, _company = resolve_chunk_authors(snippet)
+        if person and person != "Unknown":
+            return person
+    prof = (job.get("recruiter_profile_url") or job.get("profile_url") or "").strip()
+    if prof and "/in/" in prof:
+        slug = prof.rstrip("/").split("/in/")[-1].split("/")[0]
+        if slug:
+            return slug.replace("-", " ")
+    return (job.get("company") or "").strip()
 
 
 def fallback_linkedin_post_search_url(author: str, role: str = "ai engineer") -> str:
@@ -139,11 +213,21 @@ def permalink_author_slug(post_url: str) -> str:
     return match.group(1).casefold() if match else ""
 
 
-def permalink_matches_author(post_url: str, author: str) -> bool:
+def permalink_matches_author(
+    post_url: str,
+    author: str,
+    *,
+    recruiter_profile_url: str | None = None,
+) -> bool:
     """True when /posts/ slug aligns with recruiter/author name."""
     post_slug = permalink_author_slug(post_url)
     if not post_slug:
         return True
+    prof = (recruiter_profile_url or "").strip().rstrip("/")
+    if prof and "/in/" in prof:
+        profile_slug = prof.split("/in/")[-1].split("/")[0].lower()
+        if profile_slug and profile_slug in post_slug.lower():
+            return True
     author_slug = _slugify_name(re.sub(r"^~+\s*", "", (author or "").strip()))
     if not author_slug:
         return True
@@ -645,6 +729,117 @@ def match_author_feed_post_ref(author: str, refs: list[dict[str, Any]]) -> tuple
     return "", ""
 
 
+def normalize_person_profile_url(url: str) -> str:
+    """Normalize a LinkedIn person profile URL."""
+    url = (url or "").strip().split("?")[0]
+    if not url:
+        return ""
+    match = IN_SLUG_PATH_RE.search(url)
+    if not match:
+        return ""
+    slug = match.group(1).strip("/")
+    if not slug or slug.lower() == "company":
+        return ""
+    return f"https://www.linkedin.com/in/{slug}/"
+
+
+def profile_url_from_in_slug(slug: str) -> str:
+    slug = re.sub(r"[^a-z0-9-]", "", (slug or "").strip().lower())
+    if not slug:
+        return ""
+    return f"https://www.linkedin.com/in/{slug}/"
+
+
+def resolve_recruiter_profile_url(
+    author: str,
+    post_url: str,
+    refs: list[dict[str, Any]],
+) -> str:
+    """Best-effort person /in/ URL for recruiter connect automation."""
+    post_url = (post_url or "").strip()
+    author = (author or "").strip()
+
+    from_url = normalize_person_profile_url(post_url)
+    if from_url:
+        return from_url
+
+    posts_match = POSTS_SLUG_RE.search(post_url)
+    if posts_match:
+        return profile_url_from_in_slug(posts_match.group(1))
+
+    prof = lookup_author_profile_ref(author, refs)
+    if prof and prof.get("kind") == "person":
+        url = normalize_person_profile_url(prof.get("url") or "")
+        if url:
+            return url
+
+    post_key = post_url.rstrip("/")
+    for ref in refs:
+        if ref.get("kind") != "feed_post":
+            continue
+        slug = (ref.get("author_slug") or "").strip()
+        if not slug or "/" in slug or slug.lower() == author.casefold():
+            continue
+        ref_url = (ref.get("url") or "").strip().rstrip("/")
+        if ref_url and post_key and ref_url == post_key:
+            return profile_url_from_in_slug(slug)
+        if author and _author_matches_profile_slug(author, slug):
+            return profile_url_from_in_slug(slug)
+
+    return ""
+
+
+def enrich_job_recruiter_profile(
+    job: dict[str, Any],
+    refs: list[dict[str, Any]],
+    *,
+    resolve_posts: bool = False,
+) -> bool:
+    """Persist recruiter_profile_url on a LinkedIn post job when resolvable."""
+    if (job.get("recruiter_profile_url") or job.get("profile_url") or "").strip():
+        return False
+    if job.get("source") != "linkedin_posts":
+        return False
+    if job.get("post_intent") == "job_seeker":
+        return False
+
+    author = job.get("company") or ""
+    post_url = job.get("url") or ""
+    prof = resolve_recruiter_profile_url(author, post_url, refs)
+
+    if not prof and resolve_posts and is_feed_update_url(post_url):
+        resolved_post = resolve_feed_update_to_posts_permalink(post_url)
+        if resolved_post and resolved_post != post_url:
+            prof = resolve_recruiter_profile_url(author, resolved_post, refs)
+            if is_posts_permalink(resolved_post):
+                job["url"] = resolved_post
+                job["url_source"] = job.get("url_source") or "posts_permalink"
+
+    if not prof:
+        return False
+
+    job["recruiter_profile_url"] = prof
+    return True
+
+
+def patch_recruiter_profiles_on_known(
+    registry: dict[str, Any],
+    incoming: list[dict[str, Any]],
+) -> int:
+    """Backfill recruiter_profile_url on registry rows that were ingested without it."""
+    known = {job_key(j): j for j in registry.get("jobs", [])}
+    patched = 0
+    for job in incoming:
+        prof = (job.get("recruiter_profile_url") or "").strip()
+        if not prof:
+            continue
+        existing = known.get(job_key(job))
+        if existing and not (existing.get("recruiter_profile_url") or "").strip():
+            existing["recruiter_profile_url"] = prof
+            patched += 1
+    return patched
+
+
 def lookup_author_profile_ref(author: str, refs: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Return the person/company profile ref that best matches ``author``."""
     author_key = _norm_author_name(author)
@@ -723,7 +918,7 @@ def normalize_linkedin_job_urls(
     refs = refs or []
     url = (job.get("url") or "").strip()
     apply = (job.get("apply_url") or "").strip()
-    author = job.get("company") or ""
+    author = url_match_author_for_job(job)
     role = job.get("role") or "ai engineer"
 
     if is_apply_only_url(url):
@@ -744,8 +939,9 @@ def normalize_linkedin_job_urls(
         url = ""
 
     if not is_linkedin_post_url(url):
-        job["url"] = fallback_linkedin_post_search_url(author, role)
-        job["url_source"] = job.get("url_source") or "content_search_fallback"
+        if not is_placeholder_post_url(url):
+            job["url"] = fallback_linkedin_post_search_url(author, role)
+            job["url_source"] = job.get("url_source") or "content_search_fallback"
     else:
         job["url"] = url
 
@@ -1141,6 +1337,10 @@ def _guess_role(text: str, role_keyword: str) -> str:
 def _guess_company(post: dict[str, Any], text: str) -> str:
     from table_format import normalize_company_display
 
+    header = post.get("company_header")
+    if isinstance(header, str) and header.strip():
+        return normalize_company_display(header.strip())
+
     author = post.get("author") or post.get("authorName") or post.get("poster")
     if isinstance(author, dict):
         name = author.get("name") or author.get("title")
@@ -1252,6 +1452,12 @@ def post_to_job(
     if post.get("discovery_index") is not None:
         job["discovery_index"] = post["discovery_index"]
 
+    recruiter_profile = _pick_str(post, "recruiter_profile_url", "author_profile_url")
+    if recruiter_profile:
+        normalized = normalize_person_profile_url(recruiter_profile)
+        if normalized:
+            job["recruiter_profile_url"] = normalized
+
     post_intent = "hiring" if ingest_reason.startswith(("hiring", "llm_hiring")) else "ambiguous"
     if cfg.get("require_usd_salary", False):
         evaluate_job(job, job_search_config)
@@ -1271,12 +1477,28 @@ def post_to_job(
     return job
 
 
+def _chunk_url_for_index(
+    index: int,
+    *,
+    chunk_urls: list[str],
+    ordered_activity_urls: list[str] | None = None,
+) -> str:
+    """Best URL for post chunk ``index`` (collect chunk URL, then DOM-order fallback)."""
+    if index < len(chunk_urls) and (chunk_urls[index] or "").strip():
+        return chunk_urls[index].strip()
+    ordered = ordered_activity_urls or []
+    if index < len(ordered) and (ordered[index] or "").strip():
+        return ordered[index].strip()
+    return ""
+
+
 def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]]:
     """Parse LinkedIn content-search innerText + refs (browser collect export)."""
     raw = (feed_payload.get("sections") or {}).get("search_results") or ""
     refs = (feed_payload.get("references") or {}).get("search_results") or []
     author_url_map: dict[str, str] = dict(feed_payload.get("author_post_urls") or {})
     chunk_urls: list[str] = list(feed_payload.get("chunk_post_urls") or [])
+    ordered_activity_urls: list[str] = list(feed_payload.get("ordered_activity_urls") or [])
 
     if raw.startswith("Did you mean"):
         raw = re.sub(r"^Did you mean[^\n]*\n+", "", raw, count=1)
@@ -1306,18 +1528,7 @@ def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]
         if not chunk or chunk.startswith("Are these results helpful?"):
             continue
 
-        lines = [line.strip() for line in chunk.split("\n") if line.strip()]
-        author = "Unknown"
-        for line in lines[:12]:
-            if line in {"Follow", "Show translation", "Visit my website", "View my services"}:
-                continue
-            if re.search(r"\b(1st|2nd|3rd\+?)\b", line):
-                continue
-            if re.match(r"^\d+[hmdw]\b", line) or "Edited •" in line:
-                continue
-            if len(line) > 2 and not line.startswith("#"):
-                author = re.sub(r"\s+•.*", "", line).strip()
-                break
+        author, company_header = resolve_chunk_authors(chunk)
 
         post_url, apply_url, url_source, feed_idx, job_idx = resolve_post_urls(
             chunk,
@@ -1329,9 +1540,26 @@ def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]
             job_urls=job_urls,
             job_idx=job_idx,
             author_url_map=author_url_map,
-            chunk_url=chunk_urls[discovery_index] if discovery_index < len(chunk_urls) else "",
+            chunk_url=_chunk_url_for_index(
+                discovery_index,
+                chunk_urls=chunk_urls,
+                ordered_activity_urls=ordered_activity_urls,
+            ),
         )
 
+        if not post_url:
+            chunk_url = _chunk_url_for_index(
+                discovery_index,
+                chunk_urls=chunk_urls,
+                ordered_activity_urls=ordered_activity_urls,
+            )
+            if chunk_url and not is_profile_fallback_url(chunk_url):
+                post_url = chunk_url
+                url_source = url_source or (
+                    "ordered_activity_index" if discovery_index < len(ordered_activity_urls) else "collect_chunk_url"
+                )
+
+        recruiter_profile_url = resolve_recruiter_profile_url(author, post_url, refs)
         posts.append(
             {
                 "text": chunk,
@@ -1339,6 +1567,8 @@ def parse_feed_search_posts(feed_payload: dict[str, Any]) -> list[dict[str, Any]
                 "apply_url": apply_url,
                 "url_source": url_source,
                 "author": author,
+                "company_header": company_header,
+                "recruiter_profile_url": recruiter_profile_url or None,
                 "discovery_index": discovery_index,
             }
         )
@@ -1360,15 +1590,20 @@ def normalize_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 "track": block.get("track"),
             }
             posts = block.get("posts") or block.get("results") or []
+            refs: list[dict[str, Any]] = []
             if not posts:
                 for legacy_key in ("feed_payload", "feed_response", "mcp_response"):
                     nested = block.get(legacy_key)
                     if nested:
+                        refs = (nested.get("references") or {}).get("search_results") or []
                         posts = parse_feed_search_posts(nested)
                         break
+            else:
+                nested = block.get("feed_payload") or block
+                refs = (nested.get("references") or {}).get("search_results") or []
             for post in posts:
                 if isinstance(post, dict):
-                    items.append({"query_meta": meta, "post": post})
+                    items.append({"query_meta": meta, "post": post, "refs": refs})
         return items
 
     if "posts" in payload and isinstance(payload["posts"], list):
@@ -1377,9 +1612,10 @@ def normalize_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "role_keyword": payload.get("role_keyword", ""),
             "region": payload.get("region", ""),
         }
+        refs = (payload.get("references") or {}).get("search_results") or []
         for post in payload["posts"]:
             if isinstance(post, dict):
-                items.append({"query_meta": meta, "post": post})
+                items.append({"query_meta": meta, "post": post, "refs": refs})
         return items
 
     if payload.get("sections") and payload.get("references"):
@@ -1469,6 +1705,39 @@ def write_linkedin_run_markdown(
     run_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def backfill_registry_recruiter_profiles(
+    *,
+    since: datetime | None = None,
+    resolve_posts: bool = True,
+    limit: int = 500,
+) -> dict[str, int]:
+    """Fill missing recruiter_profile_url on linkedin_posts rows already in the registry."""
+    registry = load_registry()
+    stats = {"scanned": 0, "resolved": 0}
+    since_utc = since.astimezone(timezone.utc) if since and since.tzinfo else since
+
+    for job in registry.get("jobs", []):
+        if job.get("source") != "linkedin_posts":
+            continue
+        if (job.get("recruiter_profile_url") or job.get("profile_url") or "").strip():
+            continue
+        if since_utc and since_utc != datetime.min.replace(tzinfo=timezone.utc):
+            posted = parse_posted_at(job.get("posted_at"))
+            discovered = parse_posted_at(job.get("discovered_at"))
+            anchor = posted or discovered
+            if anchor and anchor < since_utc:
+                continue
+        stats["scanned"] += 1
+        if stats["scanned"] > limit:
+            break
+        if enrich_job_recruiter_profile(job, [], resolve_posts=resolve_posts):
+            stats["resolved"] += 1
+
+    if stats["resolved"]:
+        save_registry(registry)
+    return stats
+
+
 def merge_payload(
     payload: dict[str, Any],
     period_days: int,
@@ -1484,17 +1753,31 @@ def merge_payload(
     registry = load_registry()
     incoming: list[dict[str, Any]] = []
     seen_keys: set[str] = set()
+    profiles_resolved = 0
 
     for item in normalize_payload(payload):
         job = post_to_job(item["post"], item["query_meta"], cfg, job_search_config)
         if not job:
             continue
+        refs = item.get("refs") or []
+        normalize_linkedin_job_urls(job, refs, resolve_posts=True)
+        url = (job.get("url") or "").strip()
+        if is_feed_update_url(url):
+            resolved = resolve_feed_update_to_posts_permalink(url)
+            if is_posts_permalink(resolved):
+                job["url"] = resolved
+                job["url_source"] = job.get("url_source") or "posts_permalink"
+        if enrich_job_recruiter_profile(job, refs, resolve_posts=True):
+            profiles_resolved += 1
+        elif job.get("recruiter_profile_url"):
+            profiles_resolved += 1
         key = job_key(job)
         if key in seen_keys:
             continue
         seen_keys.add(key)
         incoming.append(job)
 
+    profiles_patched = patch_recruiter_profiles_on_known(registry, incoming)
     registry, new_jobs = merge_jobs(registry, incoming, since)
     now = datetime.now(LOCAL_TZ)
     run_path = RUNS_DIR / f"linkedin-posts-{now.strftime('%Y-%m-%dT%H-%M')}.md"
@@ -1531,6 +1814,8 @@ def merge_payload(
         "new_total": len(new_jobs),
         "eligible": len([j for j in new_jobs if j.get("filter_result") == "eligible"]),
         "needs_review": len([j for j in new_jobs if j.get("filter_result") == "needs_review"]),
+        "profiles_resolved": profiles_resolved,
+        "profiles_patched": profiles_patched,
     }
     from audit_log import info as audit_info  # noqa: WPS433
 

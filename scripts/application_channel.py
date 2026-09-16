@@ -119,29 +119,36 @@ def recruiter_profile_url(job: dict[str, Any]) -> str | None:
     return None
 
 
-def needs_recruiter_connect(job: dict[str, Any]) -> bool:
-    """True when we should connect with the recruiter on LinkedIn."""
+def _linkedin_job_seeker_skip(job: dict[str, Any]) -> bool:
+    """True when a LinkedIn post is someone job-seeking (not a hiring post)."""
     if job.get("post_intent") == "job_seeker" or job.get("filter_result") == "skipped":
         text = job.get("description_snippet") or job.get("description") or ""
         from post_intent import is_job_seeker_post  # noqa: WPS433
 
         if job.get("skip_reason") == "job_seeker_post" or is_job_seeker_post(text):
-            return False
+            return True
+    return False
+
+
+def needs_recruiter_connect(job: dict[str, Any]) -> bool:
+    """True when we should connect with the recruiter on LinkedIn."""
+    if _linkedin_job_seeker_skip(job):
+        return False
     if not is_linkedin_post(job):
         return classify_channel(job) == CHANNEL_DM
-    prof = recruiter_profile_url(job)
-    if not prof:
-        return False
-    if classify_channel(job) == CHANNEL_DM:
-        return True
-    return has_form_apply(job)
+    return recruiter_profile_url(job) is not None
 
 
 def has_direct_message_apply(job: dict[str, Any]) -> bool:
-    """True when LinkedIn DM/connect to a recruiter profile is possible."""
+    """True when this LinkedIn hiring post includes DM/connect in the apply workflow."""
     if not is_linkedin_post(job):
         return False
-    return recruiter_profile_url(job) is not None
+    return not _linkedin_job_seeker_skip(job)
+
+
+def dm_automation_ready(job: dict[str, Any]) -> bool:
+    """True when headed connect/check/message automation can run for this job."""
+    return needs_recruiter_connect(job) and bool(recruiter_profile_url(job))
 
 
 def recruiter_message_enabled(job: dict[str, Any], li_cfg: dict[str, Any] | None = None) -> bool:

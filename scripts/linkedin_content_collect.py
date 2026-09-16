@@ -28,11 +28,13 @@ ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
 from linkedin_posts_merge import (  # noqa: E402
+    _html_post_matches_author,
     build_queries,
     extract_activity_refs_from_html,
     extract_feed_posts_from_html,
     extract_ordered_feed_update_urls,
     extract_profile_refs_from_html,
+    lookup_author_profile_ref,
     harvest_feed_posts_from_network_body,
     linkedin_content_search_url,
     load_linkedin_config,
@@ -61,17 +63,10 @@ def _chunk_key(chunk: str, author: str) -> str:
 
 
 def _extract_author(chunk: str) -> str:
-    lines = [line.strip() for line in chunk.split("\n") if line.strip()]
-    for line in lines[:12]:
-        if line in {"Follow", "Connect", "Show translation", "Visit my website", "View my services"}:
-            continue
-        if re.search(r"\b(1st|2nd|3rd\+?)\b", line):
-            continue
-        if re.match(r"^\d+[hmdw]\b", line) or "Edited •" in line:
-            continue
-        if len(line) > 2 and not line.startswith("#"):
-            return re.sub(r"\s+•.*", "", line).strip()
-    return "Unknown"
+    from linkedin_posts_merge import resolve_chunk_authors  # noqa: WPS433
+
+    author, _company = resolve_chunk_authors(chunk)
+    return author
 
 
 def parse_feed_text(raw: str, refs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
@@ -176,6 +171,7 @@ async def collect_feed_text(
         ordered_seen: set[str] = set()
         author_url_map: dict[str, str] = {}
         chunk_post_urls: list[str] = []
+        all_html_posts: list[dict[str, Any]] = []
         for i in range(max_scrolls):
             stats["scrolls"] = i + 1
             try:
@@ -199,6 +195,7 @@ async def collect_feed_text(
             # capture activity URNs and profile links from HTML for URL fallback
             html = await page.content()
             html_posts = extract_feed_posts_from_html(html)
+            all_html_posts.extend(html_posts)
             register_author_post_urls(author_url_map, html_posts)
             for body in network_bodies:
                 register_author_post_urls(author_url_map, harvest_feed_posts_from_network_body(body))
@@ -270,12 +267,28 @@ async def collect_feed_text(
                     profile_refs=profile_refs,
                     activity_refs=activity_refs,
                 )
+            author_slug = ""
+            url_key = (url or "").strip().rstrip("/")
+            for hp in all_html_posts:
+                hp_url = (hp.get("url") or "").strip().rstrip("/")
+                if url_key and hp_url == url_key and hp.get("author_slug"):
+                    author_slug = hp["author_slug"]
+                    break
+            if not author_slug:
+                for hp in all_html_posts:
+                    if _html_post_matches_author(author, hp) and hp.get("author_slug"):
+                        author_slug = hp["author_slug"]
+                        break
+            if not author_slug:
+                prof = lookup_author_profile_ref(author, profile_refs)
+                if prof and prof.get("kind") == "person":
+                    author_slug = prof.get("url", "").rstrip("/").split("/")[-1]
             aligned_feed_refs.append(
                 {
                     "kind": "feed_post",
                     "url": url,
                     "text": author,
-                    "author_slug": author,
+                    "author_slug": author_slug,
                 }
             )
         refs = aligned_feed_refs + profile_refs
@@ -287,7 +300,8 @@ async def collect_feed_text(
 
     stats["raw_posts"] = len(chunks)
     stats["activity_urls"] = len(activity_urls)
-    stats["ordered_activity_urls"] = len(ordered_activity_urls)
+    stats["ordered_activity_url_count"] = len(ordered_activity_urls)
+    stats["ordered_activity_urls"] = ordered_activity_urls
     stats["profile_refs"] = len(profile_refs)
     stats["activity_refs"] = len(activity_refs)
     return final_raw, refs, stats
@@ -360,6 +374,7 @@ async def run_query(
         "references": {"search_results": refs},
         "author_post_urls": scroll_stats.get("author_url_map") or {},
         "chunk_post_urls": scroll_stats.get("chunk_post_urls") or [],
+        "ordered_activity_urls": scroll_stats.get("ordered_activity_urls") or [],
         "jobs": jobs,
     }
     raw_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -379,6 +394,7 @@ async def run_query(
                         "references": {"search_results": refs},
                         "author_post_urls": scroll_stats.get("author_url_map") or {},
                         "chunk_post_urls": scroll_stats.get("chunk_post_urls") or [],
+                        "ordered_activity_urls": scroll_stats.get("ordered_activity_urls") or [],
                     },
                 }
             ],
@@ -444,6 +460,9 @@ async def run_all(
                         "url": data["url"],
                         "sections": data["sections"],
                         "references": data.get("references", {}),
+                        "author_post_urls": data.get("author_post_urls") or {},
+                        "chunk_post_urls": data.get("chunk_post_urls") or [],
+                        "ordered_activity_urls": data.get("ordered_activity_urls") or [],
                     },
                 }
             )

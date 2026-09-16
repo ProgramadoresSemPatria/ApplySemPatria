@@ -81,6 +81,117 @@ def ui_snapshot(job_key: str, *, day: str = "2026-09-06", actions: dict[str, Any
     }
 
 
+def ui_snapshot_from_jobs(
+    jobs: list[dict[str, Any]],
+    *,
+    day: str = "2026-09-14",
+    section: str = "linkedin_eligible",
+) -> dict[str, Any]:
+    """Build a UI snapshot via job_to_card (exercises real action-state logic)."""
+    from applications_ui_data import job_to_card  # noqa: WPS433
+
+    li_cfg = {"form_link_message_enabled": True}
+    cards = [
+        job_to_card(
+            job,
+            section=section,
+            dm={"profiles": {}},
+            email_to=set(),
+            email_keys=set(),
+            url_done=set(),
+            li_cfg=li_cfg,
+        )
+        for job in jobs
+    ]
+    return {"day": day, "generated_at": f"{day}T12:00:00", "jobs": cards}
+
+
+def linkedin_email_dm_job(**overrides: Any) -> dict[str, Any]:
+    job = {
+        "source": "linkedin_posts",
+        "url": "https://www.linkedin.com/in/recruiter-test/recent-activity/all/",
+        "apply_email": "recruiter@acme.ai",
+        "role": "AI Engineer",
+        "company": "Acme AI",
+        "discovered_at": "2026-09-14T12:00:00-03:00",
+        "filter_result": "eligible",
+        "salary_usd": "USD 120k",
+        "location_note": "Remote LATAM",
+    }
+    job.update(overrides)
+    return job
+
+
+def linkedin_form_email_dm_job(**overrides: Any) -> dict[str, Any]:
+    job = {
+        "source": "linkedin_posts",
+        "url": "https://www.linkedin.com/in/nicolebarraconde/recent-activity/all/",
+        "apply_url": "https://lnkd.in/e4m6CuUu",
+        "apply_email": "nicole@company.com",
+        "role": "AI Engineer",
+        "company": "Nicole Barra",
+        "discovered_at": "2026-09-14T12:00:00-03:00",
+        "filter_result": "eligible",
+        "salary_usd": "USD 120k",
+    }
+    job.update(overrides)
+    return job
+
+
+def ui_snapshot_dm_no_profile(
+    job_key: str = "linkedin-post:366db93d",
+    *,
+    day: str = "2026-09-14",
+    company: str = "Monika Kuqi",
+) -> dict[str, Any]:
+    """DM-eligible card without a resolvable recruiter profile URL."""
+    actions = {
+        "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
+        "form": {"available": False, "done": False, "in_progress": False, "label": "Apply via form", "status_text": "not applied"},
+        "dm_connect": {"available": False, "done": False, "in_progress": False, "label": "Send connection", "status_text": "not applied"},
+        "dm_check": {"available": False, "done": False, "in_progress": False, "label": "Check connection accepted", "status_text": "not applied"},
+        "dm_message": {"available": False, "done": False, "in_progress": False, "label": "Send LinkedIn message", "status_text": "not applied"},
+    }
+    return {
+        "day": day,
+        "generated_at": f"{day}T12:00:00",
+        "jobs": [
+            {
+                "job_key": job_key,
+                "role": "Ai Engineer",
+                "company": company,
+                "track_label": "AI Engineer",
+                "role_from": "linkedin_posts",
+                "role_from_label": "LinkedIn Post",
+                "salary": "$96K–$144K",
+                "location": "LATAM",
+                "posted": "1d",
+                "section": "linkedin_eligible",
+                "position_disposition": "best_fit",
+                "position_disposition_label": "Best fit",
+                "position_disposition_auto": "best_fit",
+                "position_disposition_is_override": False,
+                "application_steps_enabled": True,
+                "dm_apply_steps_enabled": True,
+                "application_formats": [{"id": "direct_message", "label": "Direct message"}],
+                "post_url": "https://www.linkedin.com/search/results/content/?keywords=Monika",
+                "apply_url": "See post",
+                "apply_email": "",
+                "profile_url": "",
+                "dm_profile_missing": True,
+                "actions": actions,
+                "chameleon": {
+                    "ready": False,
+                    "generated": False,
+                    "download_url": "",
+                    "role_keywords": [],
+                    "role_keywords_count": 0,
+                },
+            }
+        ],
+    }
+
+
 def ui_snapshot_with_email(job_key: str, *, day: str = "2026-09-06", email_done: bool = False) -> dict[str, Any]:
     actions = {
         "email": {

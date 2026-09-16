@@ -272,6 +272,9 @@ async def run(
     if not recipe:
         print("ERROR: flows/linkedin-connect-or-message.json not found")
         return {"sent_actions": 0, "skipped": 0}
+    if not candidates:
+        print("No DM profiles to process — skipping browser launch.")
+        return {"sent_actions": 0, "skipped": 0}
     pw, browser, ctx = await launch_context(headless=headless)
     skipped = 0
     try:
