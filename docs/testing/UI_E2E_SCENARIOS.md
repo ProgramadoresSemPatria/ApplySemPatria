@@ -322,6 +322,48 @@ Scenario: Toggling LLM classifier and saving posts to config API
 
 ---
 
+## UI-17 — Tag as applied pill on every card ✅
+
+```gherkin
+Scenario: Application tracking shows Tag as applied on all cards
+  Given Applika sync is enabled in /api/meta
+  And the dashboard snapshot includes tracking actions
+  When I open the applications dashboard
+  Then I see a step pill "Tag as applied" on the card
+```
+
+**Automated:** `tests/e2e/test_ui_applied_applika.py` · `test_tag_applied_pill_visible_on_all_cards`
+
+---
+
+## UI-18 — Tap Tag as applied ✅
+
+```gherkin
+Scenario: Tag as applied posts tag_applied action
+  Given the dashboard is loaded with tracking steps
+  When I click the step pill with data-action="tag_applied"
+  Then the mock server records action "tag_applied" with a job_key
+```
+
+**Automated:** `test_tap_tag_applied_posts_action`
+
+---
+
+## UI-19 — Applika retry after error ✅
+
+```gherkin
+Scenario: Send for Applika retry after sync failure
+  Given the card is tagged as applied
+  And the Applika step shows status_kind "error"
+  When I click the step pill with data-action="applika"
+  Then the mock server records action "applika_send"
+  And a toast shows the Applika error when tag auto-sync fails
+```
+
+**Automated:** `test_applika_retry_pill_posts_action` · `test_tag_applied_applika_error_shows_toast`
+
+---
+
 ## Mapping to coverage (Python backend)
 
 | Scenario group | Primary modules measured in `scripts/` |

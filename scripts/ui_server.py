@@ -74,7 +74,7 @@ def spawn_daily_research(
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_VERSION = 7
+UI_VERSION = 8
 SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
 UI_META = {
     "ui_approval": True,
@@ -84,14 +84,17 @@ UI_META = {
 
 
 def ui_meta_payload() -> dict[str, Any]:
+    from applika_apply import applika_sync_enabled  # noqa: E402
     from research_log import research_status  # noqa: E402
     from resume_chameleon import chameleon_status  # noqa: E402
     from track_store import default_track_id  # noqa: E402
 
+    tid = default_track_id()
     return {
         **UI_META,
         **research_status(),
-        "chameleon": chameleon_status(default_track_id()),
+        "chameleon": chameleon_status(tid),
+        "applika_sync_enabled": applika_sync_enabled(tid),
     }
 
 
@@ -153,6 +156,28 @@ def _match_company(job: dict[str, Any]) -> str:
     return (job.get("company") or "Unknown")[:60]
 
 
+def run_tracking_action(action: str, job: dict[str, Any], job_key: str, track: str | None = None) -> dict[str, Any]:
+    from applika_apply import send_job_to_applika, tag_and_sync  # noqa: E402
+    from applied_state import is_tagged  # noqa: E402
+
+    tid = track or job.get("track") or "ai-engineer"
+    if action == "tag_applied":
+        if is_tagged(job_key):
+            return {"ok": True, "message": "Already tagged as applied.", "action": action, "job_key": job_key, "skipped": True}
+        result = tag_and_sync(job, job_key_value=job_key, track_id=tid)
+        result["action"] = action
+        result["job_key"] = job_key
+        return result
+    if action == "applika_send":
+        if not is_tagged(job_key):
+            return {"ok": False, "message": "Tag as applied first, then send to Applika."}
+        result = send_job_to_applika(job, job_key_value=job_key)
+        result["action"] = action
+        result["job_key"] = job_key
+        return result
+    return {"ok": False, "message": f"Unknown tracking action: {action}"}
+
+
 def run_action(action: str, job_key: str, track: str | None = None) -> dict[str, Any]:
     from generate_applications import apply_url_for  # noqa: E402
     from position_disposition import application_steps_enabled  # noqa: E402
@@ -160,6 +185,9 @@ def run_action(action: str, job_key: str, track: str | None = None) -> dict[str,
     job = _find_job(job_key)
     if not job:
         return {"ok": False, "message": f"Job not found: {job_key}"}
+
+    if action in ("tag_applied", "applika_send"):
+        return run_tracking_action(action, job, job_key, track)
 
     if not application_steps_enabled(job):
         return {
@@ -1113,7 +1141,7 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             result_holder["result"] = run_action(action, job_key, track)
 
         # Long browser actions: run in thread for email quick path use sync
-        if action in ("email_send", "dm_check"):
+        if action in ("email_send", "dm_check", "tag_applied", "applika_send"):
             result = run_action(action, job_key, track)
         else:
             t = threading.Thread(target=_worker, daemon=True)

@@ -336,6 +336,54 @@ def _action_states(
     }
 
 
+def _tracking_action_states(
+    job: dict,
+    applied_entries: dict[str, dict[str, Any]],
+    *,
+    applika_on: bool,
+) -> dict[str, dict[str, Any]]:
+    from applied_state import APPLIKA_ERROR, APPLIKA_SENT  # noqa: WPS433
+
+    jk = job_key(job)
+    entry = applied_entries.get(jk) or {}
+    tagged = bool(entry.get("tagged_at"))
+    applika_status = (entry.get("applika_status") or "").strip()
+
+    tag_applied = {
+        "available": True,
+        "done": tagged,
+        "in_progress": False,
+        "label": "Tag as applied",
+        "status_text": "applied" if tagged else "not applied",
+    }
+
+    if not applika_on:
+        return {"tag_applied": tag_applied, "applika": {"available": False, "done": False, "in_progress": False, "label": "Send for Applika", "status_text": "disabled"}}
+
+    applika_done = applika_status == APPLIKA_SENT
+    applika_error = applika_status == APPLIKA_ERROR
+    if applika_error:
+        err = (entry.get("applika_error") or "sync failed").strip()
+        status_text = err[:48] + ("…" if len(err) > 48 else "")
+    elif applika_done:
+        status_text = "sent to Applika"
+    elif not tagged:
+        status_text = "tag first"
+    else:
+        status_text = "ready to send"
+
+    applika = {
+        "available": tagged and (not applika_done or applika_error),
+        "done": applika_done,
+        "in_progress": False,
+        "label": "Send for Applika",
+        "status_text": status_text,
+        "status_kind": "error" if applika_error else ("done" if applika_done else "pending"),
+        "visible": True,
+    }
+    return {"tag_applied": tag_applied, "applika": applika}
+
+
 def _chameleon_card_state(job: dict[str, Any]) -> dict[str, Any]:
     from resume_chameleon import chameleon_is_configured, resolve_output_for_job  # noqa: WPS433
     from resume_keywords import extract_role_keywords_for_job  # noqa: WPS433
@@ -367,6 +415,8 @@ def job_to_card(
     form_job_keys: set[str] | None = None,
     li_cfg: dict[str, Any] | None = None,
     ea_status: dict[str, dict[str, Any]] | None = None,
+    applied_entries: dict[str, dict[str, Any]] | None = None,
+    applika_on: bool = False,
 ) -> dict[str, Any]:
     kind = _status_kind(job, dm, email_to, email_keys, url_done, form_job_keys=form_job_keys)
     apply_url = apply_url_for(job)
@@ -384,11 +434,20 @@ def job_to_card(
         li_cfg=li_cfg,
         ea_status=ea_status,
     )
+    actions.update(
+        _tracking_action_states(
+            job,
+            applied_entries or {},
+            applika_on=applika_on,
+        )
+    )
     steps_on = application_steps_enabled(job)
     dm_on = dm_apply_steps_enabled(job)
     if not steps_on:
         for key, state in actions.items():
             if not isinstance(state, dict):
+                continue
+            if key in ("tag_applied", "applika"):
                 continue
             if key.startswith("dm_") and dm_on:
                 continue
@@ -461,13 +520,17 @@ def collect_jobs_for_ui(
     from linkedin_posts_merge import sort_jobs_by_recency  # noqa: E402
     from track_store import filter_jobs_by_track, infer_track, job_track_label, load_linkedin_config  # noqa: E402
 
+    from applied_state import load_applied_entries  # noqa: E402
+    from applika_apply import applika_sync_enabled  # noqa: E402
     from linkedin_easy_apply_status import load_all_status_records  # noqa: E402
 
     dm = dm_state.load()
     email_to, email_keys = load_email_sent()
     url_done, form_job_keys = load_form_submission_state()
     ea_status = load_all_status_records()
+    applied_entries = load_applied_entries()
     li_cfgs: dict[str, dict[str, Any]] = {}
+    applika_cfgs: dict[str, bool] = {}
 
     registry = load_registry()
     all_jobs = registry["jobs"]
@@ -524,49 +587,34 @@ def collect_jobs_for_ui(
             li_cfgs[tid] = load_linkedin_config(tid)
         return li_cfgs[tid]
 
+    def _applika_on_for(job: dict) -> bool:
+        tid = (job.get("track") or infer_track(job) or "ai-engineer").strip()
+        if tid not in applika_cfgs:
+            applika_cfgs[tid] = applika_sync_enabled(tid)
+        return applika_cfgs[tid]
+
+    def _card(job: dict, section: str) -> dict[str, Any]:
+        return job_to_card(
+            job,
+            section=section,
+            dm=dm,
+            email_to=email_to,
+            email_keys=email_keys,
+            url_done=url_done,
+            form_job_keys=form_job_keys,
+            li_cfg=_li_cfg_for(job),
+            ea_status=ea_status,
+            applied_entries=applied_entries,
+            applika_on=_applika_on_for(job),
+        )
+
     cards: list[dict[str, Any]] = []
     for job in li_apply:
-        cards.append(
-            job_to_card(
-                job,
-                section="linkedin_eligible",
-                dm=dm,
-                email_to=email_to,
-                email_keys=email_keys,
-                url_done=url_done,
-                form_job_keys=form_job_keys,
-                li_cfg=_li_cfg_for(job),
-                ea_status=ea_status,
-            )
-        )
+        cards.append(_card(job, "linkedin_eligible"))
     for job in li_review:
-        cards.append(
-            job_to_card(
-                job,
-                section="linkedin_review",
-                dm=dm,
-                email_to=email_to,
-                email_keys=email_keys,
-                url_done=url_done,
-                form_job_keys=form_job_keys,
-                li_cfg=_li_cfg_for(job),
-                ea_status=ea_status,
-            )
-        )
+        cards.append(_card(job, "linkedin_review"))
     for job in boards_eligible:
-        cards.append(
-            job_to_card(
-                job,
-                section="boards",
-                dm=dm,
-                email_to=email_to,
-                email_keys=email_keys,
-                url_done=url_done,
-                form_job_keys=form_job_keys,
-                li_cfg=_li_cfg_for(job),
-                ea_status=ea_status,
-            )
-        )
+        cards.append(_card(job, "boards"))
     return cards
 
 

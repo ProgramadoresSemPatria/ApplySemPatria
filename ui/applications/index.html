@@ -1062,9 +1062,10 @@
       ingestion_last_at: null,
       ingestion_since: "7d",
       chameleon: { ready: false },
+      applika_sync_enabled: false,
     };
 
-    const UI_CLIENT_VERSION = 7;
+    const UI_CLIENT_VERSION = 8;
     const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
 
     function serverSupportsClient(meta) {
@@ -1701,8 +1702,15 @@
     }
 
     const ACTION_ORDER = ["email", "form", "dm_connect", "dm_check", "dm_message"];
+    const TRACKING_ORDER = ["tag_applied", "applika"];
 
     function stepClickable(key, state, job) {
+      if (key === "tag_applied") return !state.done;
+      if (key === "applika") {
+        if (!serverMeta.applika_sync_enabled) return false;
+        if (state.status_kind === "error") return true;
+        return !!state.available && !state.done;
+      }
       if (key === "form" && job && job.linkedin_easy_apply) return true;
       if (key === "form" && state.done) return true;
       if (!state.available && !state.in_progress) return false;
@@ -1721,7 +1729,9 @@
     function renderStepPill(key, state, job) {
       const isDm = key.startsWith("dm_");
       const forceShowDm = isDm && hasFormat(job, "direct_message");
-      if (!state.available && !state.done && !state.in_progress && !forceShowDm) return "";
+      const forceShowTracking = key === "tag_applied";
+      const forceShowApplika = key === "applika" && serverMeta.applika_sync_enabled;
+      if (!state.available && !state.done && !state.in_progress && !forceShowDm && !forceShowTracking && !forceShowApplika) return "";
       const done = state.done;
       const progress = state.in_progress && !done;
       const missingProfile = dmProfileMissing(job);
@@ -1729,6 +1739,7 @@
       let cls = "step-pill";
       if (done) cls += " done";
       else if (progress) cls += " progress";
+      else if (state.status_kind === "error") cls += " warning";
       else if (forceShowDm && missingProfile) cls += " warning";
       const clickable = !missingProfile && stepClickable(key, state, job);
       if (clickable) cls += " clickable";
@@ -1748,8 +1759,19 @@
       </button>`;
     }
 
-    function renderSteps(actions, job) {
-      return ACTION_ORDER.map(k => renderStepPill(k, actions[k] || {}, job)).join("");
+    function renderSteps(actions, job, order) {
+      const keys = order || ACTION_ORDER;
+      return keys.map(k => renderStepPill(k, actions[k] || {}, job)).join("");
+    }
+
+    function renderTrackingBlock(job, actions) {
+      if (!actions.tag_applied && !serverMeta.applika_sync_enabled) return "";
+      const pills = renderSteps(actions, job, TRACKING_ORDER);
+      if (!pills.trim()) return "";
+      return `<div class="steps-block steps-block-tracking">
+        <label>Application tracking</label>
+        <div class="step-pills">${pills}</div>
+      </div>`;
     }
 
     function renderFormatTags(formats) {
@@ -1862,7 +1884,8 @@
           ${job.profile_url ? `<a href="${esc(job.profile_url)}" target="_blank" rel="noopener">Profile ↗</a>` : ""}
           <button type="button" class="chameleon-link" data-chameleon="${esc(job.job_key)}">${job.chameleon && job.chameleon.generated ? "CV Chameleon ↓" : "CV Chameleon"}</button>
         </div>
-        ${renderStepsBlock(job, actions)}`;
+        ${renderStepsBlock(job, actions)}
+        ${renderTrackingBlock(job, actions)}`;
       card.dataset.jobKey = job.job_key;
       wireCard(card);
       return card;
@@ -1969,6 +1992,8 @@
       dm_connect: "dm_connect",
       dm_check: "dm_check",
       dm_message: "dm_message",
+      tag_applied: "tag_applied",
+      applika: "applika_send",
     };
 
     async function setFormStatus(job_key, applied) {
@@ -2087,7 +2112,8 @@
         if (!data.ok && msg.includes("Manual DM mode") && !serverUiApproval) {
           msg += " — restart the UI server: jobsearch ui";
         }
-        showToast(msg, data.ok);
+        const toastOk = data.ok && !data.applika_error;
+        showToast(msg, toastOk);
         if (data.snapshot) {
           applySnapshot(data.snapshot, job_key);
         } else if (activeDay) {

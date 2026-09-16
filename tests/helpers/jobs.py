@@ -29,6 +29,27 @@ def linkedin_dm_job(
     }
 
 
+def ui_snapshot_applika_retry(job_key: str, *, day: str = "2026-09-06") -> dict[str, Any]:
+    """Card tagged as applied with Applika sync error — retry pill enabled."""
+    snap = ui_snapshot(job_key, day=day)
+    snap["jobs"][0]["actions"]["tag_applied"] = {
+        "available": True,
+        "done": True,
+        "in_progress": False,
+        "label": "Tag as applied",
+        "status_text": "applied",
+    }
+    snap["jobs"][0]["actions"]["applika"] = {
+        "available": True,
+        "done": False,
+        "in_progress": False,
+        "label": "Send for Applika",
+        "status_text": "sync failed",
+        "status_kind": "error",
+    }
+    return snap
+
+
 def ui_snapshot(job_key: str, *, day: str = "2026-09-06", actions: dict[str, Any] | None = None, chameleon: dict[str, Any] | None = None) -> dict[str, Any]:
     actions = actions or {
         "email": {"available": False, "done": False, "in_progress": False, "label": "Apply via email", "status_text": "not applied"},
@@ -36,6 +57,8 @@ def ui_snapshot(job_key: str, *, day: str = "2026-09-06", actions: dict[str, Any
         "dm_connect": {"available": True, "done": False, "in_progress": False, "label": "Send connection", "status_text": "not applied"},
         "dm_check": {"available": False, "done": False, "in_progress": False, "label": "Check connection accepted", "status_text": "not applied"},
         "dm_message": {"available": True, "done": False, "in_progress": False, "label": "Send LinkedIn message", "status_text": "not applied"},
+        "tag_applied": {"available": True, "done": False, "in_progress": False, "label": "Tag as applied", "status_text": "not applied"},
+        "applika": {"available": False, "done": False, "in_progress": False, "label": "Send for Applika", "status_text": "tag first"},
     }
     formats = [
         {"id": "form", "label": "Form"},
