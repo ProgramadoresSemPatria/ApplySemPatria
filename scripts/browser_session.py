@@ -6,8 +6,10 @@ over Patchright's bundled "Chrome for Testing" automation build.
 
 from __future__ import annotations
 
+import functools
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -62,8 +64,76 @@ def headless_chromium_ready() -> bool:
     return headless_chromium_executable() is not None
 
 
-def headless_chromium_missing_message() -> str:
+def _uvx_executable() -> Path | None:
+    raw = os.environ.get("UVX", "").strip()
+    if raw:
+        path = Path(raw).expanduser()
+        return path if path.is_file() else None
+    default = Path.home() / ".local/bin/uvx"
+    return default if default.is_file() else None
+
+
+@functools.lru_cache(maxsize=1)
+def _uvx_patchright_headless_revision() -> str | None:
+    """Revision folder uvx patchright collect expects (e.g. ``1243``)."""
+    uvx = _uvx_executable()
+    if not uvx:
+        return None
+    script = """
+import json
+from pathlib import Path
+import patchright
+pkg = Path(patchright.__file__).resolve().parent
+data = json.loads((pkg / "driver/package/browsers.json").read_text(encoding="utf-8"))
+for browser in data.get("browsers", []):
+    if browser.get("name") == "chromium-headless-shell":
+        print(browser.get("revision", ""))
+        break
+"""
+    try:
+        proc = subprocess.run(
+            [str(uvx), "--with", "patchright", "python3", "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=45,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    rev = (proc.stdout or "").strip()
+    return rev or None
+
+
+def headless_chromium_executable_for_collect() -> Path | None:
+    """Headless shell binary for ``linkedin-deep-collect.sh`` (uvx patchright revision)."""
+    rev = _uvx_patchright_headless_revision()
     root = headless_browsers_root()
+    if rev and root.is_dir():
+        shell_dir = root / f"chromium_headless_shell-{rev}"
+        for rel in HEADLESS_SHELL_EXECUTABLE_CANDIDATES:
+            candidate = shell_dir / rel
+            if candidate.is_file():
+                return candidate
+        return None
+    return headless_chromium_executable()
+
+
+def headless_chromium_ready_for_collect() -> bool:
+    return headless_chromium_executable_for_collect() is not None
+
+
+def headless_chromium_missing_message(*, for_collect: bool = False) -> str:
+    root = headless_browsers_root()
+    if for_collect:
+        rev = _uvx_patchright_headless_revision()
+        if rev:
+            return (
+                "Patchright headless Chromium for LinkedIn collect is not installed "
+                f"(expected {root}/chromium_headless_shell-{rev}). "
+                f"Run: PLAYWRIGHT_BROWSERS_PATH={root} uvx --with patchright patchright install chromium"
+            )
     return (
         "Patchright headless Chromium is not installed "
         f"(expected under {root}/chromium_headless_shell-*). "

@@ -74,7 +74,7 @@ def spawn_daily_research(
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_VERSION = 8
+UI_VERSION = 9
 SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
 UI_META = {
     "ui_approval": True,

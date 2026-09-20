@@ -47,7 +47,7 @@ def test_daily_research_generate_uses_research_day(research_env, monkeypatch):
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr("daily_research._run_step", mock_run_step)
-    monkeypatch.setattr("browser_session.headless_chromium_ready", lambda: True)
+    monkeypatch.setattr("browser_session.headless_chromium_ready_for_collect", lambda: True)
 
     result = run_daily_research(skip_linkedin=True, skip_discover=True, since="7d")
     assert result["ok"] is True

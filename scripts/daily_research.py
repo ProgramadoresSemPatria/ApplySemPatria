@@ -53,16 +53,34 @@ def _linkedin_steps_planned(*, table_only: bool, skip_linkedin: bool, skip_linke
 
 
 def _ensure_headless_browser(*, step_key: str, steps: list[str], errors: list[str]) -> bool:
-    from browser_session import headless_chromium_missing_message, headless_chromium_ready  # noqa: WPS433
+    from browser_session import (  # noqa: WPS433
+        headless_chromium_missing_message,
+        headless_chromium_ready_for_collect,
+    )
 
     if step_key not in steps:
         steps.append(step_key)
     set_research_step(step_key, detail="checking browser")
-    if headless_chromium_ready():
+    if headless_chromium_ready_for_collect():
         return True
-    msg = headless_chromium_missing_message()
+    msg = headless_chromium_missing_message(for_collect=True)
     errors.append(f"{step_key}: {msg}")
     return False
+
+
+def _linkedin_fatal_errors(
+    errors: list[str],
+    *,
+    skip_linkedin: bool,
+    skip_linkedin_jobs: bool,
+) -> list[str]:
+    fatal: list[str] = []
+    for err in errors:
+        if err.startswith("LinkedIn collect:") and not skip_linkedin:
+            fatal.append(err)
+        elif err.startswith("LinkedIn jobs:") and not skip_linkedin_jobs:
+            fatal.append(err)
+    return fatal
 
 
 def _run_step(
@@ -313,6 +331,31 @@ def run_daily_research(
             pass
 
         merged_steps = prev_steps + [s for s in steps if s not in prev_steps]
+        linkedin_fatal = _linkedin_fatal_errors(
+            errors,
+            skip_linkedin=skip_linkedin,
+            skip_linkedin_jobs=skip_linkedin_jobs,
+        )
+        if linkedin_fatal:
+            msg = "Research failed — LinkedIn ingestion did not complete.\n" + "\n".join(errors)
+            audit_error(
+                "daily_research",
+                "research_failed",
+                day=day,
+                message=msg,
+                steps=merged_steps,
+                linkedin_fatal=linkedin_fatal,
+            )
+            finish_research_run(ok=False, message=msg)
+            return {
+                "ok": False,
+                "message": msg,
+                "day": day,
+                "job_count": job_count,
+                "steps": steps,
+                "warnings": errors,
+            }
+
         mark_research_day(
             day,
             job_count=job_count,

@@ -44,7 +44,7 @@ def test_missing_headless_browser_blocks_linkedin_before_collect(research_env, m
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr("daily_research._run_step", mock_run_step)
-    monkeypatch.setattr("browser_session.headless_chromium_ready", lambda: False)
+    monkeypatch.setattr("browser_session.headless_chromium_ready_for_collect", lambda: False)
 
     result = run_daily_research(since="7d")
     assert result["ok"] is False
@@ -69,7 +69,7 @@ def test_table_only_skips_headless_browser_preflight(research_env, monkeypatch):
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr("daily_research._run_step", mock_run_step)
-    monkeypatch.setattr("browser_session.headless_chromium_ready", lambda: False)
+    monkeypatch.setattr("browser_session.headless_chromium_ready_for_collect", lambda: False)
 
     result = run_daily_research(table_only=True, since="7d")
     assert result["ok"] is True

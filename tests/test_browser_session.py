@@ -7,8 +7,10 @@ from pathlib import Path
 from browser_session import (
     browser_launch_kwargs,
     headless_chromium_executable,
+    headless_chromium_executable_for_collect,
     headless_chromium_missing_message,
     headless_chromium_ready,
+    headless_chromium_ready_for_collect,
     resolve_chrome_executable,
 )
 
@@ -74,3 +76,24 @@ def test_headless_chromium_missing_when_not_installed(monkeypatch, tmp_path: Pat
     msg = headless_chromium_missing_message()
     assert "patchright install chromium" in msg
     assert str(tmp_path) in msg
+
+
+def test_collect_preflight_requires_uvx_revision_not_older_shell(monkeypatch, tmp_path: Path):
+    old_shell = tmp_path / "chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell"
+    old_shell.parent.mkdir(parents=True)
+    old_shell.write_text("", encoding="utf-8")
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+    monkeypatch.setattr("browser_session._uvx_patchright_headless_revision", lambda: "1243")
+    assert headless_chromium_ready() is True
+    assert headless_chromium_ready_for_collect() is False
+    assert headless_chromium_executable_for_collect() is None
+
+
+def test_collect_preflight_passes_when_uvx_revision_installed(monkeypatch, tmp_path: Path):
+    shell = tmp_path / "chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell"
+    shell.parent.mkdir(parents=True)
+    shell.write_text("", encoding="utf-8")
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+    monkeypatch.setattr("browser_session._uvx_patchright_headless_revision", lambda: "1243")
+    assert headless_chromium_ready_for_collect() is True
+    assert headless_chromium_executable_for_collect() == shell

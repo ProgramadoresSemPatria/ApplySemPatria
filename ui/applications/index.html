@@ -1065,7 +1065,7 @@
       applika_sync_enabled: false,
     };
 
-    const UI_CLIENT_VERSION = 8;
+    const UI_CLIENT_VERSION = 9;
     const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
 
     function serverSupportsClient(meta) {
@@ -1224,8 +1224,9 @@
       if (justFinished) {
         await checkServerMeta();
         await loadDays();
+        const summaryLine = (run.message || "").split("\n")[0].trim();
         if (run.ok) {
-          showToast(run.message || "Research complete", true);
+          showToast(summaryLine || "Research complete", true);
           if (viewingTodayOrLive()) {
             activeDay = run.day || serverMeta.today || activeDay;
             highlightSidebarDay(activeDay);
@@ -1235,8 +1236,11 @@
               showToast(String(e.message || e), false);
             }
           }
-        } else if (viewingTodayOrLive() && needsResearchPrompt()) {
-          showToast(run.message || "Research failed", false);
+        } else {
+          showToast(summaryLine || "Research failed", false);
+          if (viewingTodayOrLive() && needsResearchPrompt()) {
+            showResearchView();
+          }
         }
       }
 

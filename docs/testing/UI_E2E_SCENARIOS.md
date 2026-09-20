@@ -349,6 +349,23 @@ Scenario: Tag as applied posts tag_applied action
 
 ---
 
+## UI-20 — LinkedIn ingestion failure is not a false success ✅
+
+```gherkin
+Scenario: LinkedIn collect failure shows error toast and keeps today pending
+  Given today has no research yet
+  And the research run fails because LinkedIn collect did not complete
+  When I tap "Make a research today"
+  Then I see an error toast mentioning LinkedIn ingestion did not complete
+  And I do not see a green "Research complete for …" toast
+  And today's sidebar day still shows "no research yet"
+  And the research prompt remains visible with no cards loaded
+```
+
+**Automated:** `tests/e2e/test_ui_research_linkedin_failure.py`
+
+---
+
 ## UI-19 — Applika retry after error ✅
 
 ```gherkin
