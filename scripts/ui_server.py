@@ -74,7 +74,7 @@ def spawn_daily_research(
 
 PY = _resolve_python()
 UI_APPROVE = ("--ui-approved",)
-UI_VERSION = 9
+UI_VERSION = 10
 SUPPORTED_BULK_ACTIONS = ("dm_process_all", "email_process_all")
 UI_META = {
     "ui_approval": True,
@@ -1046,6 +1046,45 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                 self._json(400, {"ok": False, "message": str(exc)})
                 return
             self._json(200, {"ok": True, "message": f"Saved {section}.", "config": bundle})
+            return
+
+        if path == "/api/chameleon/onboard-from-linkedin":
+            body = self._read_json()
+            track = body.get("track")
+            linkedin_url = str(body.get("linkedin_url") or "")
+            allow_fallback = bool(body.get("allow_page_pdf_fallback"))
+            deps_ok, deps_msg = _browser_deps_ok()
+            if not deps_ok:
+                self._json(
+                    400,
+                    {"ok": False, "message": deps_msg, "needs_browser": True},
+                )
+                return
+
+            from resume_chameleon import run_onboard_from_linkedin  # noqa: E402
+
+            result_holder: dict[str, Any] = {}
+
+            def _onboard_worker() -> None:
+                result_holder["result"] = run_onboard_from_linkedin(
+                    track,
+                    linkedin_url=linkedin_url,
+                    headless=True,
+                    allow_page_pdf_fallback=allow_fallback,
+                )
+
+            t = threading.Thread(target=_onboard_worker, daemon=True)
+            t.start()
+            t.join(timeout=120)
+            result = result_holder.get("result") or {
+                "ok": False,
+                "message": "LinkedIn onboard timed out after 120s.",
+            }
+            if result.get("ok"):
+                from applications_ui_data import refresh_live_snapshot  # noqa: E402
+
+                result["snapshot"] = refresh_live_snapshot()
+            self._json(200 if result.get("ok") else 400, result)
             return
 
         if path == "/api/chameleon/generate":

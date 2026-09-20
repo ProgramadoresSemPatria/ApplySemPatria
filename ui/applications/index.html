@@ -1029,13 +1029,15 @@
   <div class="modal-backdrop" id="chameleonModal" hidden>
     <div class="modal-panel" role="dialog" aria-labelledby="chameleonModalTitle">
       <h3 id="chameleonModalTitle">Set up CV Chameleon</h3>
-      <p>Tailor your resume headline per role using master CV files (DOCX recommended).</p>
-      <p>1. Add one or more master CV paths in <strong>Settings → CV Chameleon</strong>.<br>
-         2. Use DOCX masters so headline skills can be rewritten.<br>
-         3. Run <code>jobsearch chameleon sync --track ai-engineer</code> after updating a master.</p>
+      <p>Import your LinkedIn profile to build a master CV, then tailor the headline skills per role.</p>
+      <p>Requires LinkedIn login cookies at <code>~/.linkedin-mcp/cookies.json</code>. Uses LinkedIn
+         <strong>Resources → Save to PDF</strong> on your profile.</p>
+      <p id="chameleonOnboardHint" class="steps-hint">Or add master CV paths manually in Settings → CV Chameleon.</p>
+      <p id="chameleonOnboardStatus" class="steps-hint" hidden></p>
       <div class="modal-actions">
         <button type="button" id="chameleonModalClose">Close</button>
-        <button type="button" class="primary" id="chameleonModalSettings">Open settings</button>
+        <button type="button" class="primary" id="chameleonModalImport">Import from LinkedIn</button>
+        <button type="button" id="chameleonModalSettings">Settings</button>
       </div>
     </div>
   </div>
@@ -1065,7 +1067,7 @@
       applika_sync_enabled: false,
     };
 
-    const UI_CLIENT_VERSION = 9;
+    const UI_CLIENT_VERSION = 10;
     const REQUIRED_BULK_ACTIONS = ["dm_process_all", "email_process_all"];
 
     function serverSupportsClient(meta) {
@@ -2052,6 +2054,64 @@
 
     function hideChameleonSetupModal() {
       document.getElementById("chameleonModal").hidden = true;
+      const statusEl = document.getElementById("chameleonOnboardStatus");
+      if (statusEl) {
+        statusEl.hidden = true;
+        statusEl.textContent = "";
+      }
+    }
+
+    async function runChameleonOnboard() {
+      const btn = document.getElementById("chameleonModalImport");
+      const statusEl = document.getElementById("chameleonOnboardStatus");
+      if (!btn || btn.classList.contains("loading")) return;
+      btn.classList.add("loading");
+      const prev = btn.textContent;
+      btn.textContent = "Importing…";
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.textContent = "Downloading LinkedIn profile PDF and building master CV…";
+      }
+      try {
+        const track = (serverMeta.chameleon && serverMeta.chameleon.track_id) || "ai-engineer";
+        const res = await fetch("/api/chameleon/onboard-from-linkedin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ track }),
+        });
+        const data = await res.json();
+        if (data.needs_browser) {
+          showToast(data.message || "Browser dependencies missing", false);
+          if (statusEl) statusEl.textContent = data.message || "Install Patchright Chromium for LinkedIn import.";
+          return;
+        }
+        if (data.needs_linkedin_pdf || data.needs_linkedin_login) {
+          showToast(data.message || "LinkedIn login required", false);
+          if (statusEl) statusEl.textContent = data.message || "Log in to LinkedIn and refresh cookies.";
+          return;
+        }
+        if (!data.ok) {
+          const gaps = (data.validation_errors || []).join("; ");
+          const msg = gaps ? `${data.message || "Import failed"}: ${gaps}` : (data.message || "Import failed");
+          showToast(msg, false);
+          if (statusEl) statusEl.textContent = msg;
+          return;
+        }
+        showToast(data.message || "CV Chameleon ready", true);
+        if (data.chameleon) {
+          serverMeta.chameleon = data.chameleon;
+        }
+        if (data.snapshot) {
+          applySnapshot(data.snapshot);
+        }
+        hideChameleonSetupModal();
+      } catch (e) {
+        showToast(String(e.message || e), false);
+        if (statusEl) statusEl.textContent = String(e.message || e);
+      } finally {
+        btn.classList.remove("loading");
+        btn.textContent = prev;
+      }
     }
 
     async function runChameleon(btn) {
@@ -2315,6 +2375,7 @@
     document.getElementById("bulkEmailBtn").onclick = runBulkEmailApply;
 
     document.getElementById("chameleonModalClose").onclick = hideChameleonSetupModal;
+    document.getElementById("chameleonModalImport").onclick = runChameleonOnboard;
     document.getElementById("chameleonModalSettings").onclick = () => {
       hideChameleonSetupModal();
       window.location.href = "settings.html#chameleon";

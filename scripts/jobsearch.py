@@ -272,6 +272,8 @@ def cmd_chameleon(args: argparse.Namespace) -> int:
         ch_args.extend(["--master-label", args.master_label])
     if getattr(args, "force", False):
         ch_args.append("--force")
+    if getattr(args, "allow_page_pdf_fallback", False):
+        ch_args.append("--allow-page-pdf-fallback")
     if getattr(args, "pdf", None):
         ch_args.append(args.pdf)
     if getattr(args, "linkedin_url", None):
@@ -282,6 +284,8 @@ def cmd_chameleon(args: argparse.Namespace) -> int:
         ch_args.append("--headless")
     if getattr(args, "timeout_ms", None):
         ch_args.extend(["--timeout-ms", str(args.timeout_ms)])
+    if getattr(args, "template_pdf", None):
+        ch_args.extend(["--template-pdf", args.template_pdf])
     return subprocess.call(ch_args, cwd=str(ROOT))
 
 
@@ -525,7 +529,33 @@ def build_parser() -> argparse.ArgumentParser:
     ch_onboard.add_argument("--headless", action="store_true")
     ch_onboard.add_argument("--timeout-ms", type=int, default=90_000)
     ch_onboard.add_argument("--force", action="store_true")
+    ch_onboard.add_argument(
+        "--allow-page-pdf-fallback",
+        action="store_true",
+        help="Accept page.pdf snapshot when Save to PDF is unavailable",
+    )
+    ch_onboard.add_argument("--json", action="store_true")
     ch_onboard.set_defaults(func=cmd_chameleon)
+
+    ch_export = ch_sub.add_parser(
+        "export-master-pdf",
+        help="Export master DOCX to PDF for recruiters",
+    )
+    ch_export.add_argument("--track", default=None)
+    ch_export.add_argument("--output", default="", help="Destination PDF path")
+    ch_export.add_argument("--no-download", action="store_true")
+    ch_export.add_argument("--json", action="store_true")
+    ch_export.set_defaults(func=cmd_chameleon)
+
+    ch_sync_tpl = ch_sub.add_parser(
+        "sync-master-template",
+        help="Install polished master PDF from templates/cv-master",
+    )
+    ch_sync_tpl.add_argument("--track", default=None)
+    ch_sync_tpl.add_argument("--template-pdf", default="", help="Override template PDF path")
+    ch_sync_tpl.add_argument("--no-download", action="store_true")
+    ch_sync_tpl.add_argument("--json", action="store_true")
+    ch_sync_tpl.set_defaults(func=cmd_chameleon)
 
     return parser
 

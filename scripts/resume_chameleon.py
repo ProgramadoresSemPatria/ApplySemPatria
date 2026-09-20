@@ -599,74 +599,165 @@ def cmd_fetch_linkedin_pdf(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
-def cmd_onboard_from_linkedin(args: argparse.Namespace) -> int:
-    fetch_args = argparse.Namespace(
-        track=args.track,
-        linkedin_url=args.linkedin_url or "",
-        output=args.output or "",
-        headless=args.headless,
-        timeout_ms=args.timeout_ms,
-        json=False,
-    )
-    code = cmd_fetch_linkedin_pdf(fetch_args)
-    if code != 0:
-        return code
-
-    from linkedin_profile_pdf_download import default_dest_path, resolve_linkedin_url  # noqa: WPS433
-
-    tid = resolve_track(args.track)
-    url = resolve_linkedin_url(args.linkedin_url or "", tid)
-    pdf_path = _expand(args.output) if args.output else default_dest_path(url)
-
-    import_args = argparse.Namespace(
-        track=tid,
-        pdf=str(pdf_path),
-        linkedin_url=url,
-        force=args.force,
-    )
-    return cmd_import_linkedin_pdf(import_args)
+def _linkedin_profile_json_path(track_id: str) -> Path:
+    return ROOT / "state" / "chameleon" / "profile" / f"{resolve_track(track_id)}-linkedin.json"
 
 
-def cmd_import_linkedin_pdf(args: argparse.Namespace) -> int:
-    from cv_master_docx import build_master_docx, default_template_path  # noqa: WPS433
-    from cv_master_linkedin_pdf import import_linkedin_pdf_to_profile  # noqa: WPS433
-    from cv_master_schema import validate_cv_profile  # noqa: WPS433
+def run_sync_master_from_template(
+    track_id: str | None = None,
+    *,
+    copy_to_downloads: bool = True,
+    template_pdf: str = "",
+) -> dict[str, Any]:
+    """Install polished master PDF/DOCX from templates/cv-master (Word-export layout)."""
+    from cv_master_docx import default_template_path, parse_master_docx  # noqa: WPS433
+    from cv_master_enrich import enrich_cv_profile_from_track  # noqa: WPS433
+    from cv_master_pdf import build_master_pdf, resolve_template_pdf_path  # noqa: WPS433
 
-    tid = resolve_track(args.track)
-    pdf_path = _expand(args.pdf)
-    if not pdf_path.is_file():
-        print(f"ERROR: PDF not found: {pdf_path}")
-        return 1
+    tid = resolve_track(track_id)
+    template_docx = default_template_path()
+    if not template_docx.is_file():
+        return {"ok": False, "message": f"Master DOCX template not found: {template_docx}"}
 
-    profile = import_linkedin_pdf_to_profile(
-        pdf_path,
-        linkedin_url=(args.linkedin_url or "").strip(),
-    )
-    errors = validate_cv_profile(profile)
-    if errors:
-        print("Profile gaps (fix manually or extend import):")
-        for err in errors:
-            print(f"  - {err}")
-        if not args.force:
-            return 1
+    tpl_pdf = resolve_template_pdf_path(template_pdf or None)
+    master_dir = ROOT / "state" / "chameleon" / "masters" / tid
+    master_dir.mkdir(parents=True, exist_ok=True)
+    docx_out = master_dir / "master.docx"
+    pdf_out = master_dir / "master.pdf"
+    shutil.copy2(template_docx, docx_out)
+    build_master_pdf(pdf_out, template=tpl_pdf)
 
+    profile = enrich_cv_profile_from_track(parse_master_docx(template_docx), tid)
     profile_path = _profile_json_path(tid)
     profile_path.parent.mkdir(parents=True, exist_ok=True)
     profile_path.write_text(json.dumps(profile.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
+    cfg = load_chameleon_config(tid)
+    cfg["output_format"] = "pdf"
+    cfg["pdf_skills_y_min"] = 64.0
+    cfg["pdf_skills_y_max"] = 82.0
+    cfg["masters"] = [
+        {
+            "id": tid.replace("_", "-"),
+            "label": track_label(tid),
+            "path": str(pdf_out),
+            "pdf_path": str(pdf_out),
+            "docx_path": str(docx_out),
+            "format": "pdf",
+            "default": True,
+            "keywords": [],
+            "source": "template_pdf",
+            "template_pdf": str(tpl_pdf),
+        }
+    ]
+    save_chameleon_config(tid, cfg)
+    sync_master_keywords(tid)
+
+    download_path = ""
+    if copy_to_downloads:
+        download_dir = _expand(cfg.get("download_dir") or "~/Downloads")
+        download_dir.mkdir(parents=True, exist_ok=True)
+        download_path = str(download_dir / f"{tid.replace('_', '-')}-master-cv.pdf")
+        shutil.copy2(pdf_out, download_path)
+
+    status = chameleon_status(tid)
+    return {
+        "ok": True,
+        "message": f"Master CV PDF synced from template → {download_path or pdf_out}",
+        "track_id": tid,
+        "profile_path": str(profile_path),
+        "master_docx_path": str(docx_out),
+        "master_pdf_path": str(pdf_out),
+        "template_pdf": str(tpl_pdf),
+        "download_path": download_path or str(pdf_out),
+        "chameleon": status,
+    }
+
+
+def run_import_linkedin_pdf_to_master(
+    track_id: str | None,
+    pdf_path: Path | str,
+    *,
+    linkedin_url: str = "",
+    force: bool = False,
+    use_template_master: bool = True,
+) -> dict[str, Any]:
+    """Parse LinkedIn PDF into JSON; master PDF stays the polished Word-export template."""
+    from cv_master_enrich import enrich_cv_profile_from_track  # noqa: WPS433
+    from cv_master_linkedin_pdf import import_linkedin_pdf_to_profile  # noqa: WPS433
+    from cv_master_schema import validate_cv_profile  # noqa: WPS433
+
+    tid = resolve_track(track_id)
+    resolved_pdf = _expand(pdf_path)
+    if not resolved_pdf.is_file():
+        return {"ok": False, "message": f"PDF not found: {resolved_pdf}"}
+
+    profile = import_linkedin_pdf_to_profile(
+        resolved_pdf,
+        linkedin_url=(linkedin_url or "").strip(),
+    )
+    profile = enrich_cv_profile_from_track(profile, tid)
+    errors = validate_cv_profile(profile)
+    if errors and not force:
+        return {
+            "ok": False,
+            "message": "Profile validation failed — fix gaps or use --force.",
+            "validation_errors": errors,
+            "profile_path": str(_profile_json_path(tid)),
+        }
+
+    linkedin_path = _linkedin_profile_json_path(tid)
+    linkedin_path.parent.mkdir(parents=True, exist_ok=True)
+    linkedin_path.write_text(json.dumps(profile.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    if use_template_master:
+        sync_result = run_sync_master_from_template(tid, copy_to_downloads=False)
+        if not sync_result.get("ok"):
+            return sync_result
+        cfg = load_chameleon_config(tid)
+        masters = cfg.get("masters") or [{}]
+        masters[0]["linkedin_url"] = profile.contact.linkedin_url
+        masters[0]["linkedin_profile_path"] = str(linkedin_path)
+        cfg["masters"] = masters
+        save_chameleon_config(tid, cfg)
+        status = chameleon_status(tid)
+        return {
+            "ok": True,
+            "message": (
+                "LinkedIn profile saved; master PDF uses polished template layout "
+                f"(see {sync_result.get('master_pdf_path')})."
+            ),
+            "track_id": tid,
+            "linkedin_profile_path": str(linkedin_path),
+            "profile_path": sync_result.get("profile_path"),
+            "master_pdf_path": sync_result.get("master_pdf_path"),
+            "master_docx_path": sync_result.get("master_docx_path"),
+            "validation_errors": errors,
+            "chameleon": status,
+        }
+
+    from cv_master_docx import build_master_docx, default_template_path  # noqa: WPS433
+
+    profile_path = _profile_json_path(tid)
+    profile_path.parent.mkdir(parents=True, exist_ok=True)
+    profile_path.write_text(json.dumps(profile.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     master_dir = ROOT / "state" / "chameleon" / "masters" / tid
     master_dir.mkdir(parents=True, exist_ok=True)
     docx_out = master_dir / "master.docx"
     build_master_docx(profile, docx_out, template=default_template_path())
+    from cv_master_pdf import build_master_pdf  # noqa: WPS433
 
+    pdf_out = master_dir / "master.pdf"
+    build_master_pdf(pdf_out)
     cfg = load_chameleon_config(tid)
     cfg["masters"] = [
         {
             "id": tid.replace("_", "-"),
             "label": track_label(tid),
-            "path": str(docx_out),
+            "path": str(pdf_out),
+            "pdf_path": str(pdf_out),
             "docx_path": str(docx_out),
-            "format": "docx",
+            "format": "pdf",
             "default": True,
             "keywords": [],
             "source": "linkedin_pdf",
@@ -675,11 +766,237 @@ def cmd_import_linkedin_pdf(args: argparse.Namespace) -> int:
     ]
     save_chameleon_config(tid, cfg)
     sync_master_keywords(tid)
+    status = chameleon_status(tid)
+    return {
+        "ok": True,
+        "message": status["message"],
+        "track_id": tid,
+        "profile_path": str(profile_path),
+        "master_pdf_path": str(pdf_out),
+        "master_docx_path": str(docx_out),
+        "validation_errors": errors,
+        "chameleon": status,
+    }
 
-    print(f"Imported LinkedIn PDF → {docx_out}")
-    print(f"Profile JSON → {profile_path}")
-    print(chameleon_status(tid)["message"])
-    return 0
+
+def run_export_master_pdf(
+    track_id: str | None = None,
+    *,
+    output: str = "",
+    copy_to_downloads: bool = True,
+) -> dict[str, Any]:
+    """Copy polished master PDF to output (and ~/Downloads by default)."""
+    from cv_master_pdf import build_master_pdf  # noqa: WPS433
+
+    tid = resolve_track(track_id)
+    cfg = load_chameleon_config(tid)
+    masters = cfg.get("masters") or []
+    master_dir = ROOT / "state" / "chameleon" / "masters" / tid
+    pdf_out = master_dir / "master.pdf"
+
+    if masters:
+        existing = master_pdf_path(masters[0])
+        if existing and existing.is_file():
+            pdf_out = existing
+        elif pdf_out.is_file():
+            pass
+        else:
+            sync_result = run_sync_master_from_template(tid, copy_to_downloads=False)
+            if not sync_result.get("ok"):
+                return sync_result
+            pdf_out = Path(sync_result["master_pdf_path"])
+    elif pdf_out.is_file():
+        pass
+    else:
+        sync_result = run_sync_master_from_template(tid, copy_to_downloads=False)
+        if not sync_result.get("ok"):
+            return sync_result
+        pdf_out = Path(sync_result["master_pdf_path"])
+
+    dest = _expand(output) if output else pdf_out
+    if dest.resolve() != pdf_out.resolve():
+        build_master_pdf(dest, template=pdf_out)
+
+    if masters:
+        master = masters[0]
+        master["pdf_path"] = str(pdf_out)
+        master["path"] = str(pdf_out)
+        master["format"] = "pdf"
+        cfg["output_format"] = "pdf"
+        cfg["masters"] = masters
+        save_chameleon_config(tid, cfg)
+        sync_master_keywords(tid)
+
+    download_path = ""
+    if copy_to_downloads:
+        download_dir = _expand(cfg.get("download_dir") or "~/Downloads")
+        download_dir.mkdir(parents=True, exist_ok=True)
+        download_path = str(download_dir / f"{tid.replace('_', '-')}-master-cv.pdf")
+        shutil.copy2(pdf_out, download_path)
+
+    return {
+        "ok": True,
+        "message": f"Master CV PDF ready → {download_path or dest}",
+        "track_id": tid,
+        "master_pdf_path": str(pdf_out),
+        "download_path": download_path or str(dest),
+        "chameleon": chameleon_status(tid),
+    }
+
+
+def cmd_sync_master_template(args: argparse.Namespace) -> int:
+    result = run_sync_master_from_template(
+        args.track,
+        copy_to_downloads=not args.no_download,
+        template_pdf=args.template_pdf or "",
+    )
+    if args.json:
+        print(json.dumps(result, indent=2))
+    elif result.get("ok"):
+        print(result.get("message") or "Master synced from template.")
+        print(f"  PDF:  {result.get('master_pdf_path')}")
+        print(f"  DOCX: {result.get('master_docx_path')}")
+    else:
+        print(f"ERROR: {result.get('message')}")
+    return 0 if result.get("ok") else 1
+
+
+def cmd_export_master_pdf(args: argparse.Namespace) -> int:
+    result = run_export_master_pdf(
+        args.track,
+        output=args.output or "",
+        copy_to_downloads=not args.no_download,
+    )
+    if args.json:
+        print(json.dumps(result, indent=2))
+    elif result.get("ok"):
+        print(result.get("message") or "Master PDF exported.")
+        print(f"  DOCX: {result.get('master_docx_path')}")
+        print(f"  PDF:  {result.get('master_pdf_path')}")
+    else:
+        print(f"ERROR: {result.get('message')}")
+    return 0 if result.get("ok") else 1
+
+
+def run_onboard_from_linkedin(
+    track_id: str | None = None,
+    *,
+    linkedin_url: str = "",
+    pdf_path: Path | str | None = None,
+    output: str = "",
+    headless: bool = False,
+    timeout_ms: int = 90_000,
+    force: bool = False,
+    allow_page_pdf_fallback: bool = False,
+    skip_download: bool = False,
+) -> dict[str, Any]:
+    """Download LinkedIn profile PDF (unless provided) and import into CV Chameleon."""
+    import asyncio
+
+    from linkedin_profile_pdf_download import (  # noqa: WPS433
+        default_dest_path,
+        download_linkedin_profile_pdf,
+        resolve_linkedin_url,
+    )
+
+    tid = resolve_track(track_id)
+    try:
+        url = resolve_linkedin_url(linkedin_url or "", tid)
+    except ValueError as exc:
+        return {"ok": False, "message": str(exc)}
+
+    pdf_method = ""
+    resolved_pdf: Path | None = None
+
+    if skip_download and pdf_path:
+        resolved_pdf = _expand(pdf_path)
+        pdf_method = "provided"
+    elif pdf_path and _expand(pdf_path).is_file():
+        resolved_pdf = _expand(pdf_path)
+        pdf_method = "provided"
+    else:
+        dest = _expand(output) if output else default_dest_path(url)
+        result = asyncio.run(
+            download_linkedin_profile_pdf(
+                url,
+                dest,
+                headless=headless,
+                timeout_ms=timeout_ms,
+            )
+        )
+        if not result.ok:
+            return {
+                "ok": False,
+                "message": result.message,
+                "needs_linkedin_login": "cookie" in result.message.lower() or "login" in result.message.lower(),
+            }
+        if result.method == "page_pdf" and not allow_page_pdf_fallback:
+            return {
+                "ok": False,
+                "needs_linkedin_pdf": True,
+                "pdf_method": result.method,
+                "message": (
+                    "LinkedIn download used a low-quality page snapshot (not Save to PDF). "
+                    "Ensure you are logged in with cookies at ~/.linkedin-mcp/cookies.json, "
+                    "or pass --allow-page-pdf-fallback to accept the fallback."
+                ),
+            }
+        resolved_pdf = result.path
+        pdf_method = result.method
+
+    assert resolved_pdf is not None
+    import_result = run_import_linkedin_pdf_to_master(
+        tid,
+        resolved_pdf,
+        linkedin_url=url,
+        force=force,
+    )
+    import_result["pdf_path"] = str(resolved_pdf)
+    import_result["pdf_method"] = pdf_method
+    return import_result
+
+
+def cmd_onboard_from_linkedin(args: argparse.Namespace) -> int:
+    result = run_onboard_from_linkedin(
+        args.track,
+        linkedin_url=args.linkedin_url or "",
+        output=args.output or "",
+        headless=args.headless,
+        timeout_ms=args.timeout_ms,
+        force=args.force,
+        allow_page_pdf_fallback=getattr(args, "allow_page_pdf_fallback", False),
+    )
+    if args.json:
+        print(json.dumps(result, indent=2))
+    elif result.get("ok"):
+        print(f"Imported LinkedIn PDF → {result.get('master_path')}")
+        print(f"Profile JSON → {result.get('profile_path')}")
+        print(result.get("message") or "")
+    else:
+        print(f"ERROR: {result.get('message')}")
+        for err in result.get("validation_errors") or []:
+            print(f"  - {err}")
+    return 0 if result.get("ok") else 1
+
+
+def cmd_import_linkedin_pdf(args: argparse.Namespace) -> int:
+    result = run_import_linkedin_pdf_to_master(
+        args.track,
+        args.pdf,
+        linkedin_url=(args.linkedin_url or "").strip(),
+        force=args.force,
+    )
+    if getattr(args, "json", False):
+        print(json.dumps(result, indent=2))
+    elif result.get("ok"):
+        print(f"Imported LinkedIn PDF → {result.get('master_path')}")
+        print(f"Profile JSON → {result.get('profile_path')}")
+        print(result.get("message") or "")
+    else:
+        print(f"ERROR: {result.get('message')}")
+        for err in result.get("validation_errors") or []:
+            print(f"  - {err}")
+    return 0 if result.get("ok") else 1
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -750,7 +1067,33 @@ def build_parser() -> argparse.ArgumentParser:
     onboard.add_argument("--headless", action="store_true", help="Run browser headless")
     onboard.add_argument("--timeout-ms", type=int, default=90_000, dest="timeout_ms")
     onboard.add_argument("--force", action="store_true", help="Build even when validation reports gaps")
+    onboard.add_argument(
+        "--allow-page-pdf-fallback",
+        action="store_true",
+        help="Accept browser page.pdf snapshot when Save to PDF menu is unavailable",
+    )
+    onboard.add_argument("--json", action="store_true")
     onboard.set_defaults(func=cmd_onboard_from_linkedin)
+
+    export_pdf = sub.add_parser(
+        "export-master-pdf",
+        parents=[common],
+        help="Export master DOCX to PDF (for recruiters)",
+    )
+    export_pdf.add_argument("--output", default="", help="Destination PDF path")
+    export_pdf.add_argument("--no-download", action="store_true", help="Skip ~/Downloads copy")
+    export_pdf.add_argument("--json", action="store_true")
+    export_pdf.set_defaults(func=cmd_export_master_pdf)
+
+    sync_tpl = sub.add_parser(
+        "sync-master-template",
+        parents=[common],
+        help="Install polished master PDF/DOCX from templates/cv-master",
+    )
+    sync_tpl.add_argument("--template-pdf", default="", help="Override template PDF path")
+    sync_tpl.add_argument("--no-download", action="store_true", help="Skip ~/Downloads copy")
+    sync_tpl.add_argument("--json", action="store_true")
+    sync_tpl.set_defaults(func=cmd_sync_master_template)
 
     return parser
 

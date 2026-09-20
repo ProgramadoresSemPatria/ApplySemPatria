@@ -124,3 +124,16 @@ def test_chameleon_status_endpoint(mock_ui_server):
     status = _get_json(f"http://127.0.0.1:{port}/api/chameleon/status")
     assert "ready" in status
     assert "track_id" in status
+
+
+def test_chameleon_onboard_endpoint(mock_ui_server_chameleon_onboard):
+    port, captured = mock_ui_server_chameleon_onboard
+    status, data = _post_json(
+        f"http://127.0.0.1:{port}/api/chameleon/onboard-from-linkedin",
+        {"track": "ai-engineer"},
+    )
+    assert status == 200
+    assert data.get("ok") is True
+    assert captured.get("last_chameleon_onboard", {}).get("track_id") == "ai-engineer"
+    assert data.get("chameleon", {}).get("ready") is True
+    assert (data.get("snapshot") or {}).get("jobs")

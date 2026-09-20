@@ -32,7 +32,9 @@ def test_meta_ui_approval(mock_ui_server):
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=5) as resp:
         meta = json.loads(resp.read().decode())
     assert meta.get("ui_approval") is True
-    assert meta.get("version") == 7
+    from ui_server import UI_VERSION
+
+    assert meta.get("version") == UI_VERSION
     assert "email_process_all" in (meta.get("bulk_actions") or [])
     assert meta.get("has_research_today") is True
     assert meta.get("today") == "2026-09-06"

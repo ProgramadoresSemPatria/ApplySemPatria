@@ -1,6 +1,9 @@
 # CV master format (MASTER_CV.docx)
 
-Canonical template: `templates/cv-master/MASTER_CV.docx`
+Canonical templates:
+
+- **PDF (source of truth for layout):** `templates/cv-master/MASTER_CV.pdf` — Word **Export → PDF** (centered header, right-aligned locations, achievement columns).
+- **DOCX (editable source + JSON parse):** `templates/cv-master/MASTER_CV.docx`
 
 ## Fixed header (paragraph indices in template)
 
@@ -81,8 +84,13 @@ Output default: `state/chameleon/imports/{slug}-profile.pdf`.
 
 1. `parse_linkedin_profile_pdf()` → `CvProfile` JSON
 2. `validate_cv_profile()` — block build if required fields missing (`--force` to override)
-3. `build_master_docx()` — render `templates/cv-master/MASTER_CV.docx` layout
-4. Save under `state/chameleon/masters/{track}/master.docx` + register in chameleon config
+3. **Master PDF:** copy `templates/cv-master/MASTER_CV.pdf` → `state/chameleon/masters/{track}/master.pdf` (preserves Word layout — no HTML/DOCX conversion).
+4. **Profile JSON:** parse polished content from `MASTER_CV.docx` → `state/chameleon/profile/{track}.json`.
+5. **LinkedIn raw data:** saved separately at `state/chameleon/profile/{track}-linkedin.json` (does not replace polished master body).
+
+```bash
+jobsearch chameleon sync-master-template --track ai-engineer
+```
 
 Fixture text for CI: `tests/fixtures/cv-master/linkedin-profile.txt`  
 Menu HTML fixture: `tests/fixtures/linkedin/profile-more-menu.html`

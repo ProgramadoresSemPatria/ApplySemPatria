@@ -62,6 +62,7 @@ def _start_mock_ui_server(
     bulk_dm: str = "mock",
     meta_override: dict[str, Any] | None = None,
     chameleon_generate: str = "mock",
+    chameleon_onboard: str = "off",
 ) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """HTTP server with mocked action/snapshot handlers for UI e2e."""
     from tests.helpers.jobs import ui_snapshot
@@ -78,6 +79,7 @@ def _start_mock_ui_server(
         "last_bulk_action": None,
         "last_research": None,
         "last_chameleon": None,
+        "last_chameleon_onboard": None,
         "apply_cmds": [],
     }
 
@@ -335,6 +337,53 @@ def _start_mock_ui_server(
         monkeypatch.setattr("resume_chameleon.resolve_output_for_job", fake_resolve_output_for_job)
         monkeypatch.setattr("resume_chameleon.find_job_by_key", fake_find_job_by_key)
         monkeypatch.setattr("resume_chameleon.chameleon_is_configured", lambda cfg=None, track_id=None: True)
+
+    if chameleon_onboard == "mock":
+        monkeypatch.setattr(ui_server, "_browser_deps_ok", lambda: (True, ""))
+
+        def fake_run_onboard_from_linkedin(
+            track_id=None,
+            *,
+            linkedin_url="",
+            pdf_path=None,
+            output="",
+            headless=False,
+            timeout_ms=90_000,
+            force=False,
+            allow_page_pdf_fallback=False,
+            skip_download=False,
+        ):
+            captured["last_chameleon_onboard"] = {
+                "track_id": track_id,
+                "linkedin_url": linkedin_url,
+                "allow_page_pdf_fallback": allow_page_pdf_fallback,
+            }
+            ch_state = {
+                "ready": True,
+                "message": "1 master CV(s) ready.",
+                "masters_count": 1,
+                "track_id": track_id or "ai-engineer",
+            }
+            for row in snapshot.get("jobs", []):
+                ch = row.setdefault("chameleon", {})
+                ch.update(
+                    {
+                        "ready": True,
+                        "generated": False,
+                        "role_keywords": ["python", "rag"],
+                        "role_keywords_count": 2,
+                    }
+                )
+            return {
+                "ok": True,
+                "message": ch_state["message"],
+                "track_id": track_id or "ai-engineer",
+                "master_path": "/tmp/mock-master.docx",
+                "pdf_method": "mock",
+                "chameleon": ch_state,
+            }
+
+        monkeypatch.setattr("resume_chameleon.run_onboard_from_linkedin", fake_run_onboard_from_linkedin)
 
     elif chameleon_generate == "off":
 
@@ -729,6 +778,44 @@ def mock_ui_server_chameleon(monkeypatch) -> Generator[tuple[int, dict[str, Any]
             }
         },
         chameleon_generate="mock",
+    )
+
+
+@pytest.fixture
+def mock_ui_server_chameleon_onboard(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Chameleon not ready until user runs LinkedIn onboard (mocked)."""
+    from tests.helpers.jobs import ui_snapshot
+
+    job_key = "ai-engineer|linkedin|acme ai|ai engineer"
+    chameleon = {
+        "ready": False,
+        "generated": False,
+        "download_url": "",
+        "role_keywords": [],
+        "role_keywords_count": 0,
+    }
+    snapshot = ui_snapshot(job_key, day="2026-09-06", chameleon=chameleon)
+
+    def fake_is_configured(cfg=None, track_id=None):
+        return False
+
+    monkeypatch.setattr("resume_chameleon.chameleon_is_configured", fake_is_configured)
+    yield from _start_mock_ui_server(
+        monkeypatch,
+        today="2026-09-06",
+        has_research_today=True,
+        last_research_day="2026-09-06",
+        snapshot_override=snapshot,
+        meta_override={
+            "chameleon": {
+                "ready": False,
+                "message": "Master CV path(s) missing — import from LinkedIn or update settings.",
+                "masters_count": 0,
+                "track_id": "ai-engineer",
+            }
+        },
+        chameleon_generate="off",
+        chameleon_onboard="mock",
     )
 
 

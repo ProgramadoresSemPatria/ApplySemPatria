@@ -349,6 +349,49 @@ Scenario: Tag as applied posts tag_applied action
 
 ---
 
+## UI-21 — Chameleon setup modal shows LinkedIn import ✅
+
+```gherkin
+Scenario: CV Chameleon setup modal offers LinkedIn import
+  Given CV Chameleon is not configured
+  When I click "CV Chameleon" on a job card
+  Then the setup modal (#chameleonModal) is visible
+  And I see a button "Import from LinkedIn"
+```
+
+**Automated:** `tests/e2e/test_ui_chameleon_onboard.py` · `test_chameleon_setup_modal_shows_import_button`
+
+---
+
+## UI-22 — LinkedIn onboard posts API and closes modal ✅
+
+```gherkin
+Scenario: Import from LinkedIn builds master CV via API
+  Given CV Chameleon is not configured
+  And POST /api/chameleon/onboard-from-linkedin is mocked to succeed
+  When I open the setup modal and click "Import from LinkedIn"
+  Then the mock server records an onboard request for the track
+  And I see a success toast
+  And the setup modal closes
+```
+
+**Automated:** `test_chameleon_onboard_posts_and_closes_modal`
+
+---
+
+## UI-23 — After onboard, server meta reports chameleon ready ✅
+
+```gherkin
+Scenario: LinkedIn onboard updates chameleon readiness in meta
+  Given I completed a mocked LinkedIn import from the setup modal
+  When the page refreshes /api/meta
+  Then meta.version is at least 10
+```
+
+**Automated:** `test_chameleon_onboard_updates_meta_ready`
+
+---
+
 ## UI-20 — LinkedIn ingestion failure is not a false success ✅
 
 ```gherkin
