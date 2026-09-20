@@ -1,0 +1,330 @@
+ 
+ 
+Contact
++5511968467467 (Mobile)
+caiohandradelima@gmail.com
+www.linkedin.com/in/
+caiohandradelima (LinkedIn)
+Top Skills
+Airflow
+Anthropic Claude
+GitHub
+Languages
+English (Professional Working)
+Caio Lima
+AI Software Engineer | RAG | LangChain | Python | Cloud | Data
+Pipeline
+Brazil
+Summary
+Experienced Software Engineer with a proven track record of
+developing, scaling, architecting, securing, and maintaining large-
+scale Android applications and APIs for the financial and shipping
+e-commerce industry. I have experience working in highly critical
+environments, serving millions of users daily and achieving business
+metrics.
+My expertise includes:
+Android / Kotlin / Jetpack Compose /Dart / Java / Flutter / Typescript
+Clean Architecture / SOLID / Design Patterns
+Nest Js / Firebase Functions / Azure / GCP / AWS
+Docker
+Tests (unitary / UI Testing)
+CI/CD (GitLab / CircleCI / Jenkins)
+you can check my JetpackCompose abilities here:
+Android Native Portfolio:
+using Jetpack compose: https://github.com/CaioHAndradeLima/shop
+Flutter Portfolio:
+https://github.com/CaioHAndradeLima/nasa.git
+Nest JS + AWS:
+https://github.com/CaioHAndradeLima/nasa-api
+I am passionate about solving problems and helping people, and
+I prioritize delivering value to the product. I have contributed to
+various projects that have achieved significant improvements in user
+engagement, revenue, and reduced downtime. For example, I played
+a key role in developing an Android application that increased user
+engagement by 25% within the first month of launch.
+ 
+Page 1 of 9
+
+ 
+ 
+I value collaboration and teamwork and have experience
+working with high-performance teams. I believe in building strong
+relationships with colleagues and ensuring everyone is working
+towards achieving the same goals.
+If you are interested in learning more about my work or discussing
+potential opportunities, please don't hesitate to reach out to me. I'm
+always looking for ways to contribute my expertise and make an
+impact.
+Experience
+Borderless Coding
+Senior AI Data Engineer
+December 2025 - Present (10 months)
+Worldwide
+Responsible for creating a AI Data Pipeline to help the team find the best
+market analyses within Latam and US. Total responsibility for take decisions
+regarding architecting and creating a plan from scratch to collect information
+and build a complex dashboard containing graphs regarding Tech market
+movements and new trends using technologies such as Github Actions,
+Python, Airflow, AWS, Terraform.
+PayPal
+Senior Software Engineer
+April 2024 - Present (2 years 6 months)
+United States
+Achievements: 
+- Bringing a thousand of new customers per day turning the Share App
+function available on the App 
+- Converting a thousand of marketing campaigns assisting the business area
+with the company needs
+Context:
+I'm working one of the biggest bank in USA and my team is responsible
+for marketing on PayPal Venmo Android App assisting the business sector
+achieve the marketing and campaigns results expected developing the new
+functionalities and fixing possible issues
+ 
+Page 2 of 9
+
+ 
+ 
+technologies:
+Android | Kotlin | Android SDK | Jetpack Compose
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration
+Firebase Analytics | Crashlytics | Remote Config 
+Activities:
+- Create, develop and manage the software that's necessary to business
+- Help the business area to make decisions with technology team
+- transform business rules on software functionalities
+Eyecare Health
+Senior Principal Software Engineer
+October 2023 - April 2024 (7 months)
+São Paulo, Brazil
+Achievements: 
+- Creating the world's first and only eye care app that provides comprehensive
+support for treatment through intricate business connections. From locating
+our eye care centers for treatment to offering the necessary products and
+surgeries
+Context:
+I was leading on Eye Care from Albert Einstein (one of biggest hospital and
+most important right here) working on your Node Js Back-End and Flutter
+Apps focused to build the new Super App for patients. I participate to decisions
+always getting knowledge to help the company go forward to next business
+step bringing new solutions on software and delivering new functionalities with
+a technology team
+technologies:
+Nest Js | Flutter | AWS
+Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration
+Firebase Analytics | Crashlytics | Remote Config 
+Activities:
+- Create, develop and manage the software that's necessary to business
+- Help the business area to make decisions with technology team
+ 
+Page 3 of 9
+
+ 
+ 
+- transform business rules on software functionalities
+Total Express
+Senior Software Engineer
+August 2022 - July 2023 (1 year)
+Brazil
+Achievements: 
+- Increase in 50% Amazon's shipping packages capacity by developing the
+Total Express (Amazon Logistic company) Shipping App
+Context:
+I was consulting on Total Express (the shipping company that delivers
+packages from Amazon in Brazil) working on your App Android, Ionic App,
+Node Js Back-End and Flutter Apps focused to keep the software increasing
+without problems even though the number of delivery always increasing.
+I participate to decisions always getting knowledge to help the company
+go forward to next business step bringing new solutions on software and
+delivering new functionalities with a technology team
+technologies:
+Android | Kotlin | Flutter
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration
+Firebase Analytics | Crashlytics | Remote Config 
+Activities:
+- Create, develop and manage the software that's necessary to business
+- Help the business area to make decisions with technology team
+Banco Master
+Senior Software Engineer
+March 2022 - April 2023 (1 year 2 months)
+Brazil
+Achievements: 
+- Prepared new App Bank Soft
+- achieved new 20 thousand customers in a day.
+- Reduced number problems by increase Crashlytics from 94% to 99% users
+without errors
+- Created the cryptographic algorithm to send the data to server without
+hackers interceptions sensitive information
+ 
+Page 4 of 9
+
+ 
+ 
+- Created and implemented a development process that delivers 25% more
+than before 
+Context:
+I was consulting on Banco Master (an Investment bank in Brazil) working on
+your App Android focused on investment and instant transfer (PIX). I did deal
+daily with business área making suggestions to new solutions on software and
+delivering new functionalities demanded from business area together with a
+technology team
+technologies:
+Android | Kotlin 
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration
+Firebase Analytics | Crashlytics | Remote Config 
+Activities:
+- Create, develop and manage the Android App
+- Create, and manage the metrics and measures to business area
+Banco Itaú
+Senior Software Engineer
+December 2021 - March 2022 (4 months)
+Home office
+Achievements: 
+- Reduced in 20% the time to transfer money from one account to another
+using PIX (Brazilian instant payment method) in the biggest bank in Brazil
+- increased 14% the number of transactions in the bank
+Context:
+I was consulting on Itau Unibanco (the biggest bank in Brazil) working on new
+transfer instant method in Brazil (PIX transfer) on App Android where people
+transfer more than 2 billion reais per day (450MM dollars) on the team with ios
+and Android developers this one is the most important and impactant project
+on Brazil
+technologies:
+Android | Kotlin 
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration | Jenkins
+ 
+Page 5 of 9
+
+ 
+ 
+Firebase Analytics | Crashlytics | Remote Config 
+Activities:
+- Create, develop and manage the Android App
+- Create, and manage the metrics and measures to think new ideas and
+hypotheses to implement on Software to improve that (GROWTH)
+Globo
+Senior Software Engineer
+August 2021 - January 2022 (6 months)
+Brasil
+Achievements: 
+- Increased the percentage the people find content to watch
+- Increased the time the people keep watching on the platform impacting
+measure like LTV (Life Time Value - the time of recurrence of payment made
+by the user) 
+Context:
+I was consulting on Globo (the largest television station in Brazil) working
+on your App Android with adaptation that permit it run on cellphone, tablets
+and TV. My team was focused on everything related content/titles to watch
+like novels, movies and series, I was working with back-end developers, ios/
+Android developers and growth areas always looking somehow could be done
+to make the user pass more time on the platform to increase the LTV 
+technologies:
+Android | Kotlin 
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration 
+Firebase Analytics | Crashlytics | Remote Config
+Junit | Mockk 
+Activities:
+- Create, develop and manage the Android App
+- Deploy the feature apps on Play Store (Google store to turn app available)
+- Create, and manage the metrics and measures to business area
+- Help on the new hypothesis to try test A/B looking increasing the LTV metrics
+Itaú Unibanco
+ 
+Page 6 of 9
+
+ 
+ 
+2 years 9 months
+Software Development Engineer
+January 2021 - August 2021 (8 months)
+Home office
+Achievements: 
+- Implemented and manage the process to support the scalability of the
+company arriving at 350 Android Developers coding at the same time
+- Reduced the time of release from 22 days to 5 days 
+Context:
+I received the invite to work on the most critical team doing the squads
+management, code review from other developers,  rating the quality, improving
+measures and making the deploying in Google Play Store keeping myself and
+my team responsibility of the App
+technologies:
+Android | Kotlin 
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration | Jenkins
+Firebase Analytics | Crashlytics | Remote Config 
+JUnit | Mockk | Mockito | Robolectric | Instrumented Testing 
+Activities:
+- Create, develop, and manage techs functionalities in the Android App
+- Ensuring the app is running correctly and will continue to work with the most
+advanced technology processes on the market like git-flow, CI/CD tools and
+strong devops culture
+Senior Software Engineer
+October 2020 - January 2021 (4 months)
+Achievements: 
+- Reduced the time of build from 15 minutes to some seconds (depending of
+the software module) by doing the process called modularization
+Context:
+I received the invite to work directly to Itau Unibanco (the biggest bank in
+Brazil) in the Android App Itau Companies the first moment I worked on the
+team called modularization where I broke the project into small parts in an
+intelligent way to adjust the monolith project that was taking 15 minutes to build
+transformed it into small modularized projects that take seconds to do the build
+ 
+Page 7 of 9
+
+ 
+ 
+and then be distributed among the various teams that the bank has to make it
+more similar to the process of Spotify
+technologies:
+Android | Kotlin 
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration | Jenkins
+Firebase Analytics | Crashlytics | Remote Config 
+JUnit | Mockk | Mockito | Robolectric | Instrumented Testing 
+Activities:
+- Break the software functionalities and build a module
+- Configure CI/CD in the modules
+Senior Software Engineer
+December 2018 - October 2020 (1 year 11 months)
+Achievements: 
+- Turned Investment functionality the second more accessed that year (million
+users per month)
+- My team won the 2019 best software metrics, results and practices squads
+award
+Context:
+I was consulting Itau Unibanco company (the biggest bank in Brazil) . I was
+allocated to investment team creating new screens for customers on Android
+App
+technologies:
+Android | Kotlin 
+MVVM | MVC | Clean Code | Clean Architecture | Modularization
+DevOps | Continuous Delivery | Continuous Integration | Jenkins
+Firebase Analytics | Crashlytics | Remote Config 
+JUnit | Mockk | Mockito | Robolectric | Instrumented Testing 
+Activities:
+- Create and manage new funcionalities on Android App
+Gizmin
+Software Engineer
+January 2017 - January 2019 (2 years 1 month)
+ 
+Page 8 of 9
+
+ 
+ 
+I worked with great responsibility in several projects with the newest
+technologies on the market, from cryptocurrencies with Web3J to Spring and
+Android.
+Education
+Centro Universitário Eniac
+Bachelor's degree, Computer Science · (June 2016 - June 2020)
+Faculdade Eniac
+Trabalho · (2016 - 2020)
+ 
+Page 9 of 9

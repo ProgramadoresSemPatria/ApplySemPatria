@@ -272,6 +272,10 @@ def cmd_chameleon(args: argparse.Namespace) -> int:
         ch_args.extend(["--master-label", args.master_label])
     if getattr(args, "force", False):
         ch_args.append("--force")
+    if getattr(args, "pdf", None):
+        ch_args.append(args.pdf)
+    if getattr(args, "linkedin_url", None):
+        ch_args.extend(["--linkedin-url", args.linkedin_url])
     return subprocess.call(ch_args, cwd=str(ROOT))
 
 
@@ -482,6 +486,16 @@ def build_parser() -> argparse.ArgumentParser:
     ch_status.add_argument("--track", default=None)
     ch_status.add_argument("--json", action="store_true")
     ch_status.set_defaults(func=cmd_chameleon)
+
+    ch_imp = ch_sub.add_parser(
+        "import-linkedin-pdf",
+        help="Build master CV from LinkedIn profile PDF export",
+    )
+    ch_imp.add_argument("pdf", help="LinkedIn profile PDF path")
+    ch_imp.add_argument("--track", default=None)
+    ch_imp.add_argument("--linkedin-url", default="", help="Profile URL override")
+    ch_imp.add_argument("--force", action="store_true")
+    ch_imp.set_defaults(func=cmd_chameleon)
 
     return parser
 

@@ -558,6 +558,65 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _profile_json_path(track_id: str) -> Path:
+    return ROOT / "state" / "chameleon" / "profile" / f"{resolve_track(track_id)}.json"
+
+
+def cmd_import_linkedin_pdf(args: argparse.Namespace) -> int:
+    from cv_master_docx import build_master_docx, default_template_path  # noqa: WPS433
+    from cv_master_linkedin_pdf import import_linkedin_pdf_to_profile  # noqa: WPS433
+    from cv_master_schema import validate_cv_profile  # noqa: WPS433
+
+    tid = resolve_track(args.track)
+    pdf_path = _expand(args.pdf)
+    if not pdf_path.is_file():
+        print(f"ERROR: PDF not found: {pdf_path}")
+        return 1
+
+    profile = import_linkedin_pdf_to_profile(
+        pdf_path,
+        linkedin_url=(args.linkedin_url or "").strip(),
+    )
+    errors = validate_cv_profile(profile)
+    if errors:
+        print("Profile gaps (fix manually or extend import):")
+        for err in errors:
+            print(f"  - {err}")
+        if not args.force:
+            return 1
+
+    profile_path = _profile_json_path(tid)
+    profile_path.parent.mkdir(parents=True, exist_ok=True)
+    profile_path.write_text(json.dumps(profile.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    master_dir = ROOT / "state" / "chameleon" / "masters" / tid
+    master_dir.mkdir(parents=True, exist_ok=True)
+    docx_out = master_dir / "master.docx"
+    build_master_docx(profile, docx_out, template=default_template_path())
+
+    cfg = load_chameleon_config(tid)
+    cfg["masters"] = [
+        {
+            "id": tid.replace("_", "-"),
+            "label": track_label(tid),
+            "path": str(docx_out),
+            "docx_path": str(docx_out),
+            "format": "docx",
+            "default": True,
+            "keywords": [],
+            "source": "linkedin_pdf",
+            "linkedin_url": profile.contact.linkedin_url,
+        }
+    ]
+    save_chameleon_config(tid, cfg)
+    sync_master_keywords(tid)
+
+    print(f"Imported LinkedIn PDF → {docx_out}")
+    print(f"Profile JSON → {profile_path}")
+    print(chameleon_status(tid)["message"])
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--track", default=None, help="Career track (default from tracks.json)")
@@ -593,6 +652,16 @@ def build_parser() -> argparse.ArgumentParser:
     status = sub.add_parser("status", parents=[common], help="Show setup readiness")
     status.add_argument("--json", action="store_true")
     status.set_defaults(func=cmd_status)
+
+    imp = sub.add_parser(
+        "import-linkedin-pdf",
+        parents=[common],
+        help="Build master DOCX from LinkedIn 'Save to PDF' export",
+    )
+    imp.add_argument("pdf", help="Path to LinkedIn profile PDF (e.g. ~/Downloads/Profile.pdf)")
+    imp.add_argument("--linkedin-url", default="", help="Override LinkedIn profile URL")
+    imp.add_argument("--force", action="store_true", help="Build even when validation reports gaps")
+    imp.set_defaults(func=cmd_import_linkedin_pdf)
 
     return parser
 
