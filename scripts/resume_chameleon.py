@@ -562,6 +562,71 @@ def _profile_json_path(track_id: str) -> Path:
     return ROOT / "state" / "chameleon" / "profile" / f"{resolve_track(track_id)}.json"
 
 
+def cmd_fetch_linkedin_pdf(args: argparse.Namespace) -> int:
+    import asyncio
+
+    from linkedin_profile_pdf_download import (  # noqa: WPS433
+        default_dest_path,
+        download_linkedin_profile_pdf,
+        resolve_linkedin_url,
+    )
+
+    tid = resolve_track(args.track)
+    try:
+        url = resolve_linkedin_url(args.linkedin_url or "", tid)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+
+    dest = _expand(args.output) if args.output else default_dest_path(url)
+    result = asyncio.run(
+        download_linkedin_profile_pdf(
+            url,
+            dest,
+            headless=args.headless,
+            timeout_ms=args.timeout_ms,
+        )
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), indent=2))
+    elif result.ok:
+        print(f"Saved LinkedIn profile PDF → {result.path}")
+        print(f"  method: {result.method}")
+        if result.method == "page_pdf":
+            print(f"  note: {result.message}")
+    else:
+        print(f"ERROR: {result.message}")
+    return 0 if result.ok else 1
+
+
+def cmd_onboard_from_linkedin(args: argparse.Namespace) -> int:
+    fetch_args = argparse.Namespace(
+        track=args.track,
+        linkedin_url=args.linkedin_url or "",
+        output=args.output or "",
+        headless=args.headless,
+        timeout_ms=args.timeout_ms,
+        json=False,
+    )
+    code = cmd_fetch_linkedin_pdf(fetch_args)
+    if code != 0:
+        return code
+
+    from linkedin_profile_pdf_download import default_dest_path, resolve_linkedin_url  # noqa: WPS433
+
+    tid = resolve_track(args.track)
+    url = resolve_linkedin_url(args.linkedin_url or "", tid)
+    pdf_path = _expand(args.output) if args.output else default_dest_path(url)
+
+    import_args = argparse.Namespace(
+        track=tid,
+        pdf=str(pdf_path),
+        linkedin_url=url,
+        force=args.force,
+    )
+    return cmd_import_linkedin_pdf(import_args)
+
+
 def cmd_import_linkedin_pdf(args: argparse.Namespace) -> int:
     from cv_master_docx import build_master_docx, default_template_path  # noqa: WPS433
     from cv_master_linkedin_pdf import import_linkedin_pdf_to_profile  # noqa: WPS433
@@ -662,6 +727,30 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--linkedin-url", default="", help="Override LinkedIn profile URL")
     imp.add_argument("--force", action="store_true", help="Build even when validation reports gaps")
     imp.set_defaults(func=cmd_import_linkedin_pdf)
+
+    fetch = sub.add_parser(
+        "fetch-linkedin-pdf",
+        parents=[common],
+        help="Download LinkedIn profile PDF via browser (More → Save to PDF)",
+    )
+    fetch.add_argument("--linkedin-url", default="", help="Profile URL (default: track applicant-profile)")
+    fetch.add_argument("--output", default="", help="Destination PDF path")
+    fetch.add_argument("--headless", action="store_true", help="Run browser headless")
+    fetch.add_argument("--timeout-ms", type=int, default=90_000, dest="timeout_ms")
+    fetch.add_argument("--json", action="store_true")
+    fetch.set_defaults(func=cmd_fetch_linkedin_pdf)
+
+    onboard = sub.add_parser(
+        "onboard-from-linkedin",
+        parents=[common],
+        help="Download LinkedIn profile PDF then build master DOCX",
+    )
+    onboard.add_argument("--linkedin-url", default="", help="Profile URL (default: track applicant-profile)")
+    onboard.add_argument("--output", default="", help="Destination PDF path")
+    onboard.add_argument("--headless", action="store_true", help="Run browser headless")
+    onboard.add_argument("--timeout-ms", type=int, default=90_000, dest="timeout_ms")
+    onboard.add_argument("--force", action="store_true", help="Build even when validation reports gaps")
+    onboard.set_defaults(func=cmd_onboard_from_linkedin)
 
     return parser
 

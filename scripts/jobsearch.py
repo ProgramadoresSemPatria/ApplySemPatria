@@ -276,6 +276,12 @@ def cmd_chameleon(args: argparse.Namespace) -> int:
         ch_args.append(args.pdf)
     if getattr(args, "linkedin_url", None):
         ch_args.extend(["--linkedin-url", args.linkedin_url])
+    if getattr(args, "output", None):
+        ch_args.extend(["--output", args.output])
+    if getattr(args, "headless", False):
+        ch_args.append("--headless")
+    if getattr(args, "timeout_ms", None):
+        ch_args.extend(["--timeout-ms", str(args.timeout_ms)])
     return subprocess.call(ch_args, cwd=str(ROOT))
 
 
@@ -496,6 +502,30 @@ def build_parser() -> argparse.ArgumentParser:
     ch_imp.add_argument("--linkedin-url", default="", help="Profile URL override")
     ch_imp.add_argument("--force", action="store_true")
     ch_imp.set_defaults(func=cmd_chameleon)
+
+    ch_fetch = ch_sub.add_parser(
+        "fetch-linkedin-pdf",
+        help="Download LinkedIn profile PDF via browser",
+    )
+    ch_fetch.add_argument("--track", default=None)
+    ch_fetch.add_argument("--linkedin-url", default="", help="Profile URL (default: applicant-profile)")
+    ch_fetch.add_argument("--output", default="", help="Destination PDF path")
+    ch_fetch.add_argument("--headless", action="store_true")
+    ch_fetch.add_argument("--timeout-ms", type=int, default=90_000)
+    ch_fetch.add_argument("--json", action="store_true")
+    ch_fetch.set_defaults(func=cmd_chameleon)
+
+    ch_onboard = ch_sub.add_parser(
+        "onboard-from-linkedin",
+        help="Download LinkedIn profile PDF and import into CV Chameleon",
+    )
+    ch_onboard.add_argument("--track", default=None)
+    ch_onboard.add_argument("--linkedin-url", default="", help="Profile URL (default: applicant-profile)")
+    ch_onboard.add_argument("--output", default="", help="Destination PDF path")
+    ch_onboard.add_argument("--headless", action="store_true")
+    ch_onboard.add_argument("--timeout-ms", type=int, default=90_000)
+    ch_onboard.add_argument("--force", action="store_true")
+    ch_onboard.set_defaults(func=cmd_chameleon)
 
     return parser
 
