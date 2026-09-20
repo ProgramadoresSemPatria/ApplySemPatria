@@ -39,6 +39,8 @@ state/
 *.pdf
 *.docx
 *.doc
+!templates/cv-master/
+!templates/cv-master/**
 
 # Python
 .venv/
