@@ -1,11 +1,7 @@
-from . import defi, f6s, himalayas, opentoworkremote, remoteok, wellfound, weworkremotely
+"""Backward-compatible module alias for retrieval.sources.boards.collectors."""
 
-COLLECTORS = {
-    "remoteok": remoteok.collect,
-    "weworkremotely": weworkremotely.collect,
-    "defi": defi.collect,
-    "himalayas": himalayas.collect,
-    "opentoworkremote": opentoworkremote.collect,
-    "wellfound": wellfound.collect,
-    "f6s": f6s.collect,
-}
+import sys
+
+import retrieval.sources.boards.collectors as _impl
+
+sys.modules[__name__] = _impl
