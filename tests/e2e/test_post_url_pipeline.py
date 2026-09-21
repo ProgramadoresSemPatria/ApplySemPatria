@@ -271,7 +271,7 @@ def test_e2e_merge_payload_writes_real_urls(tmp_path, linkedin_cfg, monkeypatch)
 
 
 def test_e2e_placeholder_still_falls_back_to_search_url(linkedin_cfg, job_cfg):
-    """Regression: when resolution fails, UI still gets content-search URL (workaround kept)."""
+    """Regression: registry keeps placeholder; UI display still gets content-search URL."""
     posts = parse_feed_search_posts(
         {
             "sections": {"search_results": MONIKA_INNER},
@@ -291,6 +291,54 @@ def test_e2e_placeholder_still_falls_back_to_search_url(linkedin_cfg, job_cfg):
     display = post_url_for(job)
     assert "search/results/content" in display
     assert MONIKA_URN not in display
+
+
+def test_e2e_merge_unresolved_post_url_stays_placeholder_in_registry(tmp_path, linkedin_cfg, monkeypatch):
+    """FE-11: merge must not persist content-search URLs when URN resolution fails."""
+    from linkedin_posts_merge import normalize_linkedin_job_urls
+
+    registry_path = tmp_path / "registry" / "jobs.json"
+    registry_path.parent.mkdir(parents=True)
+    registry_path.write_text(json.dumps({"jobs": []}, indent=2) + "\n", encoding="utf-8")
+    runs_dir = tmp_path / "runs"
+    runs_dir.mkdir()
+    monkeypatch.setattr("linkedin_posts_merge.REGISTRY_PATH", registry_path)
+    monkeypatch.setattr("registry.REGISTRY_PATH", registry_path)
+    monkeypatch.setattr("linkedin_posts_merge.RUNS_DIR", runs_dir)
+    monkeypatch.setattr("linkedin_posts_merge.load_linkedin_config", lambda *a, **k: linkedin_cfg)
+
+    payload = {
+        "period_days": 7,
+        "queries": [
+            {
+                "query": '"ai engineer" + "latam"',
+                "role_keyword": "ai engineer",
+                "region": "latam",
+                "feed_payload": {
+                    "sections": {"search_results": MONIKA_INNER},
+                    "references": {"search_results": []},
+                    "chunk_post_urls": [""],
+                    "author_post_urls": {},
+                },
+            }
+        ],
+    }
+    result = merge_payload(payload, period_days=7, since_arg="30d")
+    assert result["new_total"] >= 1
+
+    reg = load_registry()
+    li_posts = [j for j in reg["jobs"] if j.get("source") == "linkedin_posts"]
+    assert li_posts
+    for job in li_posts:
+        assert is_placeholder_post_url(job["url"]), job["url"]
+        assert "search/results/content" not in job["url"]
+        assert post_url_for(job)  # display link still clickable
+        assert "search/results/content" in post_url_for(job) or MONIKA_URN in post_url_for(job)
+
+    # normalize must never re-introduce search URLs
+    job = li_posts[0]
+    normalize_linkedin_job_urls(job, refs=[])
+    assert is_placeholder_post_url(job["url"])
 
 
 def test_e2e_normalize_payload_accepts_browser_collect_shape(linkedin_cfg, job_cfg):

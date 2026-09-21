@@ -70,6 +70,8 @@ def test_regression_bulk_dm_runs_connect_before_follow_up_phases(mock_run):
     scripts = [call[0][0] for call in mock_run.call_args_list]
     assert expect_action(scripts[0], must_include=["dm_apply.py", "--send", "--job-keys"])
     assert expect_action(scripts[1], must_include=["dm_followup.py", "--phase", "check", "--job-keys"])
+    assert "--send" not in scripts[1]
+    assert "--force-send" not in scripts[1]
     assert expect_action(scripts[2], must_include=["dm_followup.py", "--phase", "send", "--send", "--job-keys"])
     assert "dm_apply.py" not in " ".join(scripts[1] + scripts[2])
 

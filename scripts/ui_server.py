@@ -430,9 +430,7 @@ def run_bulk_dm_followup(
     check_cmd = [
         PY,
         str(SCRIPTS / "dm_followup.py"),
-        "--send",
         *UI_APPROVE,
-        "--force-send",
         "--phase",
         "check",
         "--track",
@@ -553,7 +551,9 @@ def run_bulk_dm_followup(
         skipped_no_profile=skipped_no_profile,
     )
 
-    for label, cmd in phases:
+    phase_idx = 0
+    while phase_idx < len(phases):
+        label, cmd = phases[phase_idx]
         print(f"[bulk-dm] ▶ {label} — {' '.join(cmd[2:6])}…", flush=True)
         audit_info(
             "ui_server",
@@ -603,6 +603,20 @@ def run_bulk_dm_followup(
             track=tid,
             job_keys=keys,
         )
+
+        if label == "check_connections" and phase_ok:
+            post_check_state = dm_state.load()
+            post_scoped = pending_profiles(post_check_state)
+            if keys:
+                post_scoped = filter_entries_by_job_keys(post_scoped, keys)
+            post_send = filter_entries_by_status(post_scoped, phase="send")
+            if post_send and not any(pl == "send_messages" for pl, _ in phases):
+                phases.append(("send_messages", send_cmd))
+                summaries.append(
+                    "[send_messages] queued — accepts found during check; messaging next"
+                )
+
+        phase_idx += 1
 
     scope = f"{len(keys)} role(s)" if keys else "all DM candidates"
     print(f"[bulk-dm] done — {scope}", flush=True)

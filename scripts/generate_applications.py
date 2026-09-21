@@ -28,6 +28,7 @@ from filters import salary_sort_value  # noqa: E402
 from linkedin_posts_merge import (  # noqa: E402
     fallback_linkedin_post_search_url,
     is_apply_only_url,
+    is_content_search_url,
     is_feed_update_url,
     is_linkedin_post_url,
     is_placeholder_post_url,
@@ -187,6 +188,8 @@ def post_url_for(job: dict) -> str:
             return resolved
         return url
     if is_profile_fallback_url(url):
+        return fallback_linkedin_post_search_url(author, role)
+    if is_placeholder_post_url(url) or is_content_search_url(url):
         return fallback_linkedin_post_search_url(author, role)
     if is_linkedin_post_url(url):
         return url

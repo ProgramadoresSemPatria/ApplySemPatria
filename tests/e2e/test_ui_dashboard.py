@@ -1,4 +1,4 @@
-"""Applications dashboard Playwright e2e — UI-01..05, UI-13."""
+"""Applications dashboard Playwright e2e — UI-01..05, UI-13, UI-24."""
 
 from __future__ import annotations
 
@@ -192,6 +192,23 @@ def test_bulk_dm_legacy_profile_key_runs_connect_and_followup(mock_ui_server_bul
     assert any("dm_apply.py" in str(part) for part in captured["apply_cmds"][0])
     assert any("dm_followup.py" in str(part) for part in captured["apply_cmds"][1])
     assert "--job-keys" in captured["apply_cmds"][1]
+
+
+def test_bulk_dm_check_phase_is_accept_only_not_send(mock_ui_server_bulk_dm_legacy_match, page: Page):
+    """UI-24: bulk check phase detects accepts only — must not pass --send."""
+    port, captured = mock_ui_server_bulk_dm_legacy_match
+    page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
+    page.locator("#bulkDmBtn").click()
+    wait_for_toast_text(page, "check_connections")
+    followup_cmds = [
+        cmd for cmd in captured["apply_cmds"] if any("dm_followup.py" in str(part) for part in cmd)
+    ]
+    assert followup_cmds, "expected dm_followup subprocess for check phase"
+    check_cmd = followup_cmds[0]
+    joined = " ".join(str(part) for part in check_cmd)
+    assert "--phase" in joined and "check" in joined
+    assert "--send" not in joined
+    assert "--force-send" not in joined
 
 
 def test_bulk_dm_includes_review_dm_and_shows_connect_count(mock_ui_server_review_dm_connect, page: Page):

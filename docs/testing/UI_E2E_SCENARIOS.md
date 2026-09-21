@@ -242,6 +242,39 @@ Scenario: List header bulk button processes DM roles in the current filter
 
 ---
 
+## FE-11 — Post URL placeholder vs search fallback ✅
+
+**Automated:** `test_e2e_merge_unresolved_post_url_stays_placeholder_in_registry`, `test_e2e_placeholder_still_falls_back_to_search_url`, `tests/test_linkedin_posts_merge.py` (`test_normalize_unresolved_post_uses_placeholder_not_search`)
+
+```gherkin
+Scenario: Unresolved LinkedIn post keeps placeholder in registry
+  Given browser collect fails to attach feed/update URN for a hiring post
+  When merge_payload writes the job to registry
+  Then job.url is linkedin-post:{hash} (not content-search URL)
+  And post_url_for(job) still returns a clickable content-search URL for the table
+```
+
+**Fixtures:** `tests/fixtures/linkedin/content_search_monika_card.html`, `content_search_network_monika.json` (stable offline replay — no HAR needed for post URL resolution).
+
+---
+
+## UI-24 — Bulk DM check phase is accept-only (no message send) ✅
+
+**Automated:** `test_bulk_dm_check_phase_is_accept_only_not_send` · unit: `test_run_check_phase_records_accept_without_messaging`, `test_filter_entries_prefers_canonical_registry_profile`
+
+```gherkin
+Scenario: Bulk DM check phase records accepts without messaging
+  Given dm_state has connect_pending profiles for filtered DM roles
+  When I click #bulkDmBtn and the pipeline reaches check_connections
+  Then the check subprocess invokes dm_followup.py with --phase check
+  And the check command does not include --send or --force-send
+  And accepted profiles are recorded without opening the message composer
+```
+
+**Regression:** stale dm_state profile URLs (e.g. paulochb vs pablo-saldarriaga) must defer to the first registry recruiter profile for the same company.
+
+---
+
 ## UI-20 — Bulk email candidature ✅
 
 **Automated:** `test_bulk_email_button_triggers_process_all`, `test_bulk_email_button_disabled_without_email_roles`, `test_bulk_email_button_shows_done_when_all_sent`, `test_stale_server_banner_when_meta_missing_bulk_email`, `tests/test_ui_client_contract.py`, `test_bulk_email_routing_uses_real_handler`  

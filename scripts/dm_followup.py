@@ -3,9 +3,10 @@
 
 Policy:
   - Pending visible on profile -> NOT accepted yet (skip).
-  - Open message thread; if latest date header is Today/Yesterday/weekday name
-    (LinkedIn's <1-week bucket) -> already messaged recently -> mark message_sent,
-    do NOT send again.
+  - --phase check: record acceptance in dm_state only; do not open composer.
+  - --phase send (or no phase): open message thread; if latest date header is
+    Today/Yesterday/weekday name (LinkedIn's <1-week bucket) -> already messaged
+    recently -> mark message_sent, do NOT send again.
   - If accepted and no recent thread message -> send DM template.
 
 Default is DRY RUN. Pass --send to perform real actions. Headed by default.
@@ -107,6 +108,24 @@ def filter_entries_by_status(
     return entries
 
 
+def _canonical_profiles_by_company(allowed: set[str]) -> dict[str, str]:
+    """First non-null registry recruiter profile per company for the allowed job_keys."""
+    from generate_applications import dm_profile_url  # noqa: E402
+    from registry import job_key as registry_job_key, load_registry  # noqa: E402
+
+    canonical: dict[str, str] = {}
+    for job in load_registry()["jobs"]:
+        if registry_job_key(job) not in allowed:
+            continue
+        prof = dm_profile_url(job)
+        if not prof:
+            continue
+        company = (job.get("company") or "").casefold().strip()
+        if company and company not in canonical:
+            canonical[company] = dm_state.normalize_profile_url(prof)
+    return canonical
+
+
 def filter_entries_by_job_keys(
     entries: list[dict[str, Any]],
     job_keys: list[str] | None,
@@ -122,24 +141,71 @@ def filter_entries_by_job_keys(
     from registry import job_key as registry_job_key, load_registry  # noqa: E402
 
     allowed_profiles: set[str] = set()
+    allowed_companies: set[str] = set()
     for job in load_registry()["jobs"]:
         if registry_job_key(job) in allowed:
             prof = dm_profile_url(job)
             if prof:
                 allowed_profiles.add(dm_state.normalize_profile_url(prof))
+            company = (job.get("company") or "").casefold().strip()
+            if company:
+                allowed_companies.add(company)
+
+    canonical_by_company = _canonical_profiles_by_company(allowed)
 
     matched: list[dict[str, Any]] = []
     seen_profiles: set[str] = set()
     for entry in entries:
         prof = dm_state.normalize_profile_url(entry.get("profile_url") or "")
         entry_key = (entry.get("job_key") or "").strip()
-        if entry_key in allowed or (prof and prof in allowed_profiles):
+        company_cf = (entry.get("company") or "").casefold().strip()
+        if (
+            entry_key in allowed
+            or (prof and prof in allowed_profiles)
+            or (company_cf and company_cf in allowed_companies)
+        ):
             if prof and prof in seen_profiles:
                 continue
             if prof:
                 seen_profiles.add(prof)
             matched.append(entry)
-    return matched
+
+    if not canonical_by_company:
+        return matched
+
+    from collections import defaultdict
+
+    by_company: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for entry in matched:
+        company_cf = (entry.get("company") or "").casefold().strip()
+        by_company[company_cf].append(entry)
+
+    deduped: list[dict[str, Any]] = []
+    for company_cf, group in by_company.items():
+        canonical = canonical_by_company.get(company_cf)
+        if not canonical:
+            deduped.extend(group)
+            continue
+        preferred = [
+            e
+            for e in group
+            if dm_state.normalize_profile_url(e.get("profile_url") or "") == canonical
+        ]
+        if preferred:
+            deduped.extend(preferred)
+            continue
+        if len(group) == 1:
+            rewritten = dict(group[0])
+            rewritten["profile_url"] = canonical
+            deduped.append(rewritten)
+        else:
+            deduped.extend(group[:1])
+    return deduped
+
+
+def _audit_extra(ctx_data: dict[str, Any], **fields: Any) -> dict[str, Any]:
+    """Merge profile audit context with event fields (explicit fields win)."""
+    return {**ctx_data, **fields}
 
 
 def _profile_audit_context(entry: dict[str, Any]) -> dict[str, Any]:
@@ -247,12 +313,18 @@ async def run(
                 audit_info(
                     "dm_followup",
                     "state_updated",
-                    update="accepted",
-                    prior_status=prior_status,
-                    new_status=new_status,
-                    **ctx_data,
+                    **_audit_extra(
+                        ctx_data,
+                        update="accepted",
+                        prior_status=prior_status,
+                        new_status=new_status,
+                    ),
                 )
                 print("  → ACCEPTED ✓ (no Pending on profile)")
+
+                if phase == "check":
+                    profile_outcome = "accepted"
+                    continue
 
                 thread = await dm_chat.inspect_thread(page)
                 hdrs = [h for h in thread.get("headers", []) if dm_chat.classify_header(h) != "other"]
@@ -293,12 +365,14 @@ async def run(
                         audit_warn(
                             "dm_followup",
                             "message_marked_sent",
-                            source="recent_header",
-                            send_confirmed=False,
-                            note=note,
-                            prior_status=prior_status,
-                            new_status=dm_state.STATUS_MESSAGE_SENT,
-                            **ctx_data,
+                            **_audit_extra(
+                                ctx_data,
+                                source="recent_header",
+                                send_confirmed=False,
+                                note=note,
+                                prior_status=prior_status,
+                                new_status=dm_state.STATUS_MESSAGE_SENT,
+                            ),
                         )
                         profile_outcome = "marked_sent_recent_header"
                     else:
@@ -334,11 +408,13 @@ async def run(
                     audit_info(
                         "dm_followup",
                         "message_sent",
-                        source="composer",
-                        send_confirmed=True,
-                        prior_status=prior_status,
-                        new_status=dm_state.STATUS_MESSAGE_SENT,
-                        **ctx_data,
+                        **_audit_extra(
+                            ctx_data,
+                            source="composer",
+                            send_confirmed=True,
+                            prior_status=prior_status,
+                            new_status=dm_state.STATUS_MESSAGE_SENT,
+                        ),
                     )
                     profile_outcome = "message_sent"
                     sent_actions += 1
@@ -389,11 +465,13 @@ async def run(
                         audit_info(
                             "dm_followup",
                             "message_sent",
-                            source="recipe_fallback",
-                            send_confirmed=True,
-                            prior_status=prior_status,
-                            new_status=dm_state.STATUS_MESSAGE_SENT,
-                            **ctx_data,
+                            **_audit_extra(
+                                ctx_data,
+                                source="recipe_fallback",
+                                send_confirmed=True,
+                                prior_status=prior_status,
+                                new_status=dm_state.STATUS_MESSAGE_SENT,
+                            ),
                         )
                         profile_outcome = "message_sent_recipe_fallback"
                         sent_actions += 1
@@ -417,6 +495,15 @@ async def run(
                         **ctx_data,
                     )
                     profile_outcome = "message_not_confirmed"
+            except Exception as exc:  # noqa: BLE001
+                audit_error(
+                    "dm_followup",
+                    "profile_error",
+                    error=str(exc)[:200],
+                    **ctx_data,
+                )
+                print(f"  → ERROR: {exc}")
+                profile_outcome = "error"
             finally:
                 closed = await cleanup_after_message(page)
                 if closed:
@@ -424,7 +511,7 @@ async def run(
                 audit_info("dm_followup", "profile_done", outcome=profile_outcome, cleanup=closed, **ctx_data)
     finally:
         await close_session(pw=pw, browser=browser, context=ctx)
-    if send:
+    if send or (phase == "check" and accepted > 0):
         from table_refresh import refresh_applications_table  # noqa: E402
         refresh_applications_table()
     print(
@@ -497,7 +584,7 @@ def main() -> int:
     if args.limit:
         entries = entries[: args.limit]
 
-    if args.send:
+    if args.send and phase != "check":
         for entry in entries:
             job = jobs_by_key.get(entry.get("job_key") or "")
             allowed, reason = linkedin_message_allowed(

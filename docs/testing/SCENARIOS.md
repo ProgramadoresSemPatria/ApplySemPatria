@@ -18,7 +18,8 @@ Full **Given / When / Then** e2e catalog: [UI_E2E_SCENARIOS.md](./UI_E2E_SCENARI
 | UI-08 | Human review card | Steps hidden; hint shown |
 | UI-09 | Filter chips | Grid re-renders; matching cards only |
 | UI-10 | Stale server | Missing `/api/meta` shows warning banner |
-| UI-13 | Bulk DM follow-up | `POST /api/bulk-action` with `job_keys` from filtered list runs check-then-send for those roles only |
+| UI-13 | Bulk DM follow-up | `POST /api/bulk-action` with `job_keys` from filtered list runs connect → check → send for those roles only |
+| UI-24 | Bulk DM check phase | Check subprocess uses `--phase check` without `--send`; records accepts only |
 
 ## Feature / domain logic
 
@@ -34,6 +35,7 @@ Full **Given / When / Then** e2e catalog: [UI_E2E_SCENARIOS.md](./UI_E2E_SCENARI
 | FE-08 | Posted epoch (Himalayas) | Displays `4h` / `3d` / `YYYY-MM-DD`, not raw integer |
 | FE-09 | Disposition auto | `filter_result` → best_fit / human_review / not_real |
 | FE-10 | Disposition override | Stored on job; steps follow override |
+| FE-11 | Unresolved post URL | Registry keeps `linkedin-post:` placeholder; table display uses content-search fallback only |
 
 ## LinkedIn flow runner (`flows/linkedin-connect-or-message.json`)
 

@@ -375,13 +375,68 @@ def test_run_bulk_dm_followup_invokes_connect_check_then_send(mock_run):
     )
     assert expect_action(
         check_cmd,
-        must_include=["dm_followup.py", "--send", "--phase", "check", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
+        must_include=["dm_followup.py", "--phase", "check", "--ui-approved", "--track", "ai-engineer", "--job-keys"],
     )
+    assert "--send" not in check_cmd
+    assert "--force-send" not in check_cmd
     assert expect_action(
         send_cmd,
         must_include=["dm_followup.py", "--send", "--phase", "send", "--ui-approved", "--force-send", "--track", "ai-engineer", "--job-keys"],
     )
     assert keys[0] in connect_cmd[connect_cmd.index("--job-keys") + 1]
+
+
+@patch("ui_server._run_apply_cmd")
+def test_run_bulk_dm_followup_queues_send_after_check_finds_accepts(mock_run):
+    mock_run.return_value = MagicMock(returncode=0, stdout="phase ok", stderr="")
+    import dm_state
+    from ui_server import run_bulk_dm_followup
+
+    keys = ["ai-engineer|linkedin|acme ai|ai engineer"]
+    connect_pending = [
+        {
+            "profile_url": "https://www.linkedin.com/in/recruiter-test/",
+            "job_key": keys[0],
+            "company": "Acme AI",
+            "connect_requested_at": "2026-09-15T12:00:00",
+        },
+    ]
+    accepted = [
+        {
+            **connect_pending[0],
+            "accepted_at": "2026-09-21T12:00:00",
+        }
+    ]
+
+    def _pending(_state=None):
+        return connect_pending if _pending.calls == 0 else accepted
+
+    _pending.calls = 0
+
+    def pending_side_effect(*_args, **_kwargs):
+        out = _pending()
+        _pending.calls += 1
+        return out
+
+    def _status(entries, *, phase):
+        if phase == "check":
+            return [e for e in entries if dm_state.status_of(e) == dm_state.STATUS_CONNECT_PENDING]
+        return [e for e in entries if dm_state.status_of(e) == dm_state.STATUS_ACCEPTED_MSG_PENDING]
+
+    with patch("dm_apply.collect_candidates", return_value=[]):
+        with patch("dm_followup.pending_profiles", side_effect=pending_side_effect):
+            with patch("dm_followup.filter_entries_by_job_keys", side_effect=lambda e, k: e):
+                with patch("dm_followup.filter_entries_by_status", side_effect=_status):
+                    result = run_bulk_dm_followup(track="ai-engineer", job_keys=keys)
+
+    assert result["ok"] is True
+    assert mock_run.call_count == 2
+    check_cmd = mock_run.call_args_list[0][0][0]
+    send_cmd = mock_run.call_args_list[1][0][0]
+    assert "check" in check_cmd
+    assert "--send" not in check_cmd
+    assert "send" in send_cmd
+    assert "--phase" in send_cmd
 
 
 @patch("ui_server._run_apply_cmd")

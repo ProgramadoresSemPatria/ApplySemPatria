@@ -14,8 +14,8 @@ from apply_email import apply_email_for_job, extract_apply_email_from_text, is_e
 from linkedin_posts_merge import (  # noqa: E402
     extract_post_salary,
     extract_role_apply_url,
-    fallback_linkedin_post_search_url,
     is_apply_only_url,
+    is_content_search_url,
     is_feed_update_url,
     is_placeholder_post_url,
     is_posts_permalink,
@@ -81,7 +81,7 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
 
         url = (job.get("url") or "").strip()
         before_url = url
-        if is_placeholder_post_url(url) or is_feed_update_url(url):
+        if is_placeholder_post_url(url) or is_feed_update_url(url) or is_content_search_url(url):
             if not dry_run:
                 from registry import remember_legacy_job_key  # noqa: WPS433
 
@@ -104,8 +104,10 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
         ):
             stats["post_url_reset"] += 1
             if not dry_run:
-                job["url"] = fallback_linkedin_post_search_url(cleaned, role)
-                job["url_source"] = "permalink_author_mismatch"
+                from linkedin_posts_merge import placeholder_post_url_for_job  # noqa: WPS433
+
+                job["url"] = placeholder_post_url_for_job(job)
+                job["url_source"] = "placeholder"
 
         apply = (job.get("apply_url") or "").strip()
         if apply and ("search/results/content" in apply or is_posts_permalink(apply) or is_email_address(apply)):
@@ -146,8 +148,10 @@ def repair_registry(*, dry_run: bool = False) -> dict[str, int]:
                 if is_email_address(url):
                     job["apply_email"] = apply_email_for_job(job)
                 else:
-                    job["url"] = fallback_linkedin_post_search_url(cleaned, role)
-                    job["url_source"] = "apply_url_split"
+                    from linkedin_posts_merge import placeholder_post_url_for_job  # noqa: WPS433
+
+                    job["url"] = placeholder_post_url_for_job(job)
+                    job["url_source"] = "placeholder"
 
         tid = job.get("track") or resolve_track(None)
         li_cfg = load_linkedin_config(tid)

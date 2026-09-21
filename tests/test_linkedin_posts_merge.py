@@ -22,9 +22,13 @@ from linkedin_posts_merge import (  # noqa: E402
     extract_ordered_feed_update_urls,
     fallback_linkedin_post_search_url,
     harvest_feed_posts_from_network_body,
+    is_content_search_url,
     is_feed_update_url,
+    is_placeholder_post_url,
     is_profile_fallback_url,
     merge_payload,
+    normalize_linkedin_job_urls,
+    placeholder_post_url_for_job,
     match_author_activity_ref,
     match_author_profile_ref,
     parse_feed_search_posts,
@@ -228,6 +232,41 @@ class LinkedInPostsMergeTests(unittest.TestCase):
         url = fallback_linkedin_post_search_url("Agustin Bellini", "ai engineer")
         self.assertIn("linkedin.com/search/results/content", url)
         self.assertIn("Agustin", url)
+
+    def test_is_content_search_url_not_linkedin_post_url(self):
+        search = fallback_linkedin_post_search_url("Agustin Bellini", "ai engineer")
+        self.assertTrue(is_content_search_url(search))
+        from linkedin_posts_merge import is_linkedin_post_url
+
+        self.assertFalse(is_linkedin_post_url(search))
+
+    def test_normalize_unresolved_post_uses_placeholder_not_search(self):
+        job = {
+            "source": "linkedin_posts",
+            "company": "Agustin Bellini",
+            "role": "AI Engineer",
+            "description_snippet": "Hiring AI Engineer remote LATAM USD 120k",
+            "url": "",
+            "url_source": "none",
+        }
+        normalize_linkedin_job_urls(job, refs=[])
+        self.assertTrue(is_placeholder_post_url(job["url"]))
+        self.assertNotIn("search/results/content", job["url"])
+        self.assertEqual(job["url_source"], "placeholder")
+
+    def test_normalize_replaces_persisted_content_search_with_placeholder(self):
+        search = fallback_linkedin_post_search_url("Agustin Bellini", "ai engineer")
+        job = {
+            "source": "linkedin_posts",
+            "company": "Agustin Bellini",
+            "role": "AI Engineer",
+            "description_snippet": "Hiring AI Engineer remote LATAM USD 120k",
+            "url": search,
+            "url_source": "content_search_fallback",
+        }
+        normalize_linkedin_job_urls(job, refs=[])
+        self.assertTrue(is_placeholder_post_url(job["url"]))
+        self.assertEqual(job["url"], placeholder_post_url_for_job(job))
 
     def test_resolve_post_urls_prefers_feed_update_over_recent_activity(self):
         refs = [

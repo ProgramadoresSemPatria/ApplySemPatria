@@ -344,11 +344,28 @@ def is_apply_only_url(url: str) -> bool:
     return False
 
 
+def is_content_search_url(url: str) -> bool:
+    """LinkedIn content search page — not a post permalink (display fallback only)."""
+    return "search/results/content" in ((url or "").strip())
+
+
+def placeholder_post_url_from_text(text: str) -> str:
+    snippet = (text or "").strip() or "unknown"
+    return f"linkedin-post:{hash(snippet) & 0xFFFFFFFF:x}"
+
+
+def placeholder_post_url_for_job(job: dict[str, Any]) -> str:
+    text = (job.get("description_snippet") or "").strip()
+    if not text:
+        text = f"{job.get('company', '')}|{job.get('role', '')}"
+    return placeholder_post_url_from_text(text)
+
+
 def is_linkedin_post_url(url: str) -> bool:
     url = (url or "").strip()
     if not url:
         return False
-    if is_placeholder_post_url(url) or is_apply_only_url(url):
+    if is_placeholder_post_url(url) or is_apply_only_url(url) or is_content_search_url(url):
         return False
     return "linkedin.com" in url
 
@@ -935,13 +952,13 @@ def normalize_linkedin_job_urls(
             url = feed_url
             job["url_source"] = feed_source
 
-    if is_profile_fallback_url(url):
+    if is_profile_fallback_url(url) or is_content_search_url(url):
         url = ""
 
     if not is_linkedin_post_url(url):
         if not is_placeholder_post_url(url):
-            job["url"] = fallback_linkedin_post_search_url(author, role)
-            job["url_source"] = job.get("url_source") or "content_search_fallback"
+            job["url"] = placeholder_post_url_for_job(job)
+            job["url_source"] = "placeholder"
     else:
         job["url"] = url
 
