@@ -165,9 +165,9 @@ def test_research_post_clears_stale_run(monkeypatch, tmp_path):
     monkeypatch.setattr("research_log.RUN_PATH", run_path)
     monkeypatch.setattr("research_log.STALE_RUN_MINUTES", 25)
     def _fake_spawn(**_kwargs):
-        from research_log import finish_research_run, start_research_run
+        from research_log import finish_research_run, set_research_step
 
-        start_research_run("2026-09-09", force=True)
+        set_research_step("generate_table")
         finish_research_run(ok=True, message="mock research")
         mock = __import__("unittest.mock").mock.MagicMock()
         mock.pid = 9999
@@ -189,6 +189,87 @@ def test_research_post_clears_stale_run(monkeypatch, tmp_path):
     assert status == 202
     assert data.get("ok") is True
     assert data.get("started") is True
+
+
+def test_research_post_returns_running_after_prior_failure(monkeypatch, tmp_path):
+    """Regression: stale ok=false must not leak into a new spawn response."""
+    import threading
+    import time
+    from http.server import ThreadingHTTPServer
+
+    import ui_server
+
+    run_path = tmp_path / "state" / "research-run.json"
+    run_path.parent.mkdir(parents=True)
+    run_path.write_text(
+        '{"running": false, "day": "2026-09-09", "step": "failed", "ok": false, '
+        '"message": "Research failed — LinkedIn ingestion did not complete.", '
+        '"started_at": "2026-09-09T10:00:00-03:00", "updated_at": "2026-09-09T10:05:00-03:00", '
+        '"version": 1}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("research_log.RUN_PATH", run_path)
+    monkeypatch.setattr("research_log.today_local", lambda: "2026-09-09")
+
+    def _slow_spawn(**_kwargs):
+        time.sleep(0.4)
+        mock = MagicMock()
+        mock.pid = 8888
+        mock.poll.return_value = None
+        return mock
+
+    monkeypatch.setattr("ui_server.spawn_daily_research", _slow_spawn)
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), ui_server.ApplicationsUIHandler)
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.15)
+    try:
+        status, data = _post_json(f"http://127.0.0.1:{port}/api/research", {})
+    finally:
+        httpd.shutdown()
+
+    assert status == 202
+    run = data.get("run") or {}
+    assert run.get("running") is True
+    assert run.get("step") == "starting"
+    assert "LinkedIn ingestion did not complete" not in (run.get("message") or "")
+
+
+def test_research_post_spawn_failure_clears_running(monkeypatch, tmp_path):
+    import threading
+    import time
+    from http.server import ThreadingHTTPServer
+
+    import ui_server
+    from research_log import load_research_run
+
+    run_path = tmp_path / "state" / "research-run.json"
+    run_path.parent.mkdir(parents=True)
+    monkeypatch.setattr("research_log.RUN_PATH", run_path)
+    monkeypatch.setattr("research_log.today_local", lambda: "2026-09-09")
+
+    def _fail_spawn(**_kwargs):
+        raise OSError("spawn failed")
+
+    monkeypatch.setattr("ui_server.spawn_daily_research", _fail_spawn)
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), ui_server.ApplicationsUIHandler)
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.15)
+    try:
+        status, data = _post_json(f"http://127.0.0.1:{port}/api/research", {})
+    finally:
+        httpd.shutdown()
+
+    assert status == 500
+    assert data.get("ok") is False
+    loaded = load_research_run()
+    assert loaded.get("running") is False
+    assert "spawn failed" in (loaded.get("message") or "")
 
 
 def test_action_dm_connect_mock(mock_ui_server):

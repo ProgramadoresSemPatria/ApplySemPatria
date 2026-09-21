@@ -182,6 +182,19 @@ def default_ingestion_since(*, now: datetime | None = None) -> str:
     return ingestion_since_datetime(now=now).isoformat()
 
 
+def ingestion_since_for_day(day: str) -> datetime | None:
+    """Ingestion cutoff for a research day (logged, or live prior-run cutoff for today)."""
+    from registry import parse_since  # noqa: WPS433
+
+    meta = load_log().get("days", {}).get(day) or {}
+    since_raw = meta.get("since")
+    if since_raw:
+        return parse_since(str(since_raw), None)
+    if day == today_local():
+        return ingestion_since_datetime()
+    return None
+
+
 def ingestion_window_meta(*, now: datetime | None = None) -> dict[str, Any]:
     """UI + API fields describing the next ingestion window."""
     now = now or datetime.now(TZ)
@@ -307,6 +320,15 @@ def start_research_run(day: str | None = None, *, force: bool = False) -> None:
             "version": 1,
         }
     )
+
+
+def join_research_run(day: str | None = None) -> None:
+    """Attach to an in-progress run for *day*, or start one if none is active."""
+    day = day or today_local()
+    run = load_research_run()
+    if run.get("running") and run.get("day") == day and not research_run_is_stale(run):
+        return
+    start_research_run(day)
 
 
 def set_research_step(step: str, *, detail: str = "") -> None:

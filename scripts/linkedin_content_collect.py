@@ -27,6 +27,12 @@ SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
 
+from linkedin_post_copy_link import (  # noqa: E402
+    backfill_missing_chunk_urls_via_copy_link,
+    extract_ordered_article_post_cards,
+    install_copy_link_hook,
+    resolve_chunk_post_url_via_copy_link,
+)
 from linkedin_posts_merge import (  # noqa: E402
     _html_post_matches_author,
     build_queries,
@@ -41,6 +47,7 @@ from linkedin_posts_merge import (  # noqa: E402
     merge_payload,
     parse_feed_search_posts,
     period_to_recency,
+    pick_post_url_for_new_chunk,
     post_to_job,
     register_author_post_urls,
     resolve_author_post_url,
@@ -127,6 +134,11 @@ async def collect_feed_text(
             stats["auth_mode"] = "cookies"
 
         page = context.pages[0] if context.pages else await context.new_page()
+        await install_copy_link_hook(page)
+        try:
+            await context.grant_permissions(["clipboard-read", "clipboard-write"])
+        except Exception:
+            pass
 
         network_bodies: list[str] = []
 
@@ -171,7 +183,9 @@ async def collect_feed_text(
         ordered_seen: set[str] = set()
         author_url_map: dict[str, str] = {}
         chunk_post_urls: list[str] = []
+        used_chunk_urls: set[str] = set()
         all_html_posts: list[dict[str, Any]] = []
+        last_html = ""
         for i in range(max_scrolls):
             stats["scrolls"] = i + 1
             try:
@@ -194,6 +208,7 @@ async def collect_feed_text(
 
             # capture activity URNs and profile links from HTML for URL fallback
             html = await page.content()
+            last_html = html
             html_posts = extract_feed_posts_from_html(html)
             all_html_posts.extend(html_posts)
             register_author_post_urls(author_url_map, html_posts)
@@ -222,15 +237,22 @@ async def collect_feed_text(
                 register_author_post_urls(author_url_map, [ref])
 
             if len(chunks) > before:
+                article_cards = extract_ordered_article_post_cards(html)
                 for chunk in chunks[before:]:
                     author = _extract_author(chunk)
-                    url, _source = resolve_author_post_url(
+                    url, _source = pick_post_url_for_new_chunk(
                         author,
                         html_posts=html_posts,
+                        article_cards=article_cards,
+                        used_urls=used_chunk_urls,
                         author_url_map=author_url_map,
                         profile_refs=profile_refs,
                         activity_refs=activity_refs,
                     )
+                    if not url:
+                        url = await resolve_chunk_post_url_via_copy_link(page, author)
+                    if url:
+                        used_chunk_urls.add(url)
                     chunk_post_urls.append(url)
                 stale = 0
             else:
@@ -245,13 +267,34 @@ async def collect_feed_text(
         while len(chunk_post_urls) < len(chunks):
             chunk = chunks[len(chunk_post_urls)]
             author = _extract_author(chunk)
-            url, _source = resolve_author_post_url(
+            url, _source = pick_post_url_for_new_chunk(
                 author,
+                html_posts=all_html_posts,
+                article_cards=extract_ordered_article_post_cards(last_html),
+                used_urls=used_chunk_urls,
                 author_url_map=author_url_map,
                 profile_refs=profile_refs,
                 activity_refs=activity_refs,
             )
+            if not url:
+                url = await resolve_chunk_post_url_via_copy_link(page, author)
+            if url:
+                used_chunk_urls.add(url)
             chunk_post_urls.append(url)
+
+        missing_before_copy = sum(1 for u in chunk_post_urls if not (u or "").strip())
+        if missing_before_copy:
+            try:
+                filled = await backfill_missing_chunk_urls_via_copy_link(
+                    page,
+                    chunks,
+                    chunk_post_urls,
+                    limit=min(50, missing_before_copy),
+                    extract_author=_extract_author,
+                )
+                stats["copy_link_filled"] = stats.get("copy_link_filled", 0) + filled
+            except Exception as exc:
+                stats["errors"].append(f"copy_link: {exc}")
 
         final_raw = "Feed post\n\n" + "\nFeed post\n\n".join(chunks)
         aligned_feed_refs: list[dict[str, Any]] = []
@@ -482,13 +525,17 @@ def main() -> int:
     parser.add_argument("--role-keyword", default="ai engineer")
     parser.add_argument("--region", default="latam")
     parser.add_argument("--all-queries", action="store_true", help="Run all 6 config queries")
-    parser.add_argument("--period", type=int, default=7)
+    parser.add_argument("--period", type=int, default=None, help="LinkedIn date filter days (default: infer from --since)")
     parser.add_argument("--max-roles", type=int, default=100, help="Max roles per query")
     parser.add_argument("--max-roles-total", type=int, default=100, help="Stop all-queries after this many roles")
     parser.add_argument("--max-scrolls", type=int, default=MAX_SCROLLS)
     parser.add_argument("--merge", action="store_true", help="Merge into registry + run markdown")
     parser.add_argument("--since", default="7d")
     args = parser.parse_args()
+
+    from registry import infer_period_days_from_since  # noqa: WPS433
+
+    period_days = args.period if args.period is not None else infer_period_days_from_since(args.since)
 
     if not PROFILE_DIR.exists():
         print(f"Missing LinkedIn profile: {PROFILE_DIR}", file=sys.stderr)
@@ -497,7 +544,7 @@ def main() -> int:
     if args.all_queries:
         result = asyncio.run(
             run_all(
-                period_days=args.period,
+                period_days=period_days,
                 max_roles=args.max_roles,
                 max_roles_total=args.max_roles_total,
                 max_scrolls=args.max_scrolls,
@@ -511,7 +558,7 @@ def main() -> int:
                 args.query,
                 args.role_keyword,
                 args.region,
-                period_days=args.period,
+                period_days=period_days,
                 max_roles=args.max_roles,
                 max_scrolls=args.max_scrolls,
                 merge=args.merge,

@@ -30,6 +30,7 @@ from registry import (  # noqa: E402
     REGISTRY_PATH,
     RUNS_DIR,
     job_key,
+    job_posted_on_or_after,
     load_json,
     load_registry,
     merge_jobs,
@@ -620,6 +621,54 @@ def resolve_author_post_url(
         for hp in html_posts:
             if hp.get("author_slug") == slug and hp.get("url"):
                 return hp["url"], "html_card_slug"
+
+    return "", ""
+
+
+def pick_post_url_for_new_chunk(
+    author: str,
+    *,
+    html_posts: list[dict[str, Any]] | None = None,
+    article_cards: list[dict[str, str]] | None = None,
+    used_urls: set[str] | None = None,
+    author_url_map: dict[str, str] | None = None,
+    profile_refs: list[dict[str, Any]] | None = None,
+    activity_refs: list[dict[str, Any]] | None = None,
+) -> tuple[str, str]:
+    """Assign one unused post URL to a newly discovered feed chunk."""
+    html_posts = html_posts or []
+    article_cards = article_cards or []
+    used = used_urls or set()
+
+    for hp in html_posts:
+        url = (hp.get("url") or "").strip()
+        if not url or url in used:
+            continue
+        if _html_post_matches_author(author, hp):
+            return url, "html_card_author"
+
+    author_key = _author_map_key(author)
+    for card in article_cards:
+        url = (card.get("url") or "").strip()
+        if not url or url in used:
+            continue
+        card_author = (card.get("author") or "").strip()
+        if card_author and _author_map_key(card_author) == author_key:
+            return url, "article_card_author"
+        if card_author and (
+            _author_map_key(card_author) in author_key or author_key in _author_map_key(card_author)
+        ):
+            return url, "article_card_author_fuzzy"
+
+    matched_url, matched_source = resolve_author_post_url(
+        author,
+        html_posts=html_posts,
+        author_url_map=author_url_map or {},
+        profile_refs=profile_refs or [],
+        activity_refs=activity_refs or html_posts,
+    )
+    if matched_url and matched_url not in used:
+        return matched_url, matched_source or "author_resolve"
 
     return "", ""
 
@@ -1665,6 +1714,12 @@ def write_linkedin_run_markdown(
     now = datetime.now(LOCAL_TZ)
     new_keys = {job_key(j) for j in new_jobs}
     ranked = rank_jobs_for_table(all_jobs, cfg)
+    since_utc = since.astimezone(timezone.utc) if since.tzinfo else since.replace(tzinfo=timezone.utc)
+    ranked = [
+        j
+        for j in ranked
+        if job_key(j) in new_keys or job_posted_on_or_after(j, since_utc)
+    ]
     sort_mode = cfg.get("table_sort", "date_posted")
 
     eligible = [j for j in ranked if j.get("filter_result") == "eligible"]

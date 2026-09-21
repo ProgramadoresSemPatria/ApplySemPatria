@@ -193,6 +193,33 @@ def index_registry(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {job_key(j): j for j in registry.get("jobs", [])}
 
 
+def infer_period_days_from_since(value: str | None, *, now: datetime | None = None) -> int:
+    """Map ingestion ``since`` to LinkedIn date-posted filter (1–7 days)."""
+    since = parse_since(value, None)
+    min_dt = datetime.min.replace(tzinfo=timezone.utc)
+    if since <= min_dt:
+        return 7
+    now = now or datetime.now(timezone.utc)
+    hours = max(0.0, (now - since.astimezone(timezone.utc)).total_seconds() / 3600)
+    # Allow next-morning research after an afternoon run (~36h).
+    if hours <= 36:
+        return 1
+    days = int(hours / 24) + (1 if hours % 24 > 0 else 0)
+    return min(7, max(1, days))
+
+
+def job_posted_on_or_after(job: dict[str, Any], since: datetime) -> bool:
+    """True when ``posted_at`` (or ``discovered_at`` fallback) is on/after ``since``."""
+    since_utc = since.astimezone(timezone.utc) if since.tzinfo else since.replace(tzinfo=timezone.utc)
+    posted = parse_posted_at(job.get("posted_at"))
+    if posted is not None:
+        return posted >= since_utc
+    discovered = parse_posted_at(job.get("discovered_at"))
+    if discovered is not None:
+        return discovered >= since_utc
+    return True
+
+
 def parse_since(value: str | None, last_run: str | None) -> datetime:
     if not value or value == "last-run":
         if last_run:

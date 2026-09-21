@@ -17,10 +17,10 @@ pytestmark = pytest.mark.playwright
 
 
 @pytest.fixture
-def mock_ui_server_research_linkedin_fail(monkeypatch) -> Generator[tuple[int, dict[str, Any]], None, None]:
+def mock_ui_server_research_linkedin_fail(monkeypatch, tmp_path) -> Generator[tuple[int, dict[str, Any]], None, None]:
     """Research spawn completes with linkedin failure (ok=false)."""
     import ui_server
-    from research_log import finish_research_run, set_research_step, start_research_run
+    from research_log import finish_research_run, join_research_run, set_research_step
 
     fail_msg = (
         "Research failed — LinkedIn ingestion did not complete.\n"
@@ -28,7 +28,7 @@ def mock_ui_server_research_linkedin_fail(monkeypatch) -> Generator[tuple[int, d
     )
 
     def fake_spawn_daily_research(**_kwargs):
-        start_research_run("2026-09-07")
+        join_research_run("2026-09-07")
         set_research_step("linkedin_collect")
         time.sleep(0.35)
         finish_research_run(ok=False, message=fail_msg)
@@ -38,11 +38,13 @@ def mock_ui_server_research_linkedin_fail(monkeypatch) -> Generator[tuple[int, d
         return mock_proc
 
     monkeypatch.setattr(ui_server, "spawn_daily_research", fake_spawn_daily_research)
+    run_path = tmp_path / "state" / "research-run.json"
     yield from _start_mock_ui_server(
         monkeypatch,
         today="2026-09-07",
         has_research_today=False,
         last_research_day="2026-09-06",
+        research_run_path=run_path,
     )
 
 

@@ -151,6 +151,17 @@ def discovered_at(job: dict) -> datetime | None:
     return datetime.fromisoformat(raw)
 
 
+def _research_day_header(research_day: str | None, linkedin_since: datetime) -> str:
+    from research_log import ingestion_since_for_day  # noqa: WPS433
+
+    day = research_day or linkedin_since.date().isoformat()
+    posted_since = ingestion_since_for_day(day) if research_day else None
+    if posted_since is not None:
+        since_label = posted_since.astimezone(TZ).strftime("%Y-%m-%d %H:%M %Z")
+        return f"**Research day:** {day} · discovered this day · posted since {since_label}"
+    return f"**Research day:** {day} · rows discovered on this day only"
+
+
 def priority(job: dict) -> str:
     salary = salary_sort_value(job.get("salary_usd"))
     status = job.get("filter_result")
@@ -300,10 +311,17 @@ def _job_in_table_scope(
     board_since: datetime,
     linkedin_source: bool,
 ) -> bool:
+    from registry import job_posted_on_or_after  # noqa: WPS433
+    from research_log import ingestion_since_for_day  # noqa: WPS433
     from table_window import job_discovered_on_day  # noqa: WPS433
 
     if research_day:
-        return job_discovered_on_day(job, research_day)
+        if not job_discovered_on_day(job, research_day):
+            return False
+        posted_since = ingestion_since_for_day(research_day)
+        if posted_since is not None and not job_posted_on_or_after(job, posted_since):
+            return False
+        return True
     dt = discovered_at(job)
     if not dt:
         return False
@@ -412,7 +430,7 @@ def generate(
         "# Application list — full refresh",
         "",
         f"**Generated:** {now.strftime('%Y-%m-%d %H:%M %Z')}",
-        f"**Research day:** {research_day or linkedin_since.date().isoformat()} · rows discovered on this day only",
+        _research_day_header(research_day, linkedin_since),
         f"**Sort:** latest → oldest",
         f"**Tracks shown:** {track_filter or 'all'}",
         "",

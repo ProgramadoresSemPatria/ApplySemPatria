@@ -19,12 +19,11 @@ def md_cell(value: object) -> str:
 
 def format_posted(job: dict[str, Any]) -> str:
     """Human-readable posted time (LinkedIn-style relative or YYYY-MM-DD)."""
-    label = job.get("posted_label")
-    if label:
-        return str(label).strip()
-
     dt = parse_posted_at(job.get("posted_at"))
     if dt is None:
+        label = job.get("posted_label")
+        if label:
+            return str(label).strip()
         raw = job.get("posted_at")
         if raw not in (None, ""):
             text = str(raw).strip()

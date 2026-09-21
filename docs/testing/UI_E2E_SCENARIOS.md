@@ -244,7 +244,7 @@ Scenario: List header bulk button processes DM roles in the current filter
 
 ## FE-11 — Post URL placeholder vs search fallback ✅
 
-**Automated:** `test_e2e_merge_unresolved_post_url_stays_placeholder_in_registry`, `test_e2e_placeholder_still_falls_back_to_search_url`, `tests/test_linkedin_posts_merge.py` (`test_normalize_unresolved_post_uses_placeholder_not_search`)
+**Automated:** `test_e2e_merge_unresolved_post_url_stays_placeholder_in_registry`, `test_e2e_placeholder_still_falls_back_to_search_url`, `test_e2e_collect_pairs_melissa_via_article_card`, `tests/test_linkedin_post_copy_link.py`, `tests/test_linkedin_posts_merge.py` (`test_normalize_unresolved_post_uses_placeholder_not_search`)
 
 ```gherkin
 Scenario: Unresolved LinkedIn post keeps placeholder in registry
@@ -439,6 +439,22 @@ Scenario: LinkedIn collect failure shows error toast and keeps today pending
 ```
 
 **Automated:** `tests/e2e/test_ui_research_linkedin_failure.py`
+
+---
+
+## UI-25 — Stale failed run does not flash false error toast ✅
+
+```gherkin
+Scenario: Starting research after a prior failed run does not show the old error
+  Given today has no research yet
+  And the last research-run.json shows ok=false with a LinkedIn ingestion failure
+  When I tap "Make a research today"
+  Then I see a "Research started" toast
+  And I do not immediately see the stale LinkedIn ingestion failure toast
+  And today's snapshot loads without replaying the stale failure message
+```
+
+**Automated:** `tests/e2e/test_ui_research_stale_false_failure.py`
 
 ---
 

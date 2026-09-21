@@ -1145,6 +1145,15 @@
     let researchPollTimer = null;
     let researchWasRunning = false;
     let researchExpectRunning = false;
+    let researchSessionStartedAt = null;
+
+    function researchRunBelongsToSession(run) {
+      if (!run) return false;
+      if (researchSessionStartedAt && run.started_at) {
+        return run.started_at === researchSessionStartedAt;
+      }
+      return researchWasRunning || researchExpectRunning;
+    }
 
     function formatResearchElapsed(iso) {
       if (!iso) return "";
@@ -1220,20 +1229,24 @@
       }
 
       stopResearchPoll();
-      const justFinished = researchWasRunning;
+      const justFinished = researchWasRunning && researchRunBelongsToSession(run);
       researchWasRunning = false;
 
       if (justFinished) {
+        researchSessionStartedAt = null;
         await checkServerMeta();
         await loadDays();
         const summaryLine = (run.message || "").split("\n")[0].trim();
         if (run.ok) {
+          serverMeta.has_research_today = true;
+          serverMeta.today = run.day || serverMeta.today;
           showToast(summaryLine || "Research complete", true);
           if (viewingTodayOrLive()) {
             activeDay = run.day || serverMeta.today || activeDay;
             highlightSidebarDay(activeDay);
             try {
               await loadSnapshot(activeDay);
+              syncMainView();
             } catch (e) {
               showToast(String(e.message || e), false);
             }
@@ -1244,6 +1257,8 @@
             showResearchView();
           }
         }
+      } else if (researchSessionStartedAt && run.started_at && run.started_at !== researchSessionStartedAt) {
+        researchSessionStartedAt = null;
       }
 
       if (!researchExpectRunning) {
@@ -2252,6 +2267,7 @@
           return;
         }
         if (res.status === 202 || data.started) {
+          researchSessionStartedAt = data.run?.started_at || null;
           researchWasRunning = true;
           showToast(data.message || "Research started…", true);
           await syncResearchRunState(btn);
@@ -2277,6 +2293,7 @@
       } catch (e) {
         showToast(String(e), false);
       } finally {
+        await syncResearchRunState(btn);
         researchExpectRunning = false;
         await syncResearchRunState(btn);
       }

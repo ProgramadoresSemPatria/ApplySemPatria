@@ -964,6 +964,26 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             same_day_refresh = has_research_today() and not force_full
             table_only = bool(body.get("table_only"))
 
+            from research_log import finish_research_run, start_research_run, today_local  # noqa: E402
+
+            day = today_local()
+            try:
+                start_research_run(day)
+            except Exception as exc:
+                from research_log import ResearchRunInProgressError  # noqa: WPS433
+
+                if isinstance(exc, ResearchRunInProgressError):
+                    self._json(
+                        409,
+                        {
+                            "ok": False,
+                            "message": "Research is already running. Wait for progress to finish.",
+                            "run": research_run_status(),
+                        },
+                    )
+                    return
+                raise
+
             audit_info(
                 "ui_server",
                 "research_spawn",
@@ -982,6 +1002,7 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                     table_only=table_only,
                 )
             except OSError as exc:
+                finish_research_run(ok=False, message=f"Could not start research: {exc}")
                 self._json(500, {"ok": False, "message": f"Could not start research: {exc}"})
                 return
 

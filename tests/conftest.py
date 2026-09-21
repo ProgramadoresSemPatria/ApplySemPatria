@@ -83,8 +83,13 @@ def _start_mock_ui_server(
         "apply_cmds": [],
     }
 
+    if mock_research and research_run_path is None:
+        import tempfile
+
+        research_run_path = Path(tempfile.mkdtemp(prefix="js-research-")) / "research-run.json"
     if research_run_path:
         monkeypatch.setattr("research_log.RUN_PATH", research_run_path)
+    monkeypatch.setattr("research_log.today_local", lambda: today)
 
     def fake_run_action(action: str, jk: str, track=None):
         captured["last_action"] = {"action": action, "job_key": jk, "track": track}
@@ -159,10 +164,10 @@ def _start_mock_ui_server(
         return snapshot if day in {d for d in known if d} else None
 
     def fake_run_daily_research(**_kwargs):
-        from research_log import finish_research_run, set_research_step, start_research_run
+        from research_log import finish_research_run, join_research_run, set_research_step
 
         captured["last_research"] = {"started": True}
-        start_research_run(today)
+        join_research_run(today)
         set_research_step("linkedin_collect")
         time.sleep(research_step_delay)
         set_research_step("generate_table")

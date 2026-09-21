@@ -103,6 +103,19 @@ def test_stale_run_detection(research_log_tmp, monkeypatch):
     start_research_run("2026-09-07")
 
 
+def test_join_research_run_attaches_to_existing(research_log_tmp):
+    from research_log import join_research_run, load_research_run, set_research_step, start_research_run
+
+    start_research_run("2026-09-07")
+    set_research_step("linkedin_collect", detail="collecting")
+    before = load_research_run()
+    join_research_run("2026-09-07")
+    after = load_research_run()
+    assert after["running"] is True
+    assert after["step"] == "linkedin_collect"
+    assert after["started_at"] == before["started_at"]
+
+
 def test_research_run_progress(research_log_tmp):
     from research_log import finish_research_run, research_run_status, set_research_step, start_research_run
 

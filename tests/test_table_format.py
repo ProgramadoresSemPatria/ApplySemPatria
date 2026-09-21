@@ -15,8 +15,13 @@ from table_format import format_posted  # noqa: E402
 
 
 class FormatPostedTests(unittest.TestCase):
-    def test_prefers_posted_label(self):
-        job = {"posted_label": "2h", "posted_at": 1788713604}
+    def test_prefers_posted_at_over_stale_label(self):
+        recent = datetime.now(timezone.utc) - timedelta(hours=3)
+        job = {"posted_label": "2h", "posted_at": int(recent.timestamp())}
+        self.assertEqual(format_posted(job), "3h")
+
+    def test_falls_back_to_posted_label_without_timestamp(self):
+        job = {"posted_label": "2h"}
         self.assertEqual(format_posted(job), "2h")
 
     def test_epoch_seconds_relative(self):
@@ -34,10 +39,11 @@ class FormatPostedTests(unittest.TestCase):
         self.assertEqual(format_posted(job), "2026-08-14")
 
     def test_himalayas_style_epoch_not_raw_number(self):
-        job = {"posted_at": 1788713604}
+        recent = datetime.now(timezone.utc) - timedelta(hours=5)
+        job = {"posted_at": int(recent.timestamp())}
         result = format_posted(job)
         self.assertFalse(result.isdigit() or len(result) > 8)
-        self.assertNotEqual(result, "1788713604")
+        self.assertNotEqual(result, str(job["posted_at"]))
 
     def test_missing_posted(self):
         self.assertEqual(format_posted({}), "—")

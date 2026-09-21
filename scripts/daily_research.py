@@ -20,9 +20,9 @@ from audit_log import info as audit_info  # noqa: E402
 from audit_log import warn as audit_warn  # noqa: E402
 from research_log import (  # noqa: E402
     finish_research_run,
+    join_research_run,
     mark_research_day,
     set_research_step,
-    start_research_run,
     today_local,
 )
 
@@ -44,6 +44,7 @@ STEP_TIMEOUT_SEC = {
     "discover": int(os.environ.get("JOBSEARCH_DISCOVER_TIMEOUT", "900")),
     "generate_table": int(os.environ.get("JOBSEARCH_TABLE_TIMEOUT", "600")),
 }
+STEP_HEARTBEAT_SEC = int(os.environ.get("JOBSEARCH_RESEARCH_HEARTBEAT_SEC", "30"))
 
 
 def _linkedin_steps_planned(*, table_only: bool, skip_linkedin: bool, skip_linkedin_jobs: bool) -> bool:
@@ -108,15 +109,33 @@ def _run_step(
         timeout_sec=timeout,
     )
     t0 = time.monotonic()
-    try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(cwd or ROOT),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired:
+    proc = subprocess.Popen(
+        cmd,
+        cwd=str(cwd or ROOT),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    last_ping = t0
+    timed_out = False
+    while True:
+        ret = proc.poll()
+        if ret is not None:
+            break
+        elapsed = time.monotonic() - t0
+        if elapsed > timeout:
+            timed_out = True
+            proc.kill()
+            proc.wait()
+            break
+        if STEP_HEARTBEAT_SEC > 0 and time.monotonic() - last_ping >= STEP_HEARTBEAT_SEC:
+            ping_detail = detail or f"running {int(elapsed)}s"
+            set_research_step(step_key, detail=ping_detail)
+            last_ping = time.monotonic()
+        time.sleep(1)
+
+    stdout, stderr = proc.communicate()
+    if timed_out:
         duration_ms = int((time.monotonic() - t0) * 1000)
         audit_error(
             "daily_research",
@@ -128,6 +147,8 @@ def _run_step(
         )
         errors.append(f"{step_key}: timed out after {timeout}s")
         return None
+
+    proc = subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
     duration_ms = int((time.monotonic() - t0) * 1000)
     if proc.returncode == 0:
         audit_info(
@@ -188,7 +209,7 @@ def run_daily_research(
         prev_steps = list(load_log().get("days", {}).get(day, {}).get("steps") or [])
 
     try:
-        start_research_run(day)
+        join_research_run(day)
     except Exception as exc:
         from research_log import ResearchRunInProgressError  # noqa: WPS433
 
@@ -236,6 +257,19 @@ def run_daily_research(
                     if proc is not None and proc.returncode != 0:
                         tail = (proc.stderr or proc.stdout or "").strip().splitlines()
                         errors.append("LinkedIn collect: " + (tail[-1] if tail else f"exit {proc.returncode}"))
+                    elif proc is not None and proc.returncode == 0:
+                        for repair_script, repair_key in (
+                            ("repair_linkedin_urls.py", "repair_post_urls"),
+                            ("repair_registry_fields.py", "repair_registry_fields"),
+                        ):
+                            repair_path = SCRIPTS / repair_script
+                            if repair_path.is_file():
+                                _run_step(
+                                    [PY, str(repair_path)],
+                                    step_key=repair_key,
+                                    steps=steps,
+                                    errors=errors,
+                                )
                 else:
                     errors.append("LinkedIn collect script missing — skipped")
 

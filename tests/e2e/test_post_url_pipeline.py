@@ -35,6 +35,7 @@ from registry import REGISTRY_PATH, job_key, load_registry, save_registry  # noq
 from tests.helpers.example_configs import load_example_linkedin_config  # noqa: E402
 
 MONIKA_URN = "7503481913303584769"
+MELISSA_URN = MONIKA_URN  # shared fixture activity id
 KIMBERLY_URN = "7503200610150973442"
 MONIKA_FEED = f"https://www.linkedin.com/feed/update/urn:li:activity:{MONIKA_URN}/"
 KIMBERLY_FEED = f"https://www.linkedin.com/feed/update/urn:li:activity:{KIMBERLY_URN}/"
@@ -178,6 +179,51 @@ async def test_e2e_collect_resolves_two_posts_by_author(monkeypatch):
     by_author = {p.get("author"): p.get("url") for p in posts}
     assert MONIKA_URN in by_author["Monika Kuqi"]
     assert KIMBERLY_URN in by_author["Kimberly Membrillo"]
+
+
+@pytest.mark.asyncio
+async def test_e2e_collect_pairs_melissa_via_article_card(monkeypatch):
+    """Article-card author match (Copy link menu card) → chunk URL for Melissa Oliveira."""
+    html = FIXTURES.joinpath("content_search_melissa_card.html").read_text(encoding="utf-8")
+    inner = (
+        "Feed post\n\n"
+        "Melissa Oliveira\n\n"
+        "5d • \n\nFollow\n\n"
+        "Full-Stack & AI Engineer USD $5.6k-7.5k / month\n"
+    )
+    page = _mock_playwright_page(scrolls=[{"inner": inner, "html": html}] * 6)
+    context = _mock_playwright_context(page)
+    browser = MagicMock()
+    browser.new_context = AsyncMock(return_value=context)
+    pw = MagicMock()
+    pw.chromium.launch = AsyncMock(return_value=browser)
+    pw.__aenter__ = AsyncMock(return_value=pw)
+    pw.__aexit__ = AsyncMock(return_value=False)
+
+    monkeypatch.setattr("linkedin_content_collect.load_cookies", lambda: [])
+    monkeypatch.setattr("asyncio.sleep", AsyncMock())
+    monkeypatch.setattr(
+        "linkedin_content_collect.backfill_missing_chunk_urls_via_copy_link",
+        AsyncMock(return_value=0),
+    )
+    with patch("patchright.async_api.async_playwright", return_value=pw):
+        raw, refs, stats = await collect_feed_text(
+            "https://www.linkedin.com/search/results/content/?keywords=%22Melissa%20Oliveira%22%20%22Ai%20Engineer%22",
+            max_scrolls=2,
+            max_stale=1,
+            pause=0,
+        )
+
+    posts = parse_feed_search_posts(
+        {
+            "sections": {"search_results": raw},
+            "references": {"search_results": refs},
+            "chunk_post_urls": stats.get("chunk_post_urls") or [],
+        }
+    )
+    assert len(posts) == 1
+    assert MELISSA_URN in posts[0]["url"]
+    assert stats["chunk_urls_resolved"] >= 1
 
 
 def test_e2e_network_harvest_populates_author_map_for_parse():
