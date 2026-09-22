@@ -100,6 +100,10 @@ def _start_mock_ui_server(
         research_run_path = Path(tempfile.mkdtemp(prefix="js-research-")) / "research-run.json"
     if research_run_path:
         monkeypatch.setattr("research_log.RUN_PATH", research_run_path)
+        monkeypatch.setattr(
+            "research_log.LOG_PATH",
+            research_run_path.parent / "research-log.json",
+        )
     monkeypatch.setattr("research_log.today_local", lambda: today)
 
     def fake_run_action(action: str, jk: str, track=None):

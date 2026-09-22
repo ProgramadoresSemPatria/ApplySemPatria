@@ -1147,12 +1147,19 @@
     let researchExpectRunning = false;
     let researchSessionStartedAt = null;
 
-    function researchRunBelongsToSession(run) {
-      if (!run) return false;
-      if (researchSessionStartedAt && run.started_at) {
-        return run.started_at === researchSessionStartedAt;
+    function bindResearchSession(run) {
+      if (run?.running && run.started_at && !researchSessionStartedAt) {
+        researchSessionStartedAt = run.started_at;
       }
-      return researchWasRunning || researchExpectRunning;
+    }
+
+    function researchRunBelongsToSession(run) {
+      if (!run || !run.started_at || !researchSessionStartedAt) return false;
+      return run.started_at === researchSessionStartedAt;
+    }
+
+    function shouldShowResearchProgress() {
+      return viewingTodayOrLive() && (!serverMeta.has_research_today || researchWasRunning);
     }
 
     function formatResearchElapsed(iso) {
@@ -1191,7 +1198,7 @@
       const elapsed = formatResearchElapsed(run.started_at);
       btn.disabled = true;
       btn.textContent = elapsed ? `Researching · ${elapsed}` : "Researching…";
-      if (viewingTodayOrLive() && needsResearchPrompt()) {
+      if (shouldShowResearchProgress()) {
         researchProgressText.hidden = false;
         researchProgressText.textContent = `${step}${detail}${elapsed ? ` · ${elapsed}` : ""}`;
       }
@@ -1215,9 +1222,10 @@
       if (run.running) {
         researchExpectRunning = false;
         researchWasRunning = true;
+        bindResearchSession(run);
         applyResearchProgress(run, btn);
         ensureResearchPoll(btn);
-        if (viewingTodayOrLive() && needsResearchPrompt()) {
+        if (viewingTodayOrLive()) {
           showResearchView();
         }
         return;
@@ -1228,8 +1236,16 @@
         return;
       }
 
-      stopResearchPoll();
       const justFinished = researchWasRunning && researchRunBelongsToSession(run);
+      if (!justFinished) {
+        stopResearchPoll();
+        if (!researchWasRunning) {
+          resetResearchButton(btn);
+        }
+        return;
+      }
+
+      stopResearchPoll();
       researchWasRunning = false;
 
       if (justFinished) {
@@ -1238,11 +1254,13 @@
         await loadDays();
         const summaryLine = (run.message || "").split("\n")[0].trim();
         if (run.ok) {
-          serverMeta.has_research_today = true;
-          serverMeta.today = run.day || serverMeta.today;
+          if (run.day && run.day === serverMeta.today) {
+            serverMeta.has_research_today = true;
+          }
           showToast(summaryLine || "Research complete", true);
           if (viewingTodayOrLive()) {
-            activeDay = run.day || serverMeta.today || activeDay;
+            const day = serverMeta.today || activeDay;
+            activeDay = day;
             highlightSidebarDay(activeDay);
             try {
               await loadSnapshot(activeDay);
@@ -2249,11 +2267,13 @@
         return;
       }
       if (btn.disabled) return;
+      researchSessionStartedAt = null;
+      researchWasRunning = false;
       researchExpectRunning = true;
       btn.disabled = true;
       btn.textContent = "Researching…";
       ensureResearchPoll(btn);
-      syncResearchRunState(btn);
+      await syncResearchRunState(btn);
       try {
         const res = await fetch("/api/research", {
           method: "POST",
@@ -2293,7 +2313,6 @@
       } catch (e) {
         showToast(String(e), false);
       } finally {
-        await syncResearchRunState(btn);
         researchExpectRunning = false;
         await syncResearchRunState(btn);
       }
@@ -2407,9 +2426,14 @@
       const run = await fetchResearchStatus();
       if (run?.running) {
         researchWasRunning = true;
+        bindResearchSession(run);
         activeDay = serverMeta.today || "live";
         highlightSidebarDay(activeDay);
-        syncMainView();
+        if (viewingTodayOrLive()) {
+          showResearchView();
+        } else {
+          syncMainView();
+        }
         await syncResearchRunState();
         return;
       }
