@@ -78,6 +78,7 @@ def test_linkedin_jobs_timeout_still_completes_table(research_env, monkeypatch):
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr("daily_research._run_step", mock_run_step)
+    monkeypatch.setattr("browser_session.headless_chromium_ready_for_collect", lambda: True)
 
     result = run_daily_research(skip_linkedin=True, since="7d")
     assert result["ok"] is True

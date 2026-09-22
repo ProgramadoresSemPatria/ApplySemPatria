@@ -62,6 +62,7 @@ def test_job_to_card_includes_chameleon(monkeypatch, tmp_path: Path):
         ],
         "tech_lexicon": ["python", "rag"],
     }
+    monkeypatch.setattr("track_store.load_chameleon_config", lambda track_id=None: cfg)
     monkeypatch.setattr("resume_chameleon.load_chameleon_config", lambda track_id=None: cfg)
 
     job = linkedin_dm_job()
