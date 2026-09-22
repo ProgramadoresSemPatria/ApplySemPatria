@@ -18,6 +18,15 @@ BROWSERS_PATH = Path.home() / ".linkedin-mcp/patchright-browsers"
 PROFILE_DIR = Path.home() / ".linkedin-mcp/profile"
 COOKIES_PATH = Path.home() / ".linkedin-mcp/cookies.json"
 
+_HEADED_COLLECT_ENV = "JOBSEARCH_COLLECT_HEADED"
+
+
+def linkedin_collect_headless() -> bool:
+    """Return False when ``JOBSEARCH_COLLECT_HEADED=1`` (visible Chrome for ingestion)."""
+    raw = os.environ.get(_HEADED_COLLECT_ENV, "").strip().lower()
+    return raw not in ("1", "true", "yes", "on")
+
+
 # Headless LinkedIn collectors require Patchright's chromium_headless_shell bundle.
 HEADLESS_SHELL_EXECUTABLE_CANDIDATES = (
     "chrome-headless-shell-mac-arm64/chrome-headless-shell",
@@ -121,6 +130,10 @@ def headless_chromium_executable_for_collect() -> Path | None:
 
 
 def headless_chromium_ready_for_collect() -> bool:
+    if not linkedin_collect_headless():
+        return resolve_chrome_executable() is not None or bool(
+            os.environ.get("JOBSEARCH_BROWSER_CHANNEL", "chrome").strip()
+        )
     return headless_chromium_executable_for_collect() is not None
 
 

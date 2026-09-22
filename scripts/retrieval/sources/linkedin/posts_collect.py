@@ -93,7 +93,12 @@ async def collect_feed_text(
     import os
 
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(BROWSERS_PATH)
+    from browser_session import linkedin_collect_headless  # noqa: WPS433
     from patchright.async_api import async_playwright
+
+    headless = linkedin_collect_headless()
+    if not headless and PROFILE_DIR.exists():
+        use_profile = True
 
     seen_keys: set[str] = set()
     chunks: list[str] = []
@@ -107,7 +112,7 @@ async def collect_feed_text(
     cookies = load_cookies()
 
     async with async_playwright() as p:
-        launch_kwargs = browser_launch_kwargs(headless=True)
+        launch_kwargs = browser_launch_kwargs(headless=headless)
 
         context = None
         if use_profile:
@@ -530,7 +535,15 @@ def main() -> int:
     parser.add_argument("--max-scrolls", type=int, default=MAX_SCROLLS)
     parser.add_argument("--merge", action="store_true", help="Merge into registry + run markdown")
     parser.add_argument("--since", default="7d")
+    parser.add_argument(
+        "--headed",
+        action="store_true",
+        help="Visible Chrome window (or set JOBSEARCH_COLLECT_HEADED=1)",
+    )
     args = parser.parse_args()
+
+    if args.headed:
+        os.environ["JOBSEARCH_COLLECT_HEADED"] = "1"
 
     from registry import infer_period_days_from_since  # noqa: WPS433
 

@@ -45,8 +45,13 @@ CARD_PAUSE = 0.12
 
 
 async def _launch_context(p: Any, *, use_profile: bool) -> tuple[Any, dict[str, Any]]:
+    from browser_session import linkedin_collect_headless  # noqa: WPS433
+
     stats: dict[str, Any] = {"errors": [], "auth_mode": "cookies"}
-    launch_kwargs = browser_launch_kwargs(headless=True)
+    headless = linkedin_collect_headless()
+    if not headless and PROFILE_DIR.exists():
+        use_profile = True
+    launch_kwargs = browser_launch_kwargs(headless=headless)
     cookies = load_cookies()
 
     context = None
@@ -592,11 +597,19 @@ def main() -> int:
     parser.add_argument("--since", default="1d")
     parser.add_argument("--use-profile", action="store_true")
     parser.add_argument(
+        "--headed",
+        action="store_true",
+        help="Visible Chrome window (or set JOBSEARCH_COLLECT_HEADED=1)",
+    )
+    parser.add_argument(
         "--backfill-ids",
         default="",
         help="Comma-separated /jobs/view/{id} to fetch directly after search",
     )
     args = parser.parse_args()
+
+    if args.headed:
+        os.environ["JOBSEARCH_COLLECT_HEADED"] = "1"
 
     cookies = Path.home() / ".linkedin-mcp" / "cookies.json"
     if not cookies.exists() and not PROFILE_DIR.exists():

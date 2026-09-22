@@ -10,8 +10,16 @@ from browser_session import (  # noqa: E402
     browser_launch_kwargs,
     headless_chromium_missing_message,
     headless_chromium_ready_for_collect,
+    linkedin_collect_headless,
     load_cookies,
 )
+
+
+def test_linkedin_collect_headless_env(monkeypatch):
+    monkeypatch.delenv("JOBSEARCH_COLLECT_HEADED", raising=False)
+    assert linkedin_collect_headless() is True
+    monkeypatch.setenv("JOBSEARCH_COLLECT_HEADED", "1")
+    assert linkedin_collect_headless() is False
 
 
 def test_browser_launch_kwargs():

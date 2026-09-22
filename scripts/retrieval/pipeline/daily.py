@@ -57,12 +57,15 @@ def _ensure_headless_browser(*, step_key: str, steps: list[str], errors: list[st
     from browser_session import (  # noqa: WPS433
         headless_chromium_missing_message,
         headless_chromium_ready_for_collect,
+        linkedin_collect_headless,
     )
 
     if step_key not in steps:
         steps.append(step_key)
     set_research_step(step_key, detail="checking browser")
     if headless_chromium_ready_for_collect():
+        if not linkedin_collect_headless():
+            set_research_step(step_key, detail="headed Chrome ready")
         return True
     msg = headless_chromium_missing_message(for_collect=True)
     errors.append(f"{step_key}: {msg}")
