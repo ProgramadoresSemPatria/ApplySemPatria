@@ -98,27 +98,6 @@ def _pick_fields(data: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {k: data.get(k, "") for k in keys}
 
 
-def _nested_get(data: dict[str, Any], dotted: str) -> Any:
-    cur: Any = data
-    for part in dotted.split("."):
-        if not isinstance(cur, dict):
-            return None
-        cur = cur.get(part)
-    return cur
-
-
-def _nested_set(data: dict[str, Any], dotted: str, value: Any) -> None:
-    parts = dotted.split(".")
-    cur = data
-    for part in parts[:-1]:
-        nxt = cur.get(part)
-        if not isinstance(nxt, dict):
-            nxt = {}
-            cur[part] = nxt
-        cur = nxt
-    cur[parts[-1]] = value
-
-
 def load_config_bundle(track_id: str | None = None) -> dict[str, Any]:
     tid = resolve_track(track_id)
     profile = load_profile(tid)

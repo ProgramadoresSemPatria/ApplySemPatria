@@ -1,0 +1,7 @@
+{
+  "line_rate_min": 1.0,
+  "branch_rate_min": 1.0,
+  "report_top_gaps": 20,
+  "exclude": [],
+  "modules": {}
+}

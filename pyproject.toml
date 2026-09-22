@@ -26,6 +26,7 @@ omit = [
   "*/tests/*",
   "*/__pycache__/*",
   "scripts/check_coverage_thresholds.py",
+  "scripts/check_retrieval_coverage.py",
 ]
 
 [tool.coverage.report]

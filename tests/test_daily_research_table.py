@@ -22,6 +22,7 @@ def research_env(tmp_path, monkeypatch):
     monkeypatch.setattr("research_log.ROOT", tmp_path)
     monkeypatch.setattr("table_paths.APPLICATIONS_TABLES_DIR", tables)
     monkeypatch.setattr("research_log.today_local", lambda: "2026-09-10")
+    monkeypatch.setattr("retrieval.pipeline.daily.today_local", lambda: "2026-09-10")
     monkeypatch.setattr("research_log.has_research", lambda _day: False)
     monkeypatch.setattr("track_readiness.ready_track_ids", lambda _op: ["ai-engineer"])
     monkeypatch.setattr("track_store.resolve_track", lambda t: t or "ai-engineer")
@@ -47,6 +48,7 @@ def test_daily_research_generate_uses_research_day(research_env, monkeypatch):
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     monkeypatch.setattr("daily_research._run_step", mock_run_step)
+    monkeypatch.setattr("daily_research.today_local", lambda: "2026-09-10")
     monkeypatch.setattr("browser_session.headless_chromium_ready_for_collect", lambda: True)
 
     result = run_daily_research(skip_linkedin=True, skip_discover=True, since="7d")

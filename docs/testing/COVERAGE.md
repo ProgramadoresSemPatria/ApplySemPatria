@@ -8,6 +8,7 @@ We treat coverage as a **regression gate**, not a vanity metric. CI fails if mea
 |---------|-------|------------|
 | `./scripts/run_tests.sh coverage` | Unit tier only → `scripts/` | **Yes** (unit job) |
 | `./scripts/run_tests.sh coverage-all` | Unit + browser (HAR, HTML, UI e2e) | Local only |
+| `./scripts/run_tests.sh retrieval-coverage` | Unit + HAR + browser on `scripts/retrieval/` only | Local (100% gate) |
 
 Reports:
 
@@ -83,6 +84,31 @@ Suggested ladder:
 | Discovery refactor | 25% | 55% | unit tests on collectors |
 
 Do **not** set `fail_under` to a target you have not measured yet — that blocks every PR until tests land.
+
+## Retrieval layer (100% gate)
+
+All external I/O lives under `scripts/retrieval/`. A dedicated gate measures **only** that tree:
+
+```bash
+PY=.venv-test/bin/python ./scripts/run_tests.sh retrieval-coverage
+open htmlcov-retrieval/index.html
+```
+
+After pytest-cov, `scripts/check_retrieval_coverage.py` reads `coverage-retrieval.json` and fails if line or branch rates drop below **100%**. On failure it prints the largest per-file gaps (missed line numbers).
+
+| File | Purpose |
+|------|---------|
+| `coverage-retrieval.json` | Floors (`line_rate_min`, `branch_rate_min`, optional per-module overrides) |
+| `scripts/check_retrieval_coverage.py` | Parse `coverage.xml`, scope to `retrieval/`, enforce floors |
+| `tests/retrieval/` | Targeted unit tests for ingest/apply modules |
+
+Report only (no fail):
+
+```bash
+./scripts/run_tests.sh retrieval-coverage-report
+```
+
+CI still runs the fast unit tier (`coverage`); run `retrieval-coverage` locally before merging retrieval changes.
 
 ## What coverage does not prove
 

@@ -69,7 +69,7 @@ def test_set_form_status_api(mock_ui_server, monkeypatch, tmp_path: Path):
     job["apply_url"] = "https://example.com/apply/acme"
     from registry import job_key as registry_job_key
 
-    jk = "ai-engineer|linkedin|acme ai|ai engineer"
+    jk = registry_job_key(job)
 
     port, _captured = mock_ui_server
 

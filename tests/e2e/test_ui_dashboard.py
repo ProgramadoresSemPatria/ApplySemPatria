@@ -229,7 +229,7 @@ def test_bulk_dm_includes_review_dm_and_shows_connect_count(mock_ui_server_revie
 def test_bulk_dm_button_passes_all_dm_job_keys(mock_ui_server_multi_dm, page: Page):
     port, captured = mock_ui_server_multi_dm
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
-    expect(page.locator("#bulkDmBtn")).to_contain_text("Connect · check · send DMs")
+    expect(page.locator("#bulkDmBtn .bulk-btn-label")).to_contain_text("Connect (2)")
     page.locator("#bulkDmBtn").click()
     bulk = wait_for_mock_bulk_action(captured, page)
     assert bulk["action"] == "dm_process_all"

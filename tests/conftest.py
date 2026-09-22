@@ -39,6 +39,17 @@ def isolate_audit_log(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     reset_audit_log()
 
 
+@pytest.fixture(autouse=True)
+def mock_browser_deps_in_unit_tests(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Unit tests must not require Patchright Chromium on the CI runner."""
+    skip_markers = ("playwright", "browser", "har", "integration")
+    if any(request.node.get_closest_marker(name) for name in skip_markers):
+        return
+    import ui_server
+
+    monkeypatch.setattr(ui_server, "_browser_deps_ok", lambda: (True, ""))
+
+
 @pytest.fixture
 def linkedin_html_dir() -> Path:
     return FIXTURES / "linkedin"
@@ -251,14 +262,20 @@ def _start_mock_ui_server(
                 dm_data = {"profiles": {}}
 
         monkeypatch.setattr(dm_state_mod, "load", lambda: dm_data)
-        monkeypatch.setattr("registry.load_registry", lambda: {"jobs": [reg_job]})
+        registry_payload = {"jobs": [reg_job]}
+        monkeypatch.setattr("registry.load_registry", lambda: registry_payload)
+        import dm_apply
+
+        monkeypatch.setattr(dm_apply, "load_registry", lambda: registry_payload)
         monkeypatch.setattr(ui_server, "_browser_deps_ok", lambda: (True, ""))
         monkeypatch.setattr(ui_server, "_run_apply_cmd", fake_run_apply_cmd)
-        monkeypatch.setattr(
-            ui_server,
-            "_find_job",
-            lambda jk, rk=reg_job, rjk=reg_jk: rk if jk == rjk else None,
-        )
+        resolved_jk = registry_job_key(reg_job)
+        job_aliases = {reg_jk, resolved_jk}
+
+        def fake_find_job_for_bulk(jk: str, *, rk=reg_job, aliases=job_aliases):
+            return rk if jk in aliases else None
+
+        monkeypatch.setattr(ui_server, "_find_job", fake_find_job_for_bulk)
     monkeypatch.setattr(applications_ui_data, "refresh_live_snapshot", fake_refresh)
     monkeypatch.setattr(applications_ui_data, "list_snapshot_days", lambda: sidebar_days)
     monkeypatch.setattr(applications_ui_data, "load_snapshot", fake_load_snapshot)

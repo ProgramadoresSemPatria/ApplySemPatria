@@ -30,6 +30,8 @@ def isolated_track_tree(tmp_path, monkeypatch):
                 "google_config_path": "tracks/ai-engineer/google-jobs-config.json",
                 "email_config_path": "tracks/ai-engineer/email-apply-config.json",
                 "form_answers_path": "tracks/ai-engineer/form-answers.json",
+                "linkedin_jobs_config_path": "tracks/ai-engineer/linkedin-jobs-config.json",
+                "chameleon_config_path": "tracks/ai-engineer/resume-chameleon-config.json",
             }
         },
     }
@@ -83,6 +85,23 @@ def isolated_track_tree(tmp_path, monkeypatch):
     )
     (track_dir / "form-answers.json").write_text(
         json.dumps({"rules": [{"q": "email", "profile_key": "email"}]}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (track_dir / "linkedin-jobs-config.json").write_text(
+        json.dumps(
+            {
+                "roles": ["ai engineer"],
+                "region_suffixes": ["latam"],
+                "default_max_pages": 10,
+                "jobs_collect_enabled": True,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (track_dir / "resume-chameleon-config.json").write_text(
+        json.dumps({"enabled": True, "masters": []}, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -195,3 +214,83 @@ def test_load_config_bundle_preview_fallback(isolated_track_tree, monkeypatch):
     monkeypatch.setattr("linkedin_configure.preview_form_link_message", boom)
     bundle = load_config_bundle("ai-engineer")
     assert bundle["previews"]["dm_message"]["body"] == "Hi {role}"
+
+
+def test_save_linkedin_jobs_section(isolated_track_tree):
+    from config_ui_data import load_config_bundle, save_config_section
+
+    bundle = save_config_section(
+        "ai-engineer",
+        "linkedin_jobs",
+        {"default_max_pages": 3, "jobs_collect_enabled": False, "salary_filter": "$120k+"},
+    )
+    assert bundle["linkedin_jobs"]["default_max_pages"] == 3
+    assert bundle["linkedin_jobs"]["jobs_collect_enabled"] is False
+    assert bundle["linkedin_jobs"]["salary_filter"] == "$120k+"
+
+
+def test_save_email_bool_fields(isolated_track_tree):
+    from config_ui_data import load_config_bundle, save_config_section
+
+    save_config_section(
+        "ai-engineer",
+        "email",
+        {
+            "email_apply_enabled": False,
+            "email_message_confirmed": True,
+            "skip_if_already_applied_in_applika": False,
+            "log_to_applika": False,
+            "rate_limit_seconds": 60,
+        },
+    )
+    email = load_config_bundle("ai-engineer")["email"]
+    assert email["email_apply_enabled"] is False
+    assert email["skip_if_already_applied_in_applika"] is False
+    assert email["rate_limit_seconds"] == 60
+
+
+def test_save_board_himalayas_max_age(isolated_track_tree):
+    from config_ui_data import load_config_bundle, save_config_section
+
+    save_config_section("ai-engineer", "board", {"himalayas_max_age_days": 21})
+    assert load_config_bundle("ai-engineer")["board"]["himalayas_max_age_days"] == 21
+
+
+def test_save_profile_skips_private_keys(isolated_track_tree):
+    from config_ui_data import load_config_bundle, save_config_section
+
+    save_config_section(
+        "ai-engineer",
+        "profile",
+        {"identity": {"_internal": "skip", "full_name": "Visible Name"}},
+    )
+    assert load_config_bundle("ai-engineer")["profile"]["identity"]["full_name"] == "Visible Name"
+
+
+def test_save_chameleon_masters(isolated_track_tree, monkeypatch, tmp_path):
+    from config_ui_data import load_config_bundle, save_config_section
+
+    master = tmp_path / "master.docx"
+    master.write_bytes(b"docx")
+    monkeypatch.setattr("resume_chameleon.sync_master_keywords", lambda tid: None)
+    save_config_section(
+        "ai-engineer",
+        "chameleon",
+        {
+            "enabled": True,
+            "download_dir": "~/Downloads",
+            "headline_max_chars": 300,
+            "masters": [
+                {
+                    "path": str(master),
+                    "label": "AI Master",
+                    "keywords": ["python", "rag"],
+                }
+            ],
+        },
+    )
+    ch = load_config_bundle("ai-engineer")["chameleon"]
+    assert ch["enabled"] is True
+    assert ch["headline_max_chars"] == 300
+    assert len(ch["masters"]) == 1
+    assert ch["masters"][0]["default"] is True

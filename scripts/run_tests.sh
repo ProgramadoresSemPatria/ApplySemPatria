@@ -73,6 +73,27 @@ assert_coverage_thresholds() {
   fi
 }
 
+RETRIEVAL_COV_ARGS=(
+  --cov=scripts/retrieval
+  --cov-branch
+  --cov-report=term-missing:skip-covered
+  --cov-report=html:htmlcov-retrieval
+  --cov-report=xml:coverage.xml
+)
+
+run_retrieval_coverage() {
+  echo "=== retrieval coverage (unit + HAR + browser, not integration/playwright UI) ==="
+  rm -f .coverage coverage.xml
+  "$PY" -m pytest tests/ -m "not integration and not playwright" "${RETRIEVAL_COV_ARGS[@]}"
+  "$PY" scripts/check_retrieval_coverage.py coverage.xml
+}
+
+print_retrieval_coverage_summary() {
+  if [[ -f coverage.xml ]]; then
+    "$PY" scripts/check_retrieval_coverage.py coverage.xml --report-only
+  fi
+}
+
 verify_hars() {
   echo "=== verify HAR fixtures ==="
   for name in profile-connect profile-message profile-pending profile-connect-more profile-connected profile-connected-only; do
@@ -113,6 +134,14 @@ case "$TIER" in
     assert_coverage_thresholds
     echo "HTML report: htmlcov/index.html"
     ;;
+  retrieval-coverage)
+    run_retrieval_coverage
+    print_retrieval_coverage_summary
+    echo "HTML report: htmlcov-retrieval/index.html"
+    ;;
+  retrieval-coverage-report)
+    print_retrieval_coverage_summary
+    ;;
   playwright|har)
     for i in $(seq 1 "$REPEATS"); do
       echo "=== browser run $i/$REPEATS ==="
@@ -128,7 +157,7 @@ case "$TIER" in
     run_playwright
     ;;
   *)
-    echo "Usage: $0 {unit|playwright|har|verify-hars|coverage|coverage-all|all|stable}" >&2
+    echo "Usage: $0 {unit|playwright|har|verify-hars|coverage|coverage-all|retrieval-coverage|retrieval-coverage-report|all|stable}" >&2
     exit 1
     ;;
 esac

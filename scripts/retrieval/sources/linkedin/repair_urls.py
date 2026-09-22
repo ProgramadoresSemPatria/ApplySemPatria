@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 from retrieval._paths import ROOT, SCRIPTS
