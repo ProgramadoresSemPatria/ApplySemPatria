@@ -90,7 +90,22 @@ discover: require-install ## Discover board jobs (TRACK=, SINCE=)
 table: require-install ## Refresh applications table + UI snapshot
 	$(JOBSEARCH) table
 
-ui: require-install ## Applications dashboard (PORT=8765 default)
+.PHONY: ui-sync-main
+ui-sync-main: ## Fetch and fast-forward local main (used by make ui)
+	@if [ "$(UI_SKIP_GIT)" = "1" ]; then \
+	  echo "○ UI_SKIP_GIT=1 — skipping git sync"; \
+	elif ! git rev-parse --git-dir >/dev/null 2>&1; then \
+	  echo "○ Not a git repo — skipping git sync"; \
+	elif [ -n "$$(git status --porcelain)" ]; then \
+	  echo "✗ Uncommitted changes — commit, stash, or run: make ui UI_SKIP_GIT=1"; \
+	  exit 1; \
+	else \
+	  git fetch origin main && \
+	  git checkout main && \
+	  git pull --ff-only origin main; \
+	fi
+
+ui: require-install ui-sync-main ## Pull main, then dashboard (PORT=8765)
 	$(JOBSEARCH) ui --port $(PORT)
 
 tracks: require-install ## List tracks and readiness
@@ -137,6 +152,10 @@ reset-data: ## Delete local data; backup first (CONFIRM=1 required)
 
 audit-ingestion: ## Snapshot research status + registry (see logs/ingestion-watch.log)
 	bash scripts/ingestion_audit.sh
+
+.PHONY: support-bundle
+support-bundle: require-install ## Redacted debug JSON under runs/ (same as UI download)
+	@$(PYTHON) scripts/support_bundle.py
 
 fresh-start: reset-data bootstrap ## Wipe data + copy track template (CONFIRM=1)
 	@echo ""
