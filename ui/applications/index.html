@@ -417,6 +417,14 @@
       font-size: 0.95rem;
     }
 
+    .research-prompt-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
     .research-prompt .research-progress {
       color: var(--accent);
       font-size: 0.88rem;
@@ -443,6 +451,26 @@
     }
 
     .research-run-btn:disabled { opacity: 0.55; cursor: wait; }
+
+    .debug-report-btn {
+      margin-top: 12px;
+      margin-left: 10px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .debug-report-btn:hover { color: var(--text); border-color: var(--border-bright); }
+
+    .list-header-actions .debug-report-btn {
+      margin-top: 0;
+      margin-left: 0;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+    }
 
     .list-content[hidden] { display: none !important; }
 
@@ -993,7 +1021,10 @@
           <h3>No research for today yet</h3>
           <p id="researchPromptText"></p>
           <p class="research-progress" id="researchProgressText" hidden></p>
-          <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
+          <div class="research-prompt-actions">
+            <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
+            <button type="button" class="debug-report-btn" id="downloadDebugReportBtn">Download debug report</button>
+          </div>
         </div>
         <div class="list-content" id="listContent">
           <div class="list-header">
@@ -1008,6 +1039,7 @@
                 <span class="bulk-btn-label">Send email candidature</span>
                 <span class="bulk-btn-status">sent</span>
               </button>
+              <button type="button" class="debug-report-btn" id="downloadDebugReportListBtn">Download debug report</button>
             </div>
           </div>
           <div class="cards-grid" id="cardsGrid"></div>
@@ -1133,6 +1165,8 @@
     const researchProgressText = document.getElementById("researchProgressText");
     const listContent = document.getElementById("listContent");
     const runResearchBtn = document.getElementById("runResearchBtn");
+    const downloadDebugReportBtn = document.getElementById("downloadDebugReportBtn");
+    const downloadDebugReportListBtn = document.getElementById("downloadDebugReportListBtn");
 
     const RESEARCH_STEP_LABELS = {
       starting: "Starting research…",
@@ -2319,6 +2353,30 @@
     }
 
     runResearchBtn.onclick = runResearchToday;
+
+    async function downloadDebugReport() {
+      try {
+        const res = await fetch("/api/debug/report");
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        const blob = await res.blob();
+        const dispo = res.headers.get("Content-Disposition") || "";
+        const match = /filename=\"?([^\";]+)/.exec(dispo);
+        const filename = match ? match[1] : "applysempatria-debug.json";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast("Debug report downloaded — attach when reporting a bug", true);
+      } catch (e) {
+        showToast(String(e.message || e), false);
+      }
+    }
+    if (downloadDebugReportBtn) downloadDebugReportBtn.onclick = downloadDebugReport;
+    if (downloadDebugReportListBtn) downloadDebugReportListBtn.onclick = downloadDebugReport;
 
     async function runBulkDmFollowup() {
       const btn = document.getElementById("bulkDmBtn");

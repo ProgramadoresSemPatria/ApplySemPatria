@@ -860,6 +860,21 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             self._json(200, research_run_status())
             return
 
+        if path.path == "/api/debug/report":
+            from retrieval.shared.support_bundle import build_debug_report  # noqa: E402
+            from research_log import today_local  # noqa: E402
+
+            report = build_debug_report()
+            filename = f"applysempatria-debug-{today_local()}.json"
+            body = json.dumps(report, indent=2, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         if path.path == "/api/research":
             self._json(200, ui_meta_payload())
             return
