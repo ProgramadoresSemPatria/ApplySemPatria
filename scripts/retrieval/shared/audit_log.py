@@ -93,6 +93,12 @@ def _emit(level: str, component: str, event: str, **data: Any) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as fh:
             fh.write(line + "\n")
+    try:
+        from retrieval.shared.telemetry import forward_audit_record  # noqa: WPS433
+
+        forward_audit_record(record)
+    except Exception:
+        pass
 
 
 def debug(component: str, event: str, **data: Any) -> None:

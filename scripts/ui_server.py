@@ -90,11 +90,14 @@ def ui_meta_payload() -> dict[str, Any]:
     from track_store import default_track_id  # noqa: E402
 
     tid = default_track_id()
+    from retrieval.shared.telemetry import public_config  # noqa: WPS433
+
     return {
         **UI_META,
         **research_status(),
         "chameleon": chameleon_status(tid),
         "applika_sync_enabled": applika_sync_enabled(tid),
+        "telemetry": public_config(),
     }
 
 
@@ -860,6 +863,12 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
             self._json(200, research_run_status())
             return
 
+        if path.path == "/api/telemetry/support-bundle":
+            from retrieval.shared.telemetry import build_support_bundle  # noqa: E402
+
+            self._json(200, build_support_bundle())
+            return
+
         if path.path == "/api/research":
             self._json(200, ui_meta_payload())
             return
@@ -1019,6 +1028,17 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                     "run": research_run_status(),
                 },
             )
+            return
+
+        if path == "/api/telemetry/client-event":
+            from retrieval.shared.telemetry import send_event  # noqa: E402
+
+            body = self._read_json()
+            name = str(body.get("name") or "client_event")[:40]
+            params = body.get("params") if isinstance(body.get("params"), dict) else {}
+            ok = send_event(name, params)
+            code = 200 if ok else 503
+            self._json(code, {"ok": ok, "accepted": ok})
             return
 
         if path == "/api/bulk-action":

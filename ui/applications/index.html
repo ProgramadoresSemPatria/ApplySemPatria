@@ -7,6 +7,7 @@
   <link rel="icon" href="logo.jpg" type="image/jpeg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script defer src="telemetry.js"></script>
   <style>
     :root {
       --bg: #07080d;
@@ -443,6 +444,18 @@
     }
 
     .research-run-btn:disabled { opacity: 0.55; cursor: wait; }
+
+    .research-debug-btn {
+      margin-top: 12px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .research-debug-btn:hover { color: var(--text); border-color: var(--border-bright); }
 
     .list-content[hidden] { display: none !important; }
 
@@ -994,6 +1007,7 @@
           <p id="researchPromptText"></p>
           <p class="research-progress" id="researchProgressText" hidden></p>
           <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
+          <button type="button" class="research-debug-btn" id="copySupportBundleBtn" hidden>Copy debug report</button>
         </div>
         <div class="list-content" id="listContent">
           <div class="list-header">
@@ -1133,6 +1147,7 @@
     const researchProgressText = document.getElementById("researchProgressText");
     const listContent = document.getElementById("listContent");
     const runResearchBtn = document.getElementById("runResearchBtn");
+    const copySupportBundleBtn = document.getElementById("copySupportBundleBtn");
 
     const RESEARCH_STEP_LABELS = {
       starting: "Starting research…",
@@ -1271,6 +1286,9 @@
           }
         } else {
           showToast(summaryLine || "Research failed", false);
+          if (window.jobsearchTelemetry?.logResearchFailed) {
+            window.jobsearchTelemetry.logResearchFailed(summaryLine || run.message || "");
+          }
           if (viewingTodayOrLive() && needsResearchPrompt()) {
             showResearchView();
           }
@@ -1357,6 +1375,12 @@
         const meta = await res.json();
         serverMeta = meta;
         updateResearchPromptText();
+        if (window.jobsearchTelemetry?.initFromMeta) {
+          await window.jobsearchTelemetry.initFromMeta(meta);
+        }
+        if (copySupportBundleBtn) {
+          copySupportBundleBtn.hidden = !(meta.telemetry && meta.telemetry.enabled);
+        }
         serverUiApproval = serverSupportsClient(meta);
         serverStale.hidden = serverUiApproval;
       } catch {
@@ -2319,6 +2343,23 @@
     }
 
     runResearchBtn.onclick = runResearchToday;
+
+    if (copySupportBundleBtn) {
+      copySupportBundleBtn.onclick = async () => {
+        try {
+          const res = await fetch("/api/telemetry/support-bundle");
+          const data = await res.json();
+          const text = JSON.stringify(data, null, 2);
+          await navigator.clipboard.writeText(text);
+          if (window.jobsearchTelemetry?.logEvent) {
+            window.jobsearchTelemetry.logEvent("support_bundle_shared", {});
+          }
+          showToast("Debug report copied — paste into GitHub issue or email", true);
+        } catch (e) {
+          showToast(String(e.message || e), false);
+        }
+      };
+    }
 
     async function runBulkDmFollowup() {
       const btn = document.getElementById("bulkDmBtn");
