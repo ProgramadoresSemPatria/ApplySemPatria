@@ -7,8 +7,7 @@ TRACK ?= ai-engineer
 SINCE ?= 7d
 PORT ?= 8765
 VENV := .venv
-PYTHON := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
+PYTHON := $(VENV)/bin/python3
 JOBSEARCH := $(VENV)/bin/jobsearch
 COMPOSE := docker compose -f dev/docker-compose.yml
 
@@ -30,21 +29,33 @@ help: ## Show targets (default)
 	@echo "  make reset-data CONFIRM=1   # wipe local data (backup first)"
 	@echo "  make fresh-start CONFIRM=1  # reset + bootstrap track template"
 
-.PHONY: venv
-venv: ## Create .venv (no pip install)
-	test -d $(VENV) || python3 -m venv $(VENV)
+.PHONY: venv clean-venv
+venv: ## Create or repair .venv (recreates if pip is missing)
+	@if [ -x '$(PYTHON)' ] && '$(PYTHON)' -m pip --version >/dev/null 2>&1; then \
+	  exit 0; \
+	fi; \
+	if [ -d '$(VENV)' ]; then \
+	  echo "⚠ $(VENV) exists but has no pip — recreating…"; \
+	  rm -rf '$(VENV)'; \
+	fi; \
+	python3 -m venv '$(VENV)'; \
+	'$(PYTHON)' -m ensurepip --upgrade 2>/dev/null || true; \
+	'$(PYTHON)' -m pip install -U pip wheel
+
+clean-venv: ## Remove .venv (run before make install if install keeps failing)
+	rm -rf '$(VENV)'
 
 .PHONY: install
 install: venv ## Editable install + browser + Gmail extras
-	$(PIP) install -U pip
-	$(PIP) install -e ".[browser,gmail]"
+	$(PYTHON) -m pip install -U pip
+	$(PYTHON) -m pip install -e ".[browser,gmail]"
 	@echo ""
 	@echo "✓ Installed. Optional: make browser"
 	@echo "  Next: make bootstrap && make onboarding"
 
 .PHONY: upgrade
 upgrade: venv ## Re-run pip install after git pull
-	$(PIP) install -e ".[browser,gmail]"
+	$(PYTHON) -m pip install -e ".[browser,gmail]"
 
 .PHONY: browser
 browser: install ## Install Patchright Chromium (LinkedIn / forms)
@@ -123,6 +134,9 @@ reset-data: ## Delete local data; backup first (CONFIRM=1 required)
 	CONFIRM=$(CONFIRM) BACKUP=$(BACKUP) RESET_LINKEDIN=$(RESET_LINKEDIN) \
 		RESET_BROWSER=$(RESET_BROWSER) BACKUP_DIR="$(BACKUP_DIR)" \
 		bash scripts/reset_local_data.sh
+
+audit-ingestion: ## Snapshot research status + registry (see logs/ingestion-watch.log)
+	bash scripts/ingestion_audit.sh
 
 fresh-start: reset-data bootstrap ## Wipe data + copy track template (CONFIRM=1)
 	@echo ""

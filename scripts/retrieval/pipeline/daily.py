@@ -293,15 +293,15 @@ def run_daily_research(
 
             track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
             if not track_ids:
-                msg = "No tracks ready for discovery. Run jobsearch doctor."
-                finish_research_run(ok=False, message=msg)
-                return {
-                    "ok": False,
-                    "message": msg,
-                    "day": day,
-                }
+                msg = (
+                    "Board discovery skipped — no track ready (need tracks/<id>/config.json). "
+                    "Run: make bootstrap  or  jobsearch doctor"
+                )
+                errors.append(msg)
+                audit_warn("daily_research", "discover_skipped", day=day, message=msg)
+                track_ids = []
 
-            if not skip_discover:
+            if not skip_discover and track_ids:
                 for tid in track_ids:
                     proc = _run_step(
                         [PY, str(SCRIPTS / "discover.py"), "--since", since, "--track", tid],

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -187,6 +188,28 @@ def save_chameleon_config(track_id: str | None, data: dict[str, Any]) -> None:
     path = track_path(track_id, "chameleon_config_path")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def ensure_track_scaffold(track_id: str | None = None) -> tuple[int, int]:
+    """Copy missing files from examples/tracks/<id>/ into tracks/ (never overwrite)."""
+    tid = resolve_track(track_id)
+    src_dir = EXAMPLES_TRACKS / tid
+    if not src_dir.is_dir():
+        raise ValueError(f"No example track at {src_dir}")
+    dst_dir = ROOT / "tracks" / tid
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    skipped = 0
+    for src in sorted(src_dir.iterdir()):
+        if not src.is_file():
+            continue
+        dest = dst_dir / src.name
+        if dest.exists():
+            skipped += 1
+            continue
+        shutil.copy2(src, dest)
+        copied += 1
+    return copied, skipped
 
 
 def infer_track(job: dict[str, Any]) -> str:

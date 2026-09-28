@@ -65,6 +65,62 @@ MAX_STALE = 6
 MAX_SCROLLS = 120
 
 
+def _track_linkedin_config() -> dict[str, Any]:
+    """Prefer tracks/<id>/linkedin-posts-config.json (not legacy root file)."""
+    from track_store import default_track_id, load_linkedin_config as track_li  # noqa: WPS433
+
+    return track_li(default_track_id())
+
+
+def _research_progress(detail: str) -> None:
+    """Update UI/audit during long linkedin_collect subprocess."""
+    try:
+        from research_log import set_research_step  # noqa: WPS433
+
+        set_research_step("linkedin_collect", detail=detail)
+    except Exception:
+        pass
+    try:
+        from audit_log import info as audit_info  # noqa: WPS433
+
+        audit_info("linkedin_posts_collect", "collect_progress", detail=detail)
+    except Exception:
+        pass
+
+
+def _merge_results_payload(
+    results: list[dict[str, Any]],
+    *,
+    period_days: int,
+    since: str,
+) -> dict[str, Any] | None:
+    payload_queries: list[dict[str, Any]] = []
+    for r in results:
+        data = json.loads(Path(r["raw_path"]).read_text(encoding="utf-8"))
+        payload_queries.append(
+            {
+                "query": data["query"],
+                "role_keyword": data["role_keyword"],
+                "region": data["region"],
+                "feed_payload": {
+                    "url": data["url"],
+                    "sections": data["sections"],
+                    "references": data.get("references", {}),
+                    "author_post_urls": data.get("author_post_urls") or {},
+                    "chunk_post_urls": data.get("chunk_post_urls") or [],
+                    "ordered_activity_urls": data.get("ordered_activity_urls") or [],
+                },
+            }
+        )
+    if not payload_queries:
+        return None
+    return merge_payload(
+        {"period_days": period_days, "queries": payload_queries},
+        period_days,
+        since,
+    )
+
+
 def _chunk_key(chunk: str, author: str) -> str:
     body = re.sub(r"\s+", " ", chunk[:240].strip().casefold())
     return f"{author.casefold()}|{body}"
@@ -362,8 +418,10 @@ def posts_to_jobs(
     *,
     max_roles: int,
 ) -> list[dict[str, Any]]:
-    cfg = load_linkedin_config()
-    job_cfg = load_json(ROOT / "config.json", {})
+    cfg = _track_linkedin_config()
+    from track_store import default_track_id, load_board_config  # noqa: WPS433
+
+    job_cfg = load_board_config(default_track_id())
     jobs: list[dict[str, Any]] = []
     seen: set[str] = set()
     for post in posts:
@@ -391,7 +449,7 @@ async def run_query(
     merge: bool,
     since: str,
 ) -> dict[str, Any]:
-    cfg = load_linkedin_config()
+    cfg = _track_linkedin_config()
     recency = period_to_recency(period_days, cfg)
     url = linkedin_content_search_url(query, recency=recency)
     meta = {"query": query, "role_keyword": role_keyword, "region": region}
@@ -472,15 +530,20 @@ async def run_all(
     merge: bool,
     since: str,
 ) -> dict[str, Any]:
-    cfg = load_linkedin_config()
+    cfg = _track_linkedin_config()
     queries = build_queries(cfg)
+    n_queries = len(queries)
     results = []
     total_roles = 0
-    for q in queries:
+    merge_result = None
+    for idx, q in enumerate(queries, start=1):
         if total_roles >= max_roles_total:
             break
         remaining = max_roles_total - total_roles
         per_query_cap = min(max_roles, remaining)
+        _research_progress(
+            f"query {idx}/{n_queries} starting ({q['role_keyword']} · {q['region']})"
+        )
         r = await run_query(
             q["query"],
             q["role_keyword"],
@@ -493,34 +556,19 @@ async def run_all(
         )
         results.append(r)
         total_roles += r["roles_kept"]
+        _research_progress(
+            f"query {idx}/{n_queries} done — {r['roles_kept']} roles in {r['elapsed_sec']}s "
+            f"(total {total_roles})"
+        )
+        if merge:
+            merge_result = _merge_results_payload(results, period_days=period_days, since=since)
+            if merge_result is not None:
+                from registry import load_registry  # noqa: WPS433
 
-    # single merge with all queries
-    merge_result = None
-    if merge:
-        payload_queries = []
-        for r in results:
-            data = json.loads(Path(r["raw_path"]).read_text())
-            payload_queries.append(
-                {
-                    "query": data["query"],
-                    "role_keyword": data["role_keyword"],
-                    "region": data["region"],
-                    "feed_payload": {
-                        "url": data["url"],
-                        "sections": data["sections"],
-                        "references": data.get("references", {}),
-                        "author_post_urls": data.get("author_post_urls") or {},
-                        "chunk_post_urls": data.get("chunk_post_urls") or [],
-                        "ordered_activity_urls": data.get("ordered_activity_urls") or [],
-                    },
-                }
-            )
-        if payload_queries:
-            merge_result = merge_payload(
-                {"period_days": period_days, "queries": payload_queries},
-                period_days,
-                since,
-            )
+                reg_count = len(load_registry().get("jobs", []))
+                _research_progress(
+                    f"registry — {reg_count} jobs after query {idx}/{n_queries}"
+                )
 
     return {"queries": results, "total_roles": total_roles, "merge": merge_result}
 

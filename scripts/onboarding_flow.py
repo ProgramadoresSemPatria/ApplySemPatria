@@ -196,7 +196,11 @@ def _step_profile(args: Any, tid: str, data: dict[str, Any], non_interactive: bo
         data["last_name"] = last
 
     from profile_store import missing  # noqa: WPS433
-    from track_store import save_profile  # noqa: WPS433
+    from track_store import ensure_track_scaffold, save_profile  # noqa: WPS433
+
+    copied, skipped = ensure_track_scaffold(tid)
+    if copied:
+        print(f"  ✓ Copied {copied} track config file(s) from examples/tracks/{tid}/")
 
     print("\nSaving profile…")
     save_profile(tid, data)
