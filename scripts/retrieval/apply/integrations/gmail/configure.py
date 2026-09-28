@@ -104,15 +104,22 @@ def print_gmail_instructions() -> None:
     print_gmail_app_password_guide()
 
 
-def _prompt_auth_method(non_interactive: bool) -> Literal["smtp", "oauth"]:
-    if non_interactive:
+def _resolve_email_mode(args: Any, non_interactive: bool) -> Literal["smtp", "oauth", "skip"]:
+    """Interactive onboarding always uses OAuth; SMTP only via explicit flags."""
+    email_mode_flag = getattr(args, "email_mode", None)
+    if email_mode_flag == "skip":
+        return "skip"
+    if email_mode_flag == "smtp":
         return "smtp"
-    print("\n  How should jobsearch access Gmail?\n")
-    print("  1. App password (recommended — quick, no Google Cloud project)")
-    print("  2. OAuth — Google Cloud desktop client + browser consent")
-    print()
-    choice = input("  Choice [1]: ").strip() or "1"
-    return "oauth" if choice == "2" else "smtp"
+    if email_mode_flag == "oauth":
+        return "oauth"
+    if getattr(args, "gmail_app_password", None):
+        return "smtp"
+    if getattr(args, "gmail_credentials", None):
+        return "oauth"
+    if non_interactive:
+        return "skip"
+    return "oauth"
 
 
 def preview_application_email(track_id: str, *, sample_role: str = SAMPLE_ROLE) -> dict[str, str]:
@@ -350,18 +357,12 @@ def run_gmail_configure(args: Any) -> int:
             print(f"  ✗ {errs[0] if errs else 'install failed'}")
             return 1
 
-    email_mode_flag = getattr(args, "email_mode", None)
-    if email_mode_flag in ("oauth", "smtp", "skip"):
-        email_mode = email_mode_flag
-    elif non_interactive and email_mode_flag == "ask":
-        email_mode = "smtp" if getattr(args, "gmail_app_password", None) else "skip"
-    elif non_interactive:
-        email_mode = "smtp" if getattr(args, "gmail_app_password", None) else "skip"
-    else:
-        email_mode = _prompt_auth_method(non_interactive)
+    email_mode = _resolve_email_mode(args, non_interactive)
 
     auth_ok = False
     if email_mode == "oauth":
+        if not non_interactive:
+            print("\n  Gmail sign-in: OAuth (Google Cloud desktop client + browser consent)\n")
         print_gmail_oauth_guide()
         creds = getattr(args, "gmail_credentials", None) or ""
         if creds:
@@ -402,5 +403,5 @@ def run_gmail_configure(args: Any) -> int:
     if load_email_config_raw(tid).get("email_apply_mode") == "manual":
         print("  Preview candidates: jobsearch apply email --track", tid, "--list --table-only")
     else:
-        print("  Send: jobsearch apply email --track", tid, "--send --smtp")
+        print("  Send: jobsearch apply email --track", tid, "--send")
     return 0

@@ -331,11 +331,15 @@ def build_parser() -> argparse.ArgumentParser:
     onboard.add_argument("--install-browser", action="store_true", help="Install Patchright Chromium")
     onboard.add_argument(
         "--email-mode",
-        choices=["skip", "smtp", "oauth", "ask"],
+        choices=["skip", "oauth", "smtp"],
         default=None,
-        help="Gmail setup (default: ask interactively, skip with --yes)",
+        help="Gmail setup (default: OAuth when interactive; skip with --yes unless --gmail-credentials)",
     )
-    onboard.add_argument("--gmail-app-password", dest="gmail_app_password", help="SMTP app password")
+    onboard.add_argument(
+        "--gmail-app-password",
+        dest="gmail_app_password",
+        help="Legacy SMTP app password (non-interactive only; prefer OAuth)",
+    )
     onboard.add_argument("--gmail-credentials", dest="gmail_credentials", help="OAuth client JSON path")
     onboard.add_argument("--linkedin-login", action="store_true", help="Open LinkedIn login during onboarding")
     onboard.add_argument(

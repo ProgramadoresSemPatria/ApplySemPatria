@@ -1,9 +1,8 @@
 ================================================================================
-  Gmail — OAuth (Google Cloud, advanced)
+  Gmail — OAuth setup
 ================================================================================
 
-Use this if you prefer the Gmail API + browser consent instead of an
-app password. Takes about 10 minutes once.
+Sign in with the Gmail API + browser consent. Takes about 10 minutes once.
 
 --------------------------------------------------------------------------------
 Step 1 — Google Cloud project + Gmail API

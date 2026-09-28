@@ -136,6 +136,20 @@ def test_step_confirm_message_non_interactive(track_cfg, monkeypatch):
     assert _step_confirm_message("ai-engineer", non_interactive=True, force_confirm=True) is True
 
 
+def test_resolve_email_mode_defaults_to_oauth_interactive():
+    from gmail_configure import _resolve_email_mode
+
+    args = SimpleNamespace(email_mode=None, gmail_app_password=None, gmail_credentials=None)
+    assert _resolve_email_mode(args, non_interactive=False) == "oauth"
+
+
+def test_resolve_email_mode_non_interactive_skips_without_creds():
+    from gmail_configure import _resolve_email_mode
+
+    args = SimpleNamespace(email_mode=None, gmail_app_password=None, gmail_credentials=None)
+    assert _resolve_email_mode(args, non_interactive=True) == "skip"
+
+
 def test_collect_app_password_saves(tmp_path, monkeypatch):
     from gmail_configure import _collect_app_password
 
@@ -144,6 +158,7 @@ def test_collect_app_password_saves(tmp_path, monkeypatch):
     monkeypatch.setattr("environment_setup.GMAIL_APP_PASSWORD_FILE", pw_file)
     monkeypatch.setattr("gmail_configure.ROOT", tmp_path)
     monkeypatch.setattr("gmail_configure.print_gmail_instructions", lambda: None)
+    monkeypatch.setattr("builtins.input", lambda _p: "")
     monkeypatch.setattr("getpass.getpass", lambda _p: "abcd efgh ijkl mnop")
     assert _collect_app_password(existing_ok=False) is True
     assert pw_file.exists()
