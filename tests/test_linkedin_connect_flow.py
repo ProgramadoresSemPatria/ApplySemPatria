@@ -20,6 +20,13 @@ from patchright.async_api import async_playwright
 pytestmark = [pytest.mark.browser]
 
 
+def _canonical_profile_url(html_uri: str) -> str:
+    name = html_uri.rsplit("/", 1)[-1].lower()
+    if "ursula" in name:
+        return "https://www.linkedin.com/in/ursula-morales-03328283/"
+    return "https://www.linkedin.com/in/test-connect/"
+
+
 async def _run_flow(html_uri: str, *, monkeypatch: pytest.MonkeyPatch | None = None) -> dict[str, Any]:
     from flow_runner import resolve_recipe, run_recipe
 
@@ -39,7 +46,7 @@ async def _run_flow(html_uri: str, *, monkeypatch: pytest.MonkeyPatch | None = N
         result = await run_recipe(
             page,
             recipe,
-            variables={"profile_url": html_uri, "message": "Hi test"},
+            variables={"profile_url": _canonical_profile_url(html_uri), "message": "Hi test"},
             profile={},
             send=False,
         )
@@ -77,6 +84,7 @@ def test_recipe_linear_with_guards_before_more_and_message():
         "profile-connect-link.html",
         "profile-connect-pvs-actions.html",
         "profile-message-and-connect.html",
+        "profile-ursula-connect-link.html",
     ],
 )
 def test_top_card_connect_fixtures_detect_and_skip_more_menu(
@@ -118,12 +126,13 @@ def test_message_only_fixture_commits_message_not_connect(linkedin_html_dir, mon
 async def _ui_probe(html_uri: str) -> dict[str, bool]:
     from linkedin_ui import has_connect_on_main, has_more_on_top_card
 
+    prof = _canonical_profile_url(html_uri)
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(html_uri, wait_until="domcontentloaded")
         out = {
-            "connect": await has_connect_on_main(page),
+            "connect": await has_connect_on_main(page, profile_url=prof),
             "more": await has_more_on_top_card(page),
         }
         await browser.close()
@@ -151,6 +160,7 @@ def test_has_connect_on_main_false_when_only_in_menu(linkedin_html_dir):
         ("profile-connect-more.html", "connect_more"),
         ("profile-message.html", "message"),
         ("profile-message-and-connect.html", "connect_top"),
+        ("profile-ursula-connect-link.html", "connect_top"),
     ],
 )
 def test_classify_affordance_priority(linkedin_html_dir, fixture_name: str, expected: str):
@@ -158,11 +168,14 @@ def test_classify_affordance_priority(linkedin_html_dir, fixture_name: str, expe
 
     html_uri = (linkedin_html_dir / fixture_name).resolve().as_uri()
 
+    prof = _canonical_profile_url((linkedin_html_dir / fixture_name).resolve().as_uri())
+
     async def _run() -> str:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
-            kind = await classify_affordance(page, html_uri)
+            html_uri = (linkedin_html_dir / fixture_name).resolve().as_uri()
+            kind = await classify_affordance(page, prof, navigate_url=html_uri)
             await browser.close()
         return kind
 

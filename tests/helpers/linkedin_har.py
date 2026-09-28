@@ -21,6 +21,7 @@ HAR_SLUGS: dict[str, str] = {
     "profile-connect-more": "test-connect-more",
     "profile-connected": "test-connected",
     "profile-connected-only": "test-connected-only",
+    "profile-ursula-connect-link": "ursula-morales-03328283",
 }
 
 T = TypeVar("T")

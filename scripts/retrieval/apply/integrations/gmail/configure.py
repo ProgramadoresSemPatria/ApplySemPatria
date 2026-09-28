@@ -16,7 +16,8 @@ import sys
 from pathlib import Path
 from typing import Any, Literal
 
-GMAIL_INSTRUCTIONS = ROOT / "prompts" / "gmail-app-password-setup.txt"
+GMAIL_APP_PASSWORD_GUIDE = ROOT / "prompts" / "gmail-app-password-setup.txt"
+GMAIL_OAUTH_GUIDE = ROOT / "prompts" / "gmail-oauth-setup.txt"
 SAMPLE_ROLE = "Senior AI Engineer"
 
 EmailApplyMode = Literal["manual", "automatic"]
@@ -77,11 +78,41 @@ def set_email_preferences(
     return cfg
 
 
-def print_gmail_instructions() -> None:
-    if GMAIL_INSTRUCTIONS.exists():
-        print(GMAIL_INSTRUCTIONS.read_text(encoding="utf-8"))
+def _print_guide(path: Path, *, fallback: str) -> None:
+    if path.exists():
+        print(path.read_text(encoding="utf-8"))
     else:
-        print("  See playbooks/gmail-email-apply-setup.md for Gmail setup instructions.")
+        print(f"  {fallback}")
+
+
+def print_gmail_app_password_guide() -> None:
+    _print_guide(
+        GMAIL_APP_PASSWORD_GUIDE,
+        fallback="See playbooks/gmail-email-apply-setup.md (App Password section).",
+    )
+
+
+def print_gmail_oauth_guide() -> None:
+    _print_guide(
+        GMAIL_OAUTH_GUIDE,
+        fallback="See playbooks/gmail-email-apply-setup.md (OAuth section).",
+    )
+
+
+def print_gmail_instructions() -> None:
+    """Legacy alias — app-password guide."""
+    print_gmail_app_password_guide()
+
+
+def _prompt_auth_method(non_interactive: bool) -> Literal["smtp", "oauth"]:
+    if non_interactive:
+        return "smtp"
+    print("\n  How should jobsearch access Gmail?\n")
+    print("  1. App password (recommended — quick, no Google Cloud project)")
+    print("  2. OAuth — Google Cloud desktop client + browser consent")
+    print()
+    choice = input("  Choice [1]: ").strip() or "1"
+    return "oauth" if choice == "2" else "smtp"
 
 
 def preview_application_email(track_id: str, *, sample_role: str = SAMPLE_ROLE) -> dict[str, str]:
@@ -133,8 +164,9 @@ def _collect_app_password(existing_ok: bool) -> bool:
         print("  ✓ Gmail credentials already on disk — keeping them.")
         return True
 
-    print_gmail_instructions()
-    print("\n  Paste your 16-character Gmail app password (input hidden):")
+    print_gmail_app_password_guide()
+    input("\n  Press Enter when you have copied the 16-character app password… ")
+    print("\n  Paste your app password below (input hidden; spaces are OK):")
     pwd = getpass.getpass("  App password: ").strip().replace(" ", "")
     if not pwd:
         print("  ○ No password entered.")
@@ -318,16 +350,24 @@ def run_gmail_configure(args: Any) -> int:
             print(f"  ✗ {errs[0] if errs else 'install failed'}")
             return 1
 
-    email_mode = getattr(args, "email_mode", None) or "smtp"
-    if non_interactive and email_mode == "ask":
+    email_mode_flag = getattr(args, "email_mode", None)
+    if email_mode_flag in ("oauth", "smtp", "skip"):
+        email_mode = email_mode_flag
+    elif non_interactive and email_mode_flag == "ask":
         email_mode = "smtp" if getattr(args, "gmail_app_password", None) else "skip"
+    elif non_interactive:
+        email_mode = "smtp" if getattr(args, "gmail_app_password", None) else "skip"
+    else:
+        email_mode = _prompt_auth_method(non_interactive)
 
     auth_ok = False
     if email_mode == "oauth":
+        print_gmail_oauth_guide()
         creds = getattr(args, "gmail_credentials", None) or ""
         if creds:
             auth_ok = _setup_oauth(tid, creds)
         elif not non_interactive:
+            input("\n  Press Enter when gmail-credentials.json is saved under secrets/ … ")
             creds = input("  Path to OAuth client JSON: ").strip()
             auth_ok = _setup_oauth(tid, creds) if creds else False
     elif email_mode == "smtp" or email_mode != "skip":

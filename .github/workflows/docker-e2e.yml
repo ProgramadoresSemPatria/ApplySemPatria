@@ -1,0 +1,36 @@
+name: Docker E2E
+
+on:
+  push:
+    branches: [main, ci/tests]
+  pull_request:
+    branches: [main, ci/tests]
+  workflow_dispatch:
+
+concurrency:
+  group: docker-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-e2e:
+    name: docker (install + UI smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker compose -f dev/docker-compose.yml build e2e
+
+      - name: Run e2e in container
+        run: docker compose -f dev/docker-compose.yml run --rm e2e
+
+      - name: Onboarding smoke (mounted repo copy)
+        run: docker compose -f dev/docker-compose.yml run --rm onboarding-smoke
+
+      - name: Summary
+        run: |
+          {
+            echo "## Docker E2E passed"
+            echo "- \`docker compose -f dev/docker-compose.yml run --rm e2e\`"
+            echo "- \`onboarding-smoke\` (fresh rsync from repo mount)"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,8 +1,44 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "jobsearch-cli"
 version = "0.1.0"
-description = "Multi-track job discovery and apply CLI"
+description = "Multi-track job discovery and apply CLI (local-first)"
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "python-docx>=1.1.0",
+  "pymupdf>=1.24.0",
+]
+
+[project.optional-dependencies]
+gmail = [
+  "google-api-python-client>=2.100.0",
+  "google-auth-httplib2>=0.2.0",
+  "google-auth-oauthlib>=1.2.0",
+]
+browser = [
+  "patchright>=1.62.0",
+]
+all = [
+  "google-api-python-client>=2.100.0",
+  "google-auth-httplib2>=0.2.0",
+  "google-auth-oauthlib>=1.2.0",
+  "patchright>=1.62.0",
+]
+
+[project.scripts]
+jobsearch = "jobsearch_cli_entry:main"
+
+[project.urls]
+Homepage = "https://github.com/ProgramadoresSemPatria/ApplySemPatria"
+Repository = "https://github.com/ProgramadoresSemPatria/ApplySemPatria"
+
+[tool.setuptools]
+py-modules = ["jobsearch_cli_entry"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -36,14 +72,10 @@ precision = 1
 fail_under = 19
 exclude_lines = [
   "pragma: no cover",
-  "if __name__ == .__main__.:",
+  "if __name__ == .__main__:",
   "raise NotImplementedError",
   "if TYPE_CHECKING:",
 ]
 
 [tool.coverage.html]
 directory = "htmlcov"
-
-# Run without install:
-#   python3 ~/job-search/scripts/jobsearch.py tracks list
-#   python3 ~/job-search/scripts/jobsearch.py doctor

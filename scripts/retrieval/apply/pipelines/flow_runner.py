@@ -281,19 +281,23 @@ async def _run_steps(
             elif action == "click_connect":
                 from linkedin_ui import click_connect_on_main  # noqa: E402
 
-                if await click_connect_on_main(page):
+                if await click_connect_on_main(page, profile_url=variables.get("profile_url")):
                     rec["note"] = "connect clicked"
                 else:
                     rec["ok"] = optional
                     rec["note"] = "connect not found" + ("" if optional else " (required)")
             elif action == "abort_if_connect_on_main":
-                from linkedin_ui import has_connect_on_main  # noqa: E402
+                from linkedin_ui import has_connect_on_main, invite_modal_visible  # noqa: E402
 
                 if await has_connect_on_main(page):
-                    rec["note"] = "connect on top card — skip More menu path"
-                    log.append(rec)
-                    break
-                rec["note"] = "no top-card connect"
+                    if await invite_modal_visible(page):
+                        rec["note"] = "invite modal open — continue recipe"
+                    else:
+                        rec["note"] = "connect on top card — skip More menu path"
+                        log.append(rec)
+                        break
+                else:
+                    rec["note"] = "no top-card connect"
             elif action == "dismiss_premium":
                 from linkedin_ui import dismiss_premium_modal  # noqa: E402
 

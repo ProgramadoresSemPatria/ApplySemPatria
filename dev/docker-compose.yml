@@ -1,11 +1,69 @@
+# Isolated jobsearch environments (no host tracks/registry/secrets).
+#
+#   docker compose -f dev/docker-compose.yml build
+#   docker compose -f dev/docker-compose.yml run --rm e2e          # CI-style e2e
+#   docker compose -f dev/docker-compose.yml run --rm onboarding-smoke  # rsync fresh copy from mount
+#   docker compose -f dev/docker-compose.yml up ui                 # browse UI on :8765
+#
 services:
+  e2e:
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+    environment:
+      USE_INPLACE: "1"
+      REPO_ROOT: /app
+      JOBSEARCH_SKIP_LINKEDIN: "1"
+      JOBSEARCH_NO_REEXEC: "1"
+    command: ["bash", "dev/docker-e2e.sh"]
+
   onboarding-smoke:
     build:
       context: ..
       dockerfile: dev/Dockerfile
+    working_dir: /repo
     volumes:
       - ..:/repo:ro
     environment:
       REPO_ROOT: /repo
+      JOBSEARCH_FRESH_DIR: /tmp/job-search-fresh
+      USE_INPLACE: "0"
       JOBSEARCH_SKIP_LINKEDIN: "1"
+      JOBSEARCH_NO_REEXEC: "1"
     command: ["bash", "/repo/dev/onboarding-smoke.sh"]
+
+  ui:
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+    ports:
+      - "8765:8765"
+    environment:
+      JOBSEARCH_SKIP_LINKEDIN: "1"
+      JOBSEARCH_NO_REEXEC: "1"
+    volumes:
+      # Optional: keep tracks/registry/state between restarts (still isolated from your Mac)
+      - jobsearch-docker-data:/app/tracks
+      - jobsearch-docker-registry:/app/registry
+      - jobsearch-docker-state:/app/state
+    command: ["bash", "dev/docker-entrypoint-ui.sh"]
+
+  # One-shot onboarding with your own flags (then start `ui`):
+  #   docker compose -f dev/docker-compose.yml run --rm onboard --yes --full-name "You" ...
+  onboard:
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+    environment:
+      JOBSEARCH_SKIP_LINKEDIN: "1"
+      JOBSEARCH_NO_REEXEC: "1"
+    volumes:
+      - jobsearch-docker-data:/app/tracks
+      - jobsearch-docker-registry:/app/registry
+      - jobsearch-docker-state:/app/state
+    entrypoint: ["jobsearch", "onboarding", "--track", "ai-engineer"]
+
+volumes:
+  jobsearch-docker-data:
+  jobsearch-docker-registry:
+  jobsearch-docker-state:

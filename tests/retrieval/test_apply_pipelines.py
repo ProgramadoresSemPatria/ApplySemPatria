@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from dm_apply import (  # noqa: E402
+    candidates_for_connect_action,
     classify_affordance,
     collect_candidates,
     is_applied_skip,
@@ -19,6 +20,7 @@ from dm_apply import (  # noqa: E402
     message_body,
     pretty_role,
     scan,
+    _skip_dm_apply_profile,
 )
 from dm_followup import (  # noqa: E402
     _audit_extra,
@@ -143,9 +145,40 @@ async def test_is_connected_message_available():
         with patch("dm_followup.drift_mouse", AsyncMock()):
             with patch("dm_followup.dismiss_blocking_dialogs", AsyncMock(return_value=False)):
                 with patch("dm_followup.shows_pending", AsyncMock(return_value=False)):
-                    with patch("dm_followup.has_top_card_message", AsyncMock(return_value=True)):
-                        ok, reason = await is_connected(page, "https://www.linkedin.com/in/r/")
+                    with patch("linkedin_ui.has_connect_on_main", AsyncMock(return_value=False)):
+                        with patch("dm_followup.has_top_card_message", AsyncMock(return_value=True)):
+                            ok, reason = await is_connected(page, "https://www.linkedin.com/in/r/")
     assert ok is True
+    assert "Message" in reason
+
+
+def test_skip_dm_apply_profile():
+    import dm_state as ds
+
+    assert _skip_dm_apply_profile(ds.STATUS_MESSAGE_SENT) is True
+    assert _skip_dm_apply_profile(ds.STATUS_ACCEPTED_MSG_PENDING) is True
+    assert _skip_dm_apply_profile(ds.STATUS_CONNECT_PENDING) is False
+    assert _skip_dm_apply_profile(ds.STATUS_NONE) is False
+
+
+def test_candidates_for_connect_action_filters_message_complete():
+    import dm_state as ds
+    from tests.helpers.jobs import linkedin_dm_job
+
+    job = linkedin_dm_job()
+    prof = job["recruiter_profile_url"]
+    key = ds.normalize_profile_url(prof)
+    state = {
+        "profiles": {
+            key: {
+                "profile_url": prof,
+                "connect_requested_at": "x",
+                "accepted_at": "y",
+                "message_sent_at": "z",
+            }
+        }
+    }
+    assert candidates_for_connect_action(state, [job]) == []
 
 
 def test_canonical_profiles_by_company(monkeypatch):

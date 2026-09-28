@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import json
 import os
+import socket
+import subprocess
 import sys
+import time
+import webbrowser
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +22,7 @@ PROFILE_FIELDS: list[tuple[str, str, bool]] = [
     ("linkedin_url", "LinkedIn profile URL", True),
     ("resume_path", "Resume PDF (full path)", True),
     ("current_title", "Current job title", True),
-    ("location", "Location (city, country)", False),
+    ("location", "Where you live (city, country)", False),
     ("years_experience", "Years of experience", False),
     ("notice_period", "Notice period / availability", False),
     ("work_authorization", "Work authorization (one line)", False),
@@ -228,7 +232,66 @@ def _step_linkedin(args: Any, tid: str, non_interactive: bool) -> int:
     return run_linkedin_configure(args)
 
 
-def _final_report(tid: str) -> None:
+def _prompt_yes_no(question: str, *, default_yes: bool = True) -> bool:
+    hint = "Y/n" if default_yes else "y/N"
+    ans = input(f"  {question} [{hint}]: ").strip().lower()
+    if not ans:
+        return default_yes
+    return ans in ("y", "yes")
+
+
+def _ui_port_ready(port: int, *, timeout_s: float = 15.0) -> bool:
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.4):
+                return True
+        except OSError:
+            time.sleep(0.25)
+    return False
+
+
+def _open_applications_dashboard(tid: str, *, port: int = 8765) -> bool:
+    """Refresh table snapshot, start UI if needed, open default browser."""
+    url = f"http://127.0.0.1:{port}/"
+
+    try:
+        from table_refresh import refresh_applications_table  # noqa: WPS433
+
+        refresh_applications_table()
+    except Exception as exc:  # noqa: BLE001
+        print(f"  ⚠ Could not refresh table: {exc}")
+
+    if _ui_port_ready(port, timeout_s=0.5):
+        print(f"  ✓ UI already running — opening {url}")
+        webbrowser.open(url)
+        return True
+
+    ui_script = SCRIPTS / "ui_server.py"
+    if not ui_script.exists():
+        print("  ✗ ui_server.py missing — cannot open dashboard.")
+        return False
+
+    proc = subprocess.Popen(
+        [sys.executable, str(ui_script), "--port", str(port), "--no-open", "--browser", "none"],
+        cwd=str(ROOT),
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    if not _ui_port_ready(port):
+        proc.terminate()
+        print("  ✗ UI server did not start — run manually: jobsearch ui")
+        return False
+
+    webbrowser.open(url)
+    print(f"  ✓ Opened {url} in your browser.")
+    print(f"  UI server running in background (pid {proc.pid}). Stop: kill {proc.pid}")
+    return True
+
+
+def _final_report(tid: str, *, non_interactive: bool = False, open_ui: bool | None = None) -> None:
     from profile_store import missing  # noqa: WPS433
     from track_readiness import assess_track  # noqa: WPS433
     from track_store import track_label  # noqa: WPS433
@@ -273,23 +336,32 @@ def _final_report(tid: str) -> None:
         print(f"\n  Optional profile fields still empty: {', '.join(miss)}")
 
     print("\n" + "=" * 60)
-    print(f"  You're set up for {label}. Next steps:")
+    print(f"  You're set up for {label}.")
     print("=" * 60)
-    print(f"""
-  1. Find jobs (boards):
-     jobsearch discover --track {tid} --since 7d
 
-  2. Build your apply table:
-     jobsearch table
+    if open_ui is None:
+        if non_interactive or os.environ.get("JOBSEARCH_NO_UI") == "1":
+            open_ui = False
+        else:
+            open_ui = _prompt_yes_no(
+                "Open the applications dashboard in your browser?",
+                default_yes=True,
+            )
 
-  3. Preview email candidates:
-     jobsearch apply email --track {tid} --list --table-only
+    if open_ui:
+        print("\n  Starting dashboard (discover & apply from the web UI)…\n")
+        if not _open_applications_dashboard(tid):
+            open_ui = False
 
-  4. LinkedIn posts (browser):
-     ~/job-search/scripts/linkedin-deep-collect.sh --all-queries --merge --since 7d
+    if not open_ui:
+        print(f"""
+  Next in the terminal (or run jobsearch ui later):
 
-  Re-check anytime:
-     jobsearch doctor
+    jobsearch discover --track {tid} --since 7d
+    jobsearch table
+    jobsearch ui
+
+  Re-check: jobsearch doctor
 """)
 
 
@@ -327,5 +399,10 @@ def run_onboarding(args: Any) -> int:
     if code != 0:
         return code
 
-    _final_report(tid)
+    open_ui: bool | None = None
+    if getattr(args, "no_open_ui", False):
+        open_ui = False
+    elif getattr(args, "open_ui", False):
+        open_ui = True
+    _final_report(tid, non_interactive=non_interactive, open_ui=open_ui)
     return 0

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import urllib.parse
 from typing import Any
 
 from human_pacing import human_click, pause_poll
@@ -14,11 +15,33 @@ PREMIUM_HINT = re.compile(r"Premium|Try 1 month|Unlock your next career", re.I)
 CONNECT_BUTTON_NAME_RE = re.compile(r"^\+?\s*connect$|^invite.*to connect$", re.I)
 CONNECT_AFFORDANCE_RE = re.compile(r"connect|invite.*to connect", re.I)
 CONNECT_AFFORDANCE_SKIP_RE = re.compile(r"remove connection|following|pending", re.I)
+MESSAGE_BUTTON_NAME_RE = re.compile(r"^Message", re.I)
+MESSAGE_COMPOSE_HREF_RE = re.compile(r"messaging/(compose|thread)", re.I)
 
 
 def connect_button_name_pattern() -> str:
     """Playwright ``name_regex`` for profile Connect buttons."""
     return r"^\+?\s*connect$|^invite.*to connect$"
+
+
+def profile_vanity_from_url(url: str) -> str:
+    m = re.search(r"linkedin\.com/in/([^/?#]+)", url or "", re.I)
+    if m:
+        return m.group(1).strip("/").lower()
+    m = re.search(r"/in/([^/?#]+)/?", url or "", re.I)
+    return m.group(1).strip("/").lower() if m else ""
+
+
+def invite_href_vanity(href: str) -> str:
+    m = re.search(r"[?&]vanityName=([^&]+)", href or "", re.I)
+    if not m:
+        return ""
+    return urllib.parse.unquote(m.group(1)).strip().lower()
+
+
+def _narrow_profile_scope(scope_index: int) -> bool:
+    """Top-card scopes only — excludes whole-``main`` feed/recommendations."""
+    return scope_index <= 4
 
 
 def main_profile_section(page):
@@ -31,7 +54,9 @@ def profile_action_scopes(page):
     return [
         page.locator("main .pvs-profile-actions").first,
         page.locator("main .pv-top-card-v2-ctas").first,
+        page.locator("main .pv-top-card").first,
         main_profile_section(page),
+        page.locator("main:has(> h1)").first,
         page.locator("main").first,
     ]
 
@@ -39,6 +64,10 @@ def profile_action_scopes(page):
 def _connect_locator_candidates(scope) -> list:
     """Playwright locators for profile Connect, in priority order."""
     return [
+        scope.locator(
+            "a[href*='custom-invite'], a[href*='preload/custom-invite'], "
+            "a[componentkey*='ConnectButton' i]"
+        ),
         scope.get_by_role("button", name=CONNECT_BUTTON_NAME_RE),
         scope.get_by_role("link", name=CONNECT_BUTTON_NAME_RE),
         scope.locator(
@@ -50,10 +79,26 @@ def _connect_locator_candidates(scope) -> list:
     ]
 
 
-async def connect_locator_on_main(page):
-    """First visible Connect control on the profile top card, or ``None``."""
+async def _connect_matches_profile(
+    node,
+    *,
+    target_vanity: str,
+    scope_index: int,
+) -> bool:
+    href = (await node.get_attribute("href")) or ""
+    link_vanity = invite_href_vanity(href)
+    if link_vanity:
+        return bool(target_vanity) and link_vanity == target_vanity
+    if not _narrow_profile_scope(scope_index):
+        return False
+    return True
+
+
+async def connect_locator_on_main(page, *, profile_url: str | None = None):
+    """First visible Connect for the profile being viewed, or ``None``."""
+    target_vanity = profile_vanity_from_url(profile_url or page.url)
     seen: set[str] = set()
-    for scope in profile_action_scopes(page):
+    for scope_index, scope in enumerate(profile_action_scopes(page)):
         try:
             if await scope.count() == 0:
                 continue
@@ -64,10 +109,14 @@ async def connect_locator_on_main(page):
                 count = await loc.count()
             except Exception:  # noqa: BLE001
                 continue
-            for idx in range(min(count, 5)):
+            for idx in range(min(count, 8)):
                 try:
                     node = loc.nth(idx)
                     if not await node.is_visible():
+                        continue
+                    if not await _connect_matches_profile(
+                        node, target_vanity=target_vanity, scope_index=scope_index
+                    ):
                         continue
                     label = " ".join(
                         (
@@ -83,7 +132,7 @@ async def connect_locator_on_main(page):
                         or CONNECT_AFFORDANCE_RE.search(label)
                     ):
                         continue
-                    key = f"{label}:{idx}"
+                    key = f"{label}:{idx}:{scope_index}"
                     if key in seen:
                         continue
                     seen.add(key)
@@ -93,17 +142,112 @@ async def connect_locator_on_main(page):
     return None
 
 
-async def has_connect_on_main(page) -> bool:
-    """True when a Connect / Invite affordance is visible on the profile top card."""
-    return await connect_locator_on_main(page) is not None
+async def has_connect_on_main(page, *, profile_url: str | None = None) -> bool:
+    """True when a Connect affordance exists for this profile (not feed suggestions)."""
+    return await connect_locator_on_main(page, profile_url=profile_url) is not None
 
 
-async def click_connect_on_main(page) -> bool:
+async def message_locator_on_main(page, *, profile_url: str | None = None):
+    """First visible Message control on the profile top card, or ``None``."""
+    _ = profile_url  # reserved for compose-recipient checks
+    seen: set[str] = set()
+    for scope_index, scope in enumerate(profile_action_scopes(page)):
+        if not _narrow_profile_scope(scope_index):
+            continue
+        try:
+            if await scope.count() == 0:
+                continue
+        except Exception:  # noqa: BLE001
+            continue
+        for role in ("button", "link"):
+            try:
+                loc = scope.get_by_role(role, name=MESSAGE_BUTTON_NAME_RE)
+                count = await loc.count()
+            except Exception:  # noqa: BLE001
+                continue
+            for idx in range(min(count, 5)):
+                try:
+                    node = loc.nth(idx)
+                    if not await node.is_visible():
+                        continue
+                    label = " ".join(
+                        (
+                            (await node.get_attribute("aria-label"))
+                            or (await node.inner_text())
+                            or ""
+                        ).split()
+                    )
+                    if not label or not MESSAGE_BUTTON_NAME_RE.search(label):
+                        continue
+                    key = f"{label}:{idx}"
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    return node
+                except Exception:  # noqa: BLE001
+                    continue
+        try:
+            compose = scope.locator(
+                "a[href*='messaging/compose'][aria-label*='Message' i], "
+                "a[href*='messaging/compose'][aria-label*='message' i], "
+                "button[aria-label*='Message' i], a[aria-label*='Message' i]"
+            )
+            count = await compose.count()
+        except Exception:  # noqa: BLE001
+            continue
+        for idx in range(min(count, 5)):
+            try:
+                node = compose.nth(idx)
+                if not await node.is_visible():
+                    continue
+                href = (await node.get_attribute("href")) or ""
+                if href and not MESSAGE_COMPOSE_HREF_RE.search(href):
+                    continue
+                aria = (await node.get_attribute("aria-label")) or ""
+                text = (await node.inner_text()) or ""
+                label = aria or text
+                if not MESSAGE_BUTTON_NAME_RE.search(label):
+                    continue
+                key = f"compose:{href}:{idx}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                return node
+            except Exception:  # noqa: BLE001
+                continue
+    return None
+
+
+async def has_message_on_main(page, *, profile_url: str | None = None) -> bool:
+    """True when a Message affordance is visible on the profile top card only."""
+    return await message_locator_on_main(page, profile_url=profile_url) is not None
+
+
+INVITE_MODAL_BUTTON_RE = re.compile(r"Send without|Not now|Continue without Premium|Continue for free", re.I)
+
+
+async def invite_modal_visible(page) -> bool:
+    """True when the post-Connect invitation dialog is open."""
+    try:
+        if await page.get_by_role("button", name=INVITE_MODAL_BUTTON_RE).count() > 0:
+            return True
+        if await page.get_by_role("link", name=INVITE_MODAL_BUTTON_RE).count() > 0:
+            return True
+    except Exception:  # noqa: BLE001
+        return False
+    return False
+
+
+async def click_connect_on_main(page, *, profile_url: str | None = None) -> bool:
     """Click the profile top-card Connect / Invite control."""
-    node = await connect_locator_on_main(page)
+    node = await connect_locator_on_main(page, profile_url=profile_url or page.url)
     if node is None:
         return False
     await human_click(page, node, timeout=15000)
+    for _ in range(25):
+        if await invite_modal_visible(page):
+            return True
+        await pause_poll(base=0.15)
     return True
 
 

@@ -86,7 +86,7 @@ def test_preview_application_email(track_cfg, monkeypatch):
 
 
 def test_print_gmail_instructions_missing(tmp_path: Path, monkeypatch, capsys):
-    monkeypatch.setattr("gmail_configure.GMAIL_INSTRUCTIONS", tmp_path / "missing.txt")
+    monkeypatch.setattr("gmail_configure.GMAIL_APP_PASSWORD_GUIDE", tmp_path / "missing.txt")
     print_gmail_instructions()
     assert "playbooks" in capsys.readouterr().out or "Gmail" in capsys.readouterr().out
 

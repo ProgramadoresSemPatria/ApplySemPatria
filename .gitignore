@@ -45,6 +45,7 @@ state/
 # Python
 .venv/
 .venv-test/
+*.egg-info/
 __pycache__/
 *.pyc
 *.pyo

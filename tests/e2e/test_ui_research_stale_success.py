@@ -74,9 +74,10 @@ def test_stale_success_does_not_flash_immediately(mock_ui_server_research_stale_
     page.goto(f"http://127.0.0.1:{port}/", wait_until="networkidle")
     page.locator("#runResearchBtn").click()
     expect(page.locator("#runResearchBtn")).to_be_disabled(timeout=5000)
-    toast = page.locator("#toast.show")
-    expect(toast).not_to_contain_text("1 roles in apply table", timeout=1500)
     expect(page.locator("#runResearchBtn")).to_contain_text("Researching", timeout=2000)
+    page.wait_for_timeout(400)
+    toast_text = (page.locator("#toast.show").text_content() or "").strip()
+    assert "1 roles in apply table" not in toast_text
 
 
 def test_stale_success_shows_progress_not_cards(mock_ui_server_research_stale_success, page: Page):

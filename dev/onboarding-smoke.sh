@@ -19,19 +19,21 @@ echo "→ Copying minimal project tree to $FRESH …"
 if command -v rsync >/dev/null 2>&1; then
   rsync -a \
     --exclude '.venv' \
-    --exclude 'registry' \
-    --exclude 'runs' \
-    --exclude 'state' \
-    --exclude 'secrets' \
+    --exclude '/registry' \
+    --exclude '/runs' \
+    --exclude '/state' \
+    --exclude '/secrets' \
+    --exclude '/tracks' \
     --exclude '.git' \
     "$REPO/" "$FRESH/"
 else
   tar -C "$REPO" \
     --exclude='.venv' \
-    --exclude='registry' \
-    --exclude='runs' \
-    --exclude='state' \
-    --exclude='secrets' \
+    --exclude='./registry' \
+    --exclude='./runs' \
+    --exclude='./state' \
+    --exclude='./secrets' \
+    --exclude='./tracks' \
     --exclude='.git' \
     -cf - . | tar -C "$FRESH" -xf -
 fi
@@ -51,15 +53,17 @@ PY
 
 cd "$FRESH"
 
-CLI="python3 scripts/jobsearch.py"
+echo
+echo "→ pip install -e . (same as README quick start)"
+python3 -m pip install --no-cache-dir -e ".[gmail]" >/dev/null
 
 echo
-echo "→ jobsearch install --check-only (before venv)"
-$CLI install --check-only
+echo "→ jobsearch install --check-only"
+jobsearch install --check-only
 
 echo
 echo "→ jobsearch onboarding (non-interactive, AI Engineer)"
-$CLI onboarding --track ai-engineer --reset --yes \
+jobsearch onboarding --track ai-engineer --reset --yes \
   --resume /tmp/sample-resume.pdf \
   --full-name "Smoke Test User" \
   --email "smoke@example.com" \
@@ -71,16 +75,20 @@ $CLI onboarding --track ai-engineer --reset --yes \
 
 echo
 echo "→ jobsearch configure linkedin --status (disabled by default after onboarding skip)"
-$CLI configure linkedin --track ai-engineer --status
-$CLI doctor
+jobsearch configure linkedin --track ai-engineer --status
+jobsearch doctor
+
+if [[ ! -f tracks/ai-engineer/config.json ]]; then
+  cp examples/tracks/ai-engineer/config.json tracks/ai-engineer/
+fi
 
 echo
 echo "→ jobsearch discover --dry-run --track ai-engineer --since 7d"
-$CLI discover --dry-run --track ai-engineer --since 7d
+jobsearch discover --dry-run --track ai-engineer --since 7d
 
 echo
 echo "→ jobsearch tracks list"
-$CLI tracks list
+jobsearch tracks list
 
 echo
 echo "============================================================"

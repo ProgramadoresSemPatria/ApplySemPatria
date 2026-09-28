@@ -46,7 +46,6 @@ from track_store import load_profile as load_track_profile  # noqa: E402
 from flow_runner import resolve_recipe, run_recipe  # noqa: E402
 from linkedin_ui import cleanup_after_message, dismiss_blocking_dialogs  # noqa: E402
 
-MESSAGE_AFFORDANCE = dm_chat.MESSAGE_AFFORDANCE
 PENDING_RE = re.compile(r"^pending$", re.I)
 
 
@@ -61,14 +60,16 @@ async def shows_pending(page) -> bool:
     return False
 
 
-async def has_top_card_message(page) -> bool:
+async def has_top_card_message(page, *, profile_url: str | None = None) -> bool:
     """Message affordance on the profile top card (not feed/recommendations)."""
-    return await page.locator("main a[href*='messaging/compose']:not([aria-label])").count() > 0
+    from linkedin_ui import has_message_on_main  # noqa: WPS433
+
+    return await has_message_on_main(page, profile_url=profile_url)
 
 
-async def is_connected(page, prof_url: str) -> tuple[bool, str]:
+async def is_connected(page, prof_url: str, *, navigate_url: str | None = None) -> tuple[bool, str]:
     try:
-        await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
+        await page.goto(navigate_url or prof_url, wait_until="domcontentloaded", timeout=60000)
         await pause_page_settle()
         await drift_mouse(page)
         dismissed = await dismiss_blocking_dialogs(page)
@@ -76,13 +77,17 @@ async def is_connected(page, prof_url: str) -> tuple[bool, str]:
             await pause_poll(base=0.35)
     except Exception:  # noqa: BLE001
         return False, "profile load failed"
-    main = page.locator("main").first
+    from linkedin_ui import has_connect_on_main  # noqa: WPS433
+
     if await shows_pending(page):
         return False, "Pending visible — not accepted yet"
-    if await has_top_card_message(page):
-        return True, "Message available (accepted)"
-    if await main.locator(MESSAGE_AFFORDANCE).count() > 0:
-        return True, "Message available (accepted or open profile)"
+    if await has_connect_on_main(page, profile_url=prof_url):
+        return False, "Connect visible — need to connect first"
+    if await has_top_card_message(page, profile_url=prof_url):
+        return True, "Message on profile top card (accepted)"
+    top = page.locator("main section").first
+    if await top.locator("a:has-text('Message'), button:has-text('Message')").count() > 0:
+        return True, "Message on profile top card (accepted)"
     return False, "no Message yet — still waiting"
 
 
@@ -293,6 +298,21 @@ async def run(
                 if not connected:
                     print(f"  → skip: {reason}")
                     profile_outcome = "still_pending" if "Pending" in reason else "not_connected"
+                    if "Connect visible" in reason or (
+                        dm_state.status_of(entry) == dm_state.STATUS_ACCEPTED_MSG_PENDING
+                        and entry.get("accepted_at")
+                        and not entry.get("message_sent_at")
+                    ):
+                        if dm_state.clear_stale_acceptance(state, prof_url):
+                            dm_state.save(state)
+                            print("  → state corrected — cleared false acceptance; retry connect/message")
+                            audit_warn(
+                                "dm_followup",
+                                "state_corrected",
+                                correction="clear_stale_acceptance",
+                                **ctx_data,
+                            )
+                            profile_outcome = "needs_connect_retry"
                     if "Pending" in reason:
                         entry = dm_state.get(state, prof_url)
                         if entry and entry.get("accepted_at") and not entry.get("message_sent_at"):

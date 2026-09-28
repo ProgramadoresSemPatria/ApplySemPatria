@@ -12,7 +12,10 @@ from linkedin_ui import (  # noqa: E402
     connect_locator_on_main,
     dismiss_premium_modal,
     has_connect_on_main,
+    has_message_on_main,
     has_more_on_top_card,
+    invite_modal_visible,
+    message_locator_on_main,
     more_menu_has_connect,
     wait_for_profile_top_card,
 )
@@ -23,6 +26,14 @@ def _connect_node():
     node.is_visible = AsyncMock(return_value=True)
     node.get_attribute = AsyncMock(return_value="Invite Jane to connect")
     node.inner_text = AsyncMock(return_value="Connect")
+    return node
+
+
+def _message_node():
+    node = MagicMock()
+    node.is_visible = AsyncMock(return_value=True)
+    node.get_attribute = AsyncMock(return_value="Message")
+    node.inner_text = AsyncMock(return_value="Message")
     return node
 
 
@@ -43,6 +54,29 @@ async def test_connect_locator_on_main_finds_button():
 
 
 @pytest.mark.asyncio
+async def test_message_locator_on_main_finds_button():
+    page = MagicMock()
+    scope = MagicMock()
+    scope.count = AsyncMock(return_value=1)
+    loc = MagicMock()
+    loc.count = AsyncMock(return_value=1)
+    loc.nth = MagicMock(return_value=_message_node())
+    scope.get_by_role = MagicMock(return_value=loc)
+    scope.locator = MagicMock(return_value=loc)
+    with patch("linkedin_ui.profile_action_scopes", return_value=[scope]):
+        node = await message_locator_on_main(page)
+    assert node is not None
+
+
+@pytest.mark.asyncio
+async def test_has_message_on_main():
+    with patch("linkedin_ui.message_locator_on_main", AsyncMock(return_value=_message_node())):
+        assert await has_message_on_main(MagicMock()) is True
+    with patch("linkedin_ui.message_locator_on_main", AsyncMock(return_value=None)):
+        assert await has_message_on_main(MagicMock()) is False
+
+
+@pytest.mark.asyncio
 async def test_has_connect_on_main():
     with patch("linkedin_ui.connect_locator_on_main", AsyncMock(return_value=_connect_node())):
         assert await has_connect_on_main(MagicMock()) is True
@@ -55,9 +89,19 @@ async def test_click_connect_on_main():
     node = _connect_node()
     with patch("linkedin_ui.connect_locator_on_main", AsyncMock(return_value=node)):
         with patch("linkedin_ui.human_click", AsyncMock()) as click:
-            ok = await click_connect_on_main(MagicMock())
+            with patch("linkedin_ui.invite_modal_visible", AsyncMock(return_value=True)):
+                ok = await click_connect_on_main(MagicMock())
     assert ok is True
     click.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_invite_modal_visible():
+    page = MagicMock()
+    page.get_by_role = MagicMock(return_value=MagicMock(count=AsyncMock(return_value=1)))
+    assert await invite_modal_visible(page) is True
+    page.get_by_role = MagicMock(return_value=MagicMock(count=AsyncMock(return_value=0)))
+    assert await invite_modal_visible(page) is False
 
 
 @pytest.mark.asyncio

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Fixture — Ursula-style Connect link + Message compose</title></head>
+<body>
+  <!-- Decoy global compose (must not count as connected / must not block Connect). -->
+  <main>
+    <nav>
+      <a href="/messaging/compose/?profileUrn=decoy-global">Messaging</a>
+    </nav>
+    <section>
+      <h1>Ursula Morales</h1>
+      <div class="profile-actions">
+        <a
+          href="/preload/custom-invite/?vanityName=ursula-morales-03328283"
+          aria-label="Invite Ursula Morales to connect"
+        ><span>Connect</span></a>
+        <a
+          href="/messaging/compose/?profileUrn=urn:li:fsd_profile:ursula"
+          aria-label="Message"
+        >Message</a>
+        <button type="button">More</button>
+      </div>
+    </section>
+    <section>
+      <h2>People also viewed</h2>
+      <a href="#" aria-label="Invite Andrés A. to connect">Connect</a>
+    </section>
+    <button type="button" id="invite-modal" hidden>Send without a note</button>
+  </main>
+  <script>
+    document.querySelector('a[href*="custom-invite"]').addEventListener("click", function (e) {
+      e.preventDefault();
+      document.getElementById("invite-modal").hidden = false;
+    });
+  </script>
+</body>
+</html>

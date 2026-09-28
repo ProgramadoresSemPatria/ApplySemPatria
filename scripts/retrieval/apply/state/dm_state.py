@@ -130,6 +130,46 @@ def record_connect(data: dict[str, Any], job: dict[str, Any], profile_url: str) 
     e["connect_requested_at"] = _now()
 
 
+def reset_stale_connect_pending(data: dict[str, Any], profile_url: str) -> bool:
+    """Clear connect_pending when LinkedIn still shows Connect (request never landed).
+
+    Returns True when state was reset.
+    """
+    key = normalize_profile_url(profile_url)
+    entry = data["profiles"].get(key)
+    if not entry:
+        return False
+    if status_of(entry) != STATUS_CONNECT_PENDING:
+        return False
+    entry["connect_requested_at"] = None
+    entry["accepted_at"] = None
+    entry.pop("pending_confirmed", None)
+    return True
+
+
+def clear_stale_acceptance(data: dict[str, Any], profile_url: str) -> bool:
+    """Drop false ``accepted_at`` / connect flags (e.g. feed Message link misread).
+
+    Returns True when state was changed.
+    """
+    key = normalize_profile_url(profile_url)
+    entry = data["profiles"].get(key)
+    if not entry:
+        return False
+    st = status_of(entry)
+    if st not in (STATUS_CONNECT_PENDING, STATUS_ACCEPTED_MSG_PENDING):
+        return False
+    changed = False
+    if entry.get("accepted_at") and not entry.get("message_sent_at"):
+        entry["accepted_at"] = None
+        changed = True
+    if st == STATUS_CONNECT_PENDING and entry.get("connect_requested_at"):
+        entry["connect_requested_at"] = None
+        entry.pop("pending_confirmed", None)
+        changed = True
+    return changed
+
+
 def record_message(
     data: dict[str, Any],
     job: dict[str, Any],

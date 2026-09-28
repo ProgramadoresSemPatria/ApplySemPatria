@@ -361,6 +361,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="LinkedIn DM send mode when enabled",
     )
     onboard.add_argument("--confirm-dm-message", action="store_true", help="Confirm DM template (non-interactive)")
+    onboard.add_argument(
+        "--open-ui",
+        action="store_true",
+        help="After onboarding, open http://127.0.0.1:8765/ (non-interactive)",
+    )
+    onboard.add_argument(
+        "--no-open-ui",
+        action="store_true",
+        help="Do not offer or open the applications dashboard",
+    )
     onboard.set_defaults(func=cmd_onboarding)
 
     cfg = sub.add_parser("configure", help="Configure integrations (Gmail, …)")

@@ -1,0 +1,48 @@
+================================================================================
+  Gmail — OAuth (Google Cloud, advanced)
+================================================================================
+
+Use this if you prefer the Gmail API + browser consent instead of an
+app password. Takes about 10 minutes once.
+
+--------------------------------------------------------------------------------
+Step 1 — Google Cloud project + Gmail API
+--------------------------------------------------------------------------------
+
+  1. Open: https://console.cloud.google.com/
+  2. Create a project (e.g. jobsearch-email).
+  3. APIs & Services → Library → search 「Gmail API」 → Enable.
+
+--------------------------------------------------------------------------------
+Step 2 — OAuth consent screen
+--------------------------------------------------------------------------------
+
+  1. APIs & Services → OAuth consent screen.
+  2. User type: External (or Internal for Workspace).
+  3. Add your Gmail address under Test users (while in Testing mode).
+
+--------------------------------------------------------------------------------
+Step 3 — Desktop OAuth client
+--------------------------------------------------------------------------------
+
+  1. APIs & Services → Credentials → Create credentials → OAuth client ID.
+  2. Application type: Desktop app.
+  3. Download the JSON file.
+
+  4. Save it in your job-search folder as:
+       secrets/gmail-credentials.json
+     (never commit this file)
+
+--------------------------------------------------------------------------------
+Step 4 — Authorize in the browser (this CLI)
+--------------------------------------------------------------------------------
+
+  When prompted, enter the path to that JSON file.
+  A browser window opens → sign in with the Gmail account that will SEND
+  applications → allow 「Send email on your behalf」.
+
+  Token saved locally: state/gmail-token.json
+
+Docs: playbooks/gmail-email-apply-setup.md
+
+================================================================================

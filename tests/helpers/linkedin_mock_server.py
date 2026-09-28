@@ -19,6 +19,7 @@ PROFILE_MAP: dict[str, str] = {
     "test-connect-more": "profile-connect-more.html",
     "test-connected": "profile-connected.html",
     "test-connected-only": "profile-connected-only.html",
+    "ursula-morales-03328283": "profile-ursula-connect-link.html",
 }
 
 

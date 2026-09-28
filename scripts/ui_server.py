@@ -453,7 +453,7 @@ def run_bulk_dm_followup(
     ]
 
     from application_channel import dm_automation_ready  # noqa: WPS433
-    from dm_apply import collect_candidates  # noqa: WPS433
+    from dm_apply import candidates_for_connect_action, collect_candidates  # noqa: WPS433
     from dm_followup import (  # noqa: WPS433
         filter_entries_by_job_keys,
         filter_entries_by_status,
@@ -468,16 +468,18 @@ def run_bulk_dm_followup(
             if job and not dm_automation_ready(job):
                 skipped_no_profile.append((job.get("company") or jk).strip())
 
+    state = dm_state.load()
     connect_count = len(
-        collect_candidates(
-            table_only=False,
-            limit=0,
-            track_id=tid,
-            job_keys=keys if keys else None,
+        candidates_for_connect_action(
+            state,
+            collect_candidates(
+                table_only=False,
+                limit=0,
+                track_id=tid,
+                job_keys=keys if keys else None,
+            ),
         )
     )
-
-    state = dm_state.load()
     scoped = pending_profiles(state)
     if keys:
         scoped = filter_entries_by_job_keys(scoped, keys)

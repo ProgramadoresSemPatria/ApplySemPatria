@@ -182,14 +182,41 @@ def collect_candidates(
     return out
 
 
-async def classify_affordance(page, prof_url: str) -> str:
+def candidates_for_connect_action(
+    state: dict[str, Any],
+    candidates: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Jobs that still need a connect attempt (new or stale connect_pending)."""
+    out: list[dict[str, Any]] = []
+    for job in candidates:
+        prof = profile_url_for(job)
+        if not prof:
+            continue
+        st = dm_state.status_for(state, prof)
+        if st in (dm_state.STATUS_NONE, dm_state.STATUS_CONNECT_PENDING):
+            out.append(job)
+    return out
+
+
+def _skip_dm_apply_profile(status: str) -> bool:
+    """Profiles handled by follow-up (message) or already complete."""
+    return status in (
+        dm_state.STATUS_MESSAGE_SENT,
+        dm_state.STATUS_ACCEPTED_MSG_PENDING,
+    )
+
+
+async def classify_affordance(page, prof_url: str, *, navigate_url: str | None = None) -> str:
     """Return: message | connect_top | connect_more | connected | follow_only | error.
 
     All top-card checks are scoped to <main> so we never hit a post's "More"
     menu or the chat-dock messaging button.
+
+    ``navigate_url`` is for tests/fixtures only (load local HTML while ``prof_url``
+    supplies the LinkedIn vanity slug for Connect/Message scoping).
     """
     try:
-        await page.goto(prof_url, wait_until="domcontentloaded", timeout=60000)
+        await page.goto(navigate_url or prof_url, wait_until="domcontentloaded", timeout=60000)
         await pause_page_settle()
         await drift_mouse(page)
         await dismiss_blocking_dialogs(page)
@@ -198,16 +225,21 @@ async def classify_affordance(page, prof_url: str) -> str:
     from linkedin_ui import (  # noqa: WPS433
         CONNECT_BUTTON_NAME_RE,
         has_connect_on_main,
+        has_message_on_main,
         is_connect_affordance_label,
         more_menu_has_connect,
     )
 
-    if await has_connect_on_main(page):
+    if await has_connect_on_main(page, profile_url=prof_url):
         return "connect_top"
     if await more_menu_has_connect(page):
         return "connect_more"
+    if await has_message_on_main(page, profile_url=prof_url):
+        return "message"
     main = page.locator("main").first
     if await main.get_by_role("button", name=re.compile(r"^Message", re.I)).count() > 0:
+        return "message"
+    if await main.get_by_role("link", name=re.compile(r"^Message", re.I)).count() > 0:
         return "message"
     more = main.get_by_role("button", name=re.compile(r"^More", re.I))
     if await more.count() > 0:
@@ -286,7 +318,7 @@ async def run(
         for job in candidates:
             prof_check = profile_url_for(job)
             existing = dm_state.status_for(state, prof_check)
-            if existing != dm_state.STATUS_NONE:
+            if _skip_dm_apply_profile(existing):
                 print(f"  skip (already {dm_state.status_label(existing)}): {job.get('company')}")
                 audit_warn(
                     "dm_apply",
@@ -464,13 +496,10 @@ def main() -> int:
     if args.match:
         needle = args.match.casefold()
         candidates = [j for j in candidates if needle in (j.get("company") or "").casefold()]
-    # Drop already-actioned profiles BEFORE limiting so --limit counts fresh work.
+    # Drop message-complete / awaiting-message profiles BEFORE limiting.
     if not args.list and not args.scan:
         _state = dm_state.load()
-        candidates = [
-            j for j in candidates
-            if dm_state.status_for(_state, profile_url_for(j) or "") == dm_state.STATUS_NONE
-        ]
+        candidates = candidates_for_connect_action(_state, candidates)
     if args.limit:
         candidates = candidates[: args.limit]
 
