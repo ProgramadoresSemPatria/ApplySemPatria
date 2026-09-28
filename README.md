@@ -50,6 +50,7 @@ List every target: **`make`** or **`make help`**.
 | Install Chromium via CLI | `make install-cli` or `make browser` |
 | Broken `.venv` / install fails | `make clean-venv` then `make quickstart` |
 | Ingestion health snapshot | `make audit-ingestion` |
+| Share redacted debug JSON | `make support-bundle` (optional [Firebase telemetry](docs/telemetry/FIREBASE_SETUP.md)) |
 
 ## Reset local data (bugs / first-run replay)
 
