@@ -22,9 +22,21 @@ _HEADED_COLLECT_ENV = "JOBSEARCH_COLLECT_HEADED"
 
 
 def linkedin_collect_headless() -> bool:
-    """Return False when ``JOBSEARCH_COLLECT_HEADED=1`` (visible Chrome for ingestion)."""
+    """Return False when visible collect is enabled (env, settings file, or --headed)."""
     raw = os.environ.get(_HEADED_COLLECT_ENV, "").strip().lower()
-    return raw not in ("1", "true", "yes", "on")
+    if raw:
+        return raw not in ("1", "true", "yes", "on")
+    try:
+        from retrieval.jobsearch_settings import linkedin_collect_visible_from_settings  # noqa: WPS433
+
+        visible = linkedin_collect_visible_from_settings()
+        if visible is True:
+            return False
+        if visible is False:
+            return True
+    except Exception:
+        pass
+    return True
 
 
 # Headless LinkedIn collectors require Patchright's chromium_headless_shell bundle.

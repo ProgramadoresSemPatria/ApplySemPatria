@@ -217,6 +217,27 @@ def print_environment_report() -> None:
     print(f"  Browser (patchright): {browser_label}")
     print(f"  Gmail auth: {'✓' if gmail_auth_ok() else '○ not configured'}")
     print(f"  LinkedIn cookies: {'✓' if linkedin_cookies_ok() else '○ not configured'}")
+    try:
+        from browser_session import linkedin_collect_headless  # noqa: WPS433
+        from retrieval.jobsearch_settings import (  # noqa: WPS433
+            linkedin_collect_visible_from_settings,
+            settings_path_in_use,
+        )
+
+        if os.environ.get("JOBSEARCH_COLLECT_HEADED", "").strip():
+            collect_mode = "visible (JOBSEARCH_COLLECT_HEADED)"
+        elif settings_path_in_use() is not None and linkedin_collect_visible_from_settings() is not None:
+            visible = not linkedin_collect_headless()
+            collect_mode = (
+                f"visible ({settings_path_in_use().name})"
+                if visible
+                else f"headless ({settings_path_in_use().name})"
+            )
+        else:
+            collect_mode = "headless (set browser.linkedin_collect_visible in jobsearch.settings.yaml)"
+        print(f"  LinkedIn collect browser: {collect_mode}")
+    except Exception:
+        pass
 
 
 def run_install_step(

@@ -50,6 +50,7 @@ List every target: **`make`** or **`make help`**.
 | Install Chromium via CLI | `make install-cli` or `make browser` |
 | Broken `.venv` / install fails | `make clean-venv` then `make quickstart` |
 | Ingestion health snapshot | `make audit-ingestion` |
+| Watch Chrome during LinkedIn ingest | `make collect-visible` then re-run ingestion (or `JOBSEARCH_COLLECT_HEADED=1`) |
 
 ## Reset local data (bugs / first-run replay)
 
@@ -63,6 +64,10 @@ make onboarding
 ```
 
 Options: `BACKUP=0`, `RESET_LINKEDIN=0` (keep LinkedIn cookies), `RESET_BROWSER=1` (remove `patchright-profile/`).
+
+### Visible browser (debug LinkedIn collect)
+
+Copy `examples/jobsearch.settings.yaml` to `jobsearch.settings.yaml` (gitignored) and set `browser.linkedin_collect_visible: true`, or run **`make collect-visible`**. Environment **`JOBSEARCH_COLLECT_HEADED=1`** still wins if set. **`make doctor`** shows the active mode.
 
 ## Keeping your install stable
 
