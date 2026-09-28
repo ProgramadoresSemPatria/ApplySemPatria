@@ -444,6 +444,73 @@
 
     .research-run-btn:disabled { opacity: 0.55; cursor: wait; }
 
+    .research-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .research-stop-btn {
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 120, 120, 0.45);
+      background: rgba(255, 80, 80, 0.08);
+      color: #ffb4b4;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .research-stop-btn:hover:not(:disabled) { background: rgba(255, 80, 80, 0.16); }
+
+    .research-pipeline {
+      width: min(520px, 100%);
+      text-align: left;
+      margin-top: 0.25rem;
+      padding: 1rem 1.1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .research-pipeline[hidden] { display: none !important; }
+
+    .pipeline-step {
+      display: flex;
+      gap: 0.65rem;
+      align-items: flex-start;
+      padding: 0.45rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .pipeline-step:last-child { border-bottom: none; }
+
+    .pipeline-icon {
+      width: 1.25rem;
+      flex-shrink: 0;
+      text-align: center;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .pipeline-step.running .pipeline-icon { color: var(--accent); }
+    .pipeline-step.success .pipeline-icon { color: #6ee7a0; }
+    .pipeline-step.failure .pipeline-icon { color: #f87171; }
+    .pipeline-step.pending .pipeline-icon { color: var(--muted); opacity: 0.5; }
+    .pipeline-step.skipped .pipeline-icon { color: var(--muted); opacity: 0.35; }
+
+    .pipeline-label { font-weight: 600; }
+    .pipeline-detail {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 0.15rem;
+      word-break: break-word;
+    }
+
     .list-content[hidden] { display: none !important; }
 
     .cards-wrap {
@@ -993,7 +1060,11 @@
           <h3>No research for today yet</h3>
           <p id="researchPromptText"></p>
           <p class="research-progress" id="researchProgressText" hidden></p>
-          <button type="button" class="research-run-btn" id="runResearchBtn">Make a research today</button>
+          <div class="research-pipeline" id="researchPipeline" hidden></div>
+          <div class="research-actions">
+            <button type="button" class="research-run-btn" id="runResearchBtn">Run ingestion</button>
+            <button type="button" class="research-stop-btn" id="stopResearchBtn" hidden>Stop</button>
+          </div>
         </div>
         <div class="list-content" id="listContent">
           <div class="list-header">
@@ -1133,6 +1204,8 @@
     const researchProgressText = document.getElementById("researchProgressText");
     const listContent = document.getElementById("listContent");
     const runResearchBtn = document.getElementById("runResearchBtn");
+    const stopResearchBtn = document.getElementById("stopResearchBtn");
+    const researchPipeline = document.getElementById("researchPipeline");
 
     const RESEARCH_STEP_LABELS = {
       starting: "Starting research…",
@@ -1141,6 +1214,35 @@
       discover: "Discovering job boards",
       generate_table: "Building today's apply table",
     };
+
+    const PIPELINE_ICONS = {
+      pending: "○",
+      running: "◉",
+      success: "✓",
+      failure: "✕",
+      skipped: "–",
+    };
+
+    function renderResearchPipeline(run) {
+      if (!researchPipeline) return;
+      const steps = run?.pipeline;
+      if (!steps?.length) {
+        researchPipeline.hidden = true;
+        researchPipeline.innerHTML = "";
+        return;
+      }
+      researchPipeline.hidden = false;
+      researchPipeline.innerHTML = steps
+        .map((s) => {
+          const icon = PIPELINE_ICONS[s.status] || "○";
+          const detail = s.detail ? `<div class="pipeline-detail">${esc(s.detail)}</div>` : "";
+          return `<div class="pipeline-step ${s.status}">
+            <span class="pipeline-icon">${icon}</span>
+            <div><div class="pipeline-label">${esc(s.label || s.id)}</div>${detail}</div>
+          </div>`;
+        })
+        .join("");
+    }
 
     let researchPollTimer = null;
     let researchWasRunning = false;
@@ -1193,11 +1295,13 @@
     }
 
     function applyResearchProgress(run, btn) {
-      const step = RESEARCH_STEP_LABELS[run.step] || run.step || "Researching";
+      const step = RESEARCH_STEP_LABELS[run.step] || run.step || "Ingesting";
       const detail = run.detail ? ` · ${run.detail}` : "";
       const elapsed = formatResearchElapsed(run.started_at);
       btn.disabled = true;
-      btn.textContent = elapsed ? `Researching · ${elapsed}` : "Researching…";
+      btn.textContent = elapsed ? `Running · ${elapsed}` : "Running…";
+      if (stopResearchBtn) stopResearchBtn.hidden = false;
+      renderResearchPipeline(run);
       if (shouldShowResearchProgress()) {
         researchProgressText.hidden = false;
         researchProgressText.textContent = `${step}${detail}${elapsed ? ` · ${elapsed}` : ""}`;
@@ -1206,7 +1310,8 @@
 
     function resetResearchButton(btn) {
       btn.disabled = false;
-      btn.textContent = "Make a research today";
+      btn.textContent = "Run ingestion";
+      if (stopResearchBtn) stopResearchBtn.hidden = true;
       resetResearchProgressText();
     }
 
@@ -1230,6 +1335,8 @@
         }
         return;
       }
+
+      renderResearchPipeline(run);
 
       if (researchExpectRunning) {
         ensureResearchPoll(btn);
@@ -2319,6 +2426,26 @@
     }
 
     runResearchBtn.onclick = runResearchToday;
+
+    async function stopResearchToday() {
+      if (!stopResearchBtn || stopResearchBtn.disabled) return;
+      stopResearchBtn.disabled = true;
+      try {
+        const res = await fetch("/api/research/cancel", { method: "POST" });
+        const data = await res.json();
+        showToast(data.message || "Stopped", res.ok);
+        researchExpectRunning = false;
+        researchWasRunning = false;
+        researchSessionStartedAt = null;
+        await syncResearchRunState(runResearchBtn);
+      } catch (e) {
+        showToast(String(e), false);
+      } finally {
+        stopResearchBtn.disabled = false;
+      }
+    }
+
+    if (stopResearchBtn) stopResearchBtn.onclick = stopResearchToday;
 
     async function runBulkDmFollowup() {
       const btn = document.getElementById("bulkDmBtn");

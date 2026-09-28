@@ -1008,17 +1008,28 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                 self._json(500, {"ok": False, "message": f"Could not start research: {exc}"})
                 return
 
+            from research_log import set_research_pid  # noqa: E402
+
+            set_research_pid(proc.pid)
             audit_info("ui_server", "research_spawned", pid=proc.pid, since=since)
             self._json(
                 202,
                 {
                     "ok": True,
                     "started": True,
-                    "message": "Research started — progress updates in the status bar.",
+                    "message": "Research started — progress updates in the pipeline below.",
                     "pid": proc.pid,
                     "run": research_run_status(),
                 },
             )
+            return
+
+        if path == "/api/research/cancel":
+            from research_log import cancel_research_run, research_run_status  # noqa: E402
+
+            ok, message = cancel_research_run()
+            code = 200 if ok else 409
+            self._json(code, {"ok": ok, "message": message, "run": research_run_status()})
             return
 
         if path == "/api/bulk-action":

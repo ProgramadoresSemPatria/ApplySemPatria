@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -16,6 +18,17 @@ INGESTION_HISTORY_PATH = ROOT / "state" / "ingestion-history.json"
 RUN_PATH = ROOT / "state" / "research-run.json"
 STALE_RUN_MINUTES = 10
 DEFAULT_INGESTION_LOOKBACK_DAYS = 7
+
+PIPELINE_STEP_LABELS: dict[str, str] = {
+    "starting": "Starting",
+    "browser_preflight": "Browser preflight",
+    "linkedin_collect": "LinkedIn posts",
+    "repair_post_urls": "Repair post URLs",
+    "repair_registry_fields": "Repair registry fields",
+    "linkedin_jobs_collect": "LinkedIn jobs",
+    "discover": "Job boards",
+    "generate_table": "Build apply table",
+}
 
 
 class ResearchRunInProgressError(RuntimeError):
@@ -271,6 +284,131 @@ def _parse_run_timestamp(raw: str | None) -> datetime | None:
         return None
 
 
+def _pipeline_label(step_id: str) -> str:
+    if step_id in PIPELINE_STEP_LABELS:
+        return PIPELINE_STEP_LABELS[step_id]
+    if step_id.startswith("discover:"):
+        return f"Discover boards ({step_id.split(':', 1)[1]})"
+    return step_id.replace("_", " ").title()
+
+
+def research_process_alive(pid: int | None) -> bool:
+    if not pid or pid <= 0:
+        return False
+    try:
+        os.kill(int(pid), 0)
+    except OSError:
+        return False
+    return True
+
+
+def configure_research_pipeline(step_ids: list[str]) -> None:
+    run = load_research_run()
+    run["pipeline_plan"] = list(step_ids)
+    run.setdefault("steps_completed", [])
+    _save_research_run(run)
+
+
+def append_research_pipeline_steps(step_ids: list[str]) -> None:
+    run = load_research_run()
+    plan = list(run.get("pipeline_plan") or [])
+    for sid in step_ids:
+        if sid not in plan:
+            plan.append(sid)
+    run["pipeline_plan"] = plan
+    _save_research_run(run)
+
+
+def build_pipeline_status(run: dict[str, Any]) -> list[dict[str, Any]]:
+    plan = list(run.get("pipeline_plan") or [])
+    if not plan and run.get("running"):
+        plan = ["starting"]
+    completed = set(run.get("steps_completed") or [])
+    current = str(run.get("step") or "")
+    running = bool(run.get("running"))
+    failed = not running and run.get("ok") is False
+    failed_step = current if failed and current not in ("done", "failed") else None
+    if failed and run.get("step") in ("failed", "done"):
+        failed_step = None
+        for sid in reversed(plan):
+            if sid not in completed:
+                failed_step = sid
+                break
+
+    rows: list[dict[str, Any]] = []
+    for sid in plan:
+        if sid in completed:
+            status = "success"
+        elif running and sid == current:
+            status = "running"
+        elif failed and sid == failed_step:
+            status = "failure"
+        elif failed and sid not in completed:
+            status = "skipped"
+        else:
+            status = "pending"
+        detail = ""
+        if status == "running":
+            detail = str(run.get("detail") or "")
+        rows.append(
+            {
+                "id": sid,
+                "label": _pipeline_label(sid),
+                "status": status,
+                "detail": detail,
+            }
+        )
+    return rows
+
+
+def reconcile_research_run() -> dict[str, Any]:
+    """Mark interrupted runs failed when the worker process is gone or progress stalled."""
+    run = load_research_run()
+    if not run.get("running"):
+        return run
+    pid = run.get("pid")
+    pid_dead = pid is not None and not research_process_alive(int(pid))
+    stale = research_run_is_stale(run)
+    if pid_dead:
+        finish_research_run(
+            ok=False,
+            message="Research stopped — worker process ended (server restart or crash). Tap Run again.",
+        )
+        return load_research_run()
+    if stale:
+        clear_stale_research_run(
+            reason="Research timed out with no progress updates. Tap Run again.",
+        )
+        return load_research_run()
+    return run
+
+
+def cancel_research_run() -> tuple[bool, str]:
+    run = load_research_run()
+    if not run.get("running"):
+        return False, "No ingestion is running."
+    pid = run.get("pid")
+    if pid and research_process_alive(int(pid)):
+        try:
+            os.killpg(os.getpgid(int(pid)), signal.SIGTERM)
+        except (ProcessLookupError, OSError):
+            try:
+                os.kill(int(pid), signal.SIGTERM)
+            except OSError:
+                pass
+    finish_research_run(ok=False, message="Ingestion cancelled.")
+    return True, "Ingestion cancelled."
+
+
+def set_research_pid(pid: int) -> None:
+    run = load_research_run()
+    if not run.get("running"):
+        return
+    run["pid"] = int(pid)
+    run["updated_at"] = datetime.now(TZ).isoformat()
+    _save_research_run(run)
+
+
 def research_run_is_stale(run: dict[str, Any] | None = None) -> bool:
     """True when a run is marked running but has not updated recently."""
     run = run or load_research_run()
@@ -335,6 +473,11 @@ def set_research_step(step: str, *, detail: str = "") -> None:
     run = load_research_run()
     if not run.get("running"):
         return
+    prev = str(run.get("step") or "")
+    if prev and prev != step and prev not in ("starting", "done", "failed"):
+        completed = run.setdefault("steps_completed", [])
+        if prev not in completed:
+            completed.append(prev)
     run["step"] = step
     run["detail"] = detail
     run["updated_at"] = datetime.now(TZ).isoformat()
@@ -343,18 +486,28 @@ def set_research_step(step: str, *, detail: str = "") -> None:
 
 def finish_research_run(*, ok: bool, message: str = "") -> None:
     run = load_research_run()
+    prev = str(run.get("step") or "")
+    if ok and prev and prev not in ("starting", "done", "failed"):
+        completed = run.setdefault("steps_completed", [])
+        if prev not in completed:
+            completed.append(prev)
     run["running"] = False
     run["ok"] = ok
     run["message"] = message
     run["step"] = "done" if ok else "failed"
+    run["pid"] = None
     run["updated_at"] = datetime.now(TZ).isoformat()
     _save_research_run(run)
 
 
-def research_run_status() -> dict[str, Any]:
-    run = load_research_run()
+def research_run_status(*, reconcile: bool = True) -> dict[str, Any]:
+    run = reconcile_research_run() if reconcile else load_research_run()
+    pid = run.get("pid")
+    running = bool(run.get("running"))
+    stale = research_run_is_stale(run) if running else False
+    alive = research_process_alive(int(pid)) if pid and running else None
     return {
-        "running": bool(run.get("running")),
+        "running": running,
         "day": run.get("day"),
         "step": run.get("step"),
         "detail": run.get("detail") or "",
@@ -362,6 +515,11 @@ def research_run_status() -> dict[str, Any]:
         "updated_at": run.get("updated_at"),
         "ok": run.get("ok"),
         "message": run.get("message") or "",
+        "pid": pid,
+        "process_alive": alive,
+        "stale": stale,
+        "interrupted": (not running and run.get("ok") is False and bool(run.get("message"))),
+        "pipeline": build_pipeline_status(run),
     }
 
 
