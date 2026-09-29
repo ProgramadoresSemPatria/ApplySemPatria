@@ -26,6 +26,10 @@ state/
 /tracks/**
 !/tracks/.gitkeep
 
+# Local jobsearch settings (copy from examples/jobsearch.settings.yaml)
+/jobsearch.settings.yaml
+/jobsearch.settings.json
+
 # Legacy root-level configs (prefer tracks/<id>/ after onboarding)
 /applicant-profile.json
 /profile.json

@@ -47,6 +47,30 @@ STEP_TIMEOUT_SEC = {
 STEP_HEARTBEAT_SEC = int(os.environ.get("JOBSEARCH_RESEARCH_HEARTBEAT_SEC", "30"))
 
 
+def _research_pipeline_plan(
+    *,
+    table_only: bool,
+    skip_linkedin: bool,
+    skip_linkedin_jobs: bool,
+    skip_discover: bool,
+    track_ids: list[str],
+    linkedin_planned: bool,
+) -> list[str]:
+    plan: list[str] = []
+    if linkedin_planned:
+        plan.append("browser_preflight")
+    if not table_only:
+        if not skip_linkedin:
+            plan.extend(["linkedin_collect", "repair_post_urls", "repair_registry_fields"])
+        if not skip_linkedin_jobs:
+            plan.append("linkedin_jobs_collect")
+        if not skip_discover:
+            for tid in track_ids:
+                plan.append(f"discover:{tid}")
+    plan.append("generate_table")
+    return plan
+
+
 def _linkedin_steps_planned(*, table_only: bool, skip_linkedin: bool, skip_linkedin_jobs: bool) -> bool:
     if table_only:
         return False
@@ -223,11 +247,27 @@ def run_daily_research(
 
     try:
         track_ids: list[str] = []
+        if track:
+            track_ids = [resolve_track(track)]
+        elif not table_only and not skip_discover:
+            track_ids = ready_track_ids("discover")
 
         linkedin_planned = _linkedin_steps_planned(
             table_only=table_only,
             skip_linkedin=skip_linkedin,
             skip_linkedin_jobs=skip_linkedin_jobs,
+        )
+        from research_log import configure_research_pipeline  # noqa: WPS433
+
+        configure_research_pipeline(
+            _research_pipeline_plan(
+                table_only=table_only,
+                skip_linkedin=skip_linkedin,
+                skip_linkedin_jobs=skip_linkedin_jobs,
+                skip_discover=skip_discover,
+                track_ids=track_ids,
+                linkedin_planned=linkedin_planned,
+            )
         )
         linkedin_browser_ok = True
         if linkedin_planned:
@@ -291,15 +331,13 @@ def run_daily_research(
                 else:
                     errors.append("LinkedIn jobs collect script missing — skipped")
 
-            track_ids = [resolve_track(track)] if track else ready_track_ids("discover")
-            if not track_ids:
+            if not skip_discover and not track_ids:
                 msg = (
                     "Board discovery skipped — no track ready (need tracks/<id>/config.json). "
                     "Run: make bootstrap  or  jobsearch doctor"
                 )
                 errors.append(msg)
                 audit_warn("daily_research", "discover_skipped", day=day, message=msg)
-                track_ids = []
 
             if not skip_discover and track_ids:
                 for tid in track_ids:

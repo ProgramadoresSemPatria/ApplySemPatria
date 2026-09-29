@@ -135,6 +135,9 @@ reset-data: ## Delete local data; backup first (CONFIRM=1 required)
 		RESET_BROWSER=$(RESET_BROWSER) BACKUP_DIR="$(BACKUP_DIR)" \
 		bash scripts/reset_local_data.sh
 
+collect-visible: require-install ## jobsearch.settings.yaml with visible Chrome for LinkedIn ingest
+	@$(PYTHON) -c "from pathlib import Path; s=Path('examples/jobsearch.settings.yaml').read_text(); d=Path('jobsearch.settings.yaml'); d.write_text(s.replace('linkedin_collect_visible: false','linkedin_collect_visible: true')); print('Wrote', d.resolve(), '(browser.linkedin_collect_visible: true)')"
+
 audit-ingestion: ## Snapshot research status + registry (see logs/ingestion-watch.log)
 	bash scripts/ingestion_audit.sh
 

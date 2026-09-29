@@ -15,18 +15,28 @@ Local-first job discovery and application tooling (boards, LinkedIn posts, email
 
 ## Quick start
 
+All steps use the **Makefile** — no `pip`, no `source .venv/bin/activate`, no `jobsearch` on PATH unless you want it.
+
 ```bash
 git clone https://github.com/ProgramadoresSemPatria/ApplySemPatria.git job-search
 cd job-search
 
-make quickstart
-make onboarding
-make ui
+make quickstart      # .venv + install CLI + copy examples/tracks → tracks/
+make browser         # Patchright Chromium (once; needed for LinkedIn / forms)
+make onboarding      # interactive profile, Gmail OAuth, LinkedIn
+make doctor          # sanity check
+make ui              # http://127.0.0.1:8765/ — use **Ingestion** in the dashboard
 ```
 
-That’s it for setup — no `pip`, no `source .venv/bin/activate`. Run **`make help`** for everything else (`discover`, `doctor`, `reset-data`, Docker, tests).
+After ingestion (or anytime):
 
-When you need LinkedIn or form apply in the browser: **`make browser`** once.
+```bash
+make table           # refresh applications table + UI snapshot
+make discover        # board jobs only (TRACK=ai-engineer, SINCE=7d)
+make audit-ingestion # snapshot research status + registry (debugging)
+```
+
+List every target: **`make`** or **`make help`**.
 
 ## Daily commands
 
@@ -37,7 +47,10 @@ When you need LinkedIn or form apply in the browser: **`make browser`** once.
 | Health check | `make doctor` |
 | List tracks | `make tracks` |
 | Reinstall deps after `git pull` | `make upgrade` then `make doctor` |
-| Install Chromium via CLI | `make install-cli` |
+| Install Chromium via CLI | `make install-cli` or `make browser` |
+| Broken `.venv` / install fails | `make clean-venv` then `make quickstart` |
+| Ingestion health snapshot | `make audit-ingestion` |
+| Watch Chrome during LinkedIn ingest | `make collect-visible` then re-run ingestion (or `JOBSEARCH_COLLECT_HEADED=1`) |
 
 ## Reset local data (bugs / first-run replay)
 
@@ -51,6 +64,10 @@ make onboarding
 ```
 
 Options: `BACKUP=0`, `RESET_LINKEDIN=0` (keep LinkedIn cookies), `RESET_BROWSER=1` (remove `patchright-profile/`).
+
+### Visible browser (debug LinkedIn collect)
+
+Copy `examples/jobsearch.settings.yaml` to `jobsearch.settings.yaml` (gitignored) and set `browser.linkedin_collect_visible: true`, or run **`make collect-visible`**. Environment **`JOBSEARCH_COLLECT_HEADED=1`** still wins if set. **`make doctor`** shows the active mode.
 
 ## Keeping your install stable
 

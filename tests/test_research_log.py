@@ -116,6 +116,22 @@ def test_join_research_run_attaches_to_existing(research_log_tmp):
     assert after["started_at"] == before["started_at"]
 
 
+def test_reconcile_dead_pid_marks_failed(research_log_tmp):
+    from research_log import load_research_run, research_run_status, start_research_run
+
+    start_research_run("2026-09-28")
+    run = load_research_run()
+    run["pid"] = 999999991
+    run["step"] = "linkedin_collect"
+    from research_log import _save_research_run  # noqa: WPS433
+
+    _save_research_run(run)
+    status = research_run_status(reconcile=True)
+    assert status["running"] is False
+    assert status["ok"] is False
+    assert "worker process" in (status["message"] or "").lower()
+
+
 def test_research_run_progress(research_log_tmp):
     from research_log import finish_research_run, research_run_status, set_research_step, start_research_run
 
