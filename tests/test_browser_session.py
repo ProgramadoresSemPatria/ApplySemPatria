@@ -70,6 +70,18 @@ def test_headless_chromium_ready_when_shell_installed(monkeypatch, tmp_path: Pat
     assert headless_chromium_executable() == shell
 
 
+def test_headless_chromium_ready_when_linux_shell_installed(monkeypatch, tmp_path: Path):
+    shell = tmp_path / "chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell"
+    shell.parent.mkdir(parents=True)
+    shell.write_text("", encoding="utf-8")
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
+    monkeypatch.setattr("browser_session._uvx_patchright_headless_revision", lambda: "1243")
+
+    assert headless_chromium_ready() is True
+    assert headless_chromium_ready_for_collect() is True
+    assert headless_chromium_executable_for_collect() == shell
+
+
 def test_headless_chromium_missing_when_not_installed(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path))
     assert headless_chromium_ready() is False

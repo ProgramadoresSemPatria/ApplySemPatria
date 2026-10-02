@@ -31,6 +31,7 @@ def linkedin_collect_headless() -> bool:
 HEADLESS_SHELL_EXECUTABLE_CANDIDATES = (
     "chrome-headless-shell-mac-arm64/chrome-headless-shell",
     "chrome-headless-shell-mac-x64/chrome-headless-shell",
+    "chrome-headless-shell-linux64/chrome-headless-shell",
     "chrome-linux/headless_shell",
     "chrome-win/headless_shell.exe",
 )

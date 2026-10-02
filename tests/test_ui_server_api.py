@@ -27,6 +27,29 @@ def _post_json(url: str, payload: dict) -> tuple[int, dict]:
         return e.code, json.loads(e.read().decode())
 
 
+def test_ui_server_uses_default_browser_on_linux_for_safari_option(monkeypatch, tmp_path, capsys):
+    import ui_server
+
+    (tmp_path / "index.html").write_text("test", encoding="utf-8")
+    monkeypatch.setattr(ui_server, "UI_DIR", tmp_path)
+    monkeypatch.setattr(ui_server.sys, "platform", "linux")
+    monkeypatch.setattr(ui_server.webbrowser, "open", lambda url: True)
+    calls: list[str] = []
+
+    class FakeHTTPServer:
+        def __init__(self, *_args):
+            pass
+
+        def serve_forever(self):
+            calls.append("serve_forever")
+
+    monkeypatch.setattr(ui_server, "ThreadingHTTPServer", FakeHTTPServer)
+
+    assert ui_server.serve(port=8765, open_browser="safari") == 0
+    assert calls == ["serve_forever"]
+    assert "Applications UI" in capsys.readouterr().out
+
+
 def test_meta_ui_approval(mock_ui_server):
     port, _captured = mock_ui_server
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/meta", timeout=5) as resp:
@@ -770,5 +793,4 @@ def test_resolve_python_prefers_project_venv(tmp_path, monkeypatch):
     monkeypatch.setattr("ui_server.ROOT", tmp_path)
     monkeypatch.delenv("JOBSEARCH_PYTHON", raising=False)
     assert _resolve_python() == str(venv_py)
-
 

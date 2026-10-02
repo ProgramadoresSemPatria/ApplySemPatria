@@ -59,7 +59,7 @@ upgrade: venv ## Re-run pip install after git pull
 
 .PHONY: browser
 browser: install ## Install Patchright Chromium (LinkedIn / forms)
-	$(VENV)/bin/patchright install chromium
+	PLAYWRIGHT_BROWSERS_PATH="$(HOME)/.linkedin-mcp/patchright-browsers" $(VENV)/bin/patchright install chromium
 
 .PHONY: bootstrap
 bootstrap: ## Copy examples/tracks/$(TRACK) → tracks/$(TRACK) (skips existing)
