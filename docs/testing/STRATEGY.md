@@ -15,7 +15,7 @@
 
 ```bash
 pip install -r requirements-dev.txt
-patchright install chromium
+PLAYWRIGHT_BROWSERS_PATH="$HOME/.linkedin-mcp/patchright-browsers" patchright install chromium
 
 ./scripts/run_tests.sh verify-hars   # HAR JSON integrity only
 ./scripts/run_tests.sh unit          # ~85 tests
