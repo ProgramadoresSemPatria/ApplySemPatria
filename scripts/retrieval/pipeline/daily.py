@@ -448,7 +448,12 @@ def main() -> int:
     parser.add_argument(
         "--skip-discover",
         action="store_true",
-        help="Skip job-board discover (use with catch-up when posts/jobs already ran)",
+        help="Skip job-board discover (default for daily ingestion)",
+    )
+    parser.add_argument(
+        "--with-boards",
+        action="store_true",
+        help="Run job-board discover (RemoteOK, Himalayas, etc.) — off by default",
     )
     parser.add_argument(
         "--table-only",
@@ -475,7 +480,9 @@ def main() -> int:
 
     skip_linkedin = args.skip_linkedin or args.catch_up_jobs or args.table_only
     skip_linkedin_jobs = args.skip_linkedin_jobs or args.table_only
-    skip_discover = args.skip_discover or args.catch_up_jobs or args.table_only
+    skip_discover = (
+        args.skip_discover or args.catch_up_jobs or args.table_only or not args.with_boards
+    )
 
     result = run_daily_research(
         track=args.track,

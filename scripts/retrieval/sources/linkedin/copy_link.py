@@ -282,7 +282,7 @@ async def copy_post_link_from_card(page: Any, card: Any, *, timeout_ms: int = 80
 
     try:
         await copy_btn.click(timeout=timeout_ms)
-        await asyncio.sleep(0.35)
+        await asyncio.sleep(0.08)
         url = await page.evaluate("() => navigator.clipboard.readText()")
     except Exception:
         url = ""
@@ -347,7 +347,7 @@ async def copy_post_link_for_author(page: Any, author: str, *, timeout_ms: int =
                 await page.keyboard.press("Escape")
                 continue
             await copy_btn.click(timeout=timeout_ms)
-            await asyncio.sleep(0.35)
+            await asyncio.sleep(0.08)
             raw = await page.evaluate(
                 "() => window.__lastCopiedText || (navigator.clipboard && navigator.clipboard.readText ? '' : '')"
             )

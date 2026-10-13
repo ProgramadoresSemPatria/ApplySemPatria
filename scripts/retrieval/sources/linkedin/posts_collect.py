@@ -60,7 +60,9 @@ RUNS = ROOT / "runs"
 TZ = ZoneInfo("America/Sao_Paulo")
 
 WHEEL_DELTA = 2000
-SCROLL_PAUSE = 1.2
+# Minimal pause between scrolls (DOM catch-up only — no anti-bot jitter).
+SCROLL_PAUSE = 0.12
+PAGE_SETTLE_SEC = 0.35
 MAX_STALE = 6
 MAX_SCROLLS = 120
 
@@ -228,7 +230,7 @@ async def collect_feed_text(
 
         await page.goto(url, wait_until="domcontentloaded", timeout=90000)
         await page.wait_for_selector("main", timeout=30000)
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(PAGE_SETTLE_SEC)
 
         initial = await page.locator("main").inner_text(timeout=15000)
         if "No results found" in initial and initial.count("Feed post") == 0:

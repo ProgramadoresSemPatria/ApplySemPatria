@@ -72,3 +72,29 @@ def test_run_daily_research_table_only(monkeypatch, tmp_path):
     result = dp.run_daily_research(table_only=True, skip_linkedin=True, skip_discover=True)
     assert result["ok"] is True
     assert result["day"] == "2026-09-10"
+
+
+def test_main_skips_board_discover_by_default(monkeypatch):
+    captured: dict = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+        return {"ok": True, "message": "ok"}
+
+    monkeypatch.setattr(dp, "run_daily_research", fake_run)
+    monkeypatch.setattr("sys.argv", ["daily_research.py", "--since", "7d"])
+    assert dp.main() == 0
+    assert captured.get("skip_discover") is True
+
+
+def test_main_with_boards_enables_discover(monkeypatch):
+    captured: dict = {}
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+        return {"ok": True, "message": "ok"}
+
+    monkeypatch.setattr(dp, "run_daily_research", fake_run)
+    monkeypatch.setattr("sys.argv", ["daily_research.py", "--with-boards"])
+    assert dp.main() == 0
+    assert captured.get("skip_discover") is False

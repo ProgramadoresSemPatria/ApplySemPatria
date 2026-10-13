@@ -40,6 +40,7 @@ def spawn_daily_research(
     since: str,
     skip_linkedin: bool = False,
     skip_linkedin_jobs: bool = False,
+    skip_discover: bool = True,
     table_only: bool = False,
 ) -> subprocess.Popen[str]:
     """Launch daily research in a detached subprocess (survives UI server restarts)."""
@@ -59,6 +60,8 @@ def spawn_daily_research(
         cmd.append("--skip-linkedin")
     if skip_linkedin_jobs:
         cmd.append("--skip-linkedin-jobs")
+    if skip_discover:
+        cmd.append("--skip-discover")
     if table_only:
         cmd.append("--table-only")
 
@@ -1002,6 +1005,7 @@ class ApplicationsUIHandler(BaseHTTPRequestHandler):
                     since=since,
                     skip_linkedin=skip_linkedin or same_day_refresh,
                     skip_linkedin_jobs=bool(body.get("skip_linkedin_jobs")),
+                    skip_discover=not bool(body.get("with_boards")),
                     table_only=table_only,
                 )
             except OSError as exc:

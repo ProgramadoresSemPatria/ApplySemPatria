@@ -967,14 +967,14 @@
         <button type="button" class="chip active" data-filter="all">All</button>
         <button type="button" class="chip chip-source" data-source="linkedin_posts">LinkedIn posts</button>
         <button type="button" class="chip chip-source" data-source="linkedin_jobs">LinkedIn jobs</button>
-        <button type="button" class="chip chip-source" data-source="himalayas">Himalayas</button>
-        <button type="button" class="chip chip-source" data-source="google">Google</button>
-        <button type="button" class="chip chip-source" data-source="remoteok">RemoteOK</button>
-        <button type="button" class="chip chip-source" data-source="weworkremotely">We Work Remotely</button>
-        <button type="button" class="chip chip-source" data-source="opentoworkremote">Open To Work Remote</button>
-        <button type="button" class="chip chip-source" data-source="wellfound">Wellfound</button>
-        <button type="button" class="chip chip-source" data-source="defi">DeFi Jobs</button>
-        <button type="button" class="chip chip-source" data-source="f6s">F6S</button>
+        <button type="button" class="chip chip-source chip-external" data-source="himalayas" title="Open Himalayas in a new tab (browse there — daily ingestion is LinkedIn only)">Himalayas ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="google" title="Open Google job search in a new tab">Google ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="remoteok" title="Open RemoteOK in a new tab">RemoteOK ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="weworkremotely" title="Open We Work Remotely in a new tab">We Work Remotely ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="opentoworkremote" title="Open Open To Work Remote in a new tab">Open To Work Remote ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="wellfound" title="Open Wellfound in a new tab">Wellfound ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="defi" title="Open DeFi Jobs in a new tab">DeFi Jobs ↗</button>
+        <button type="button" class="chip chip-source chip-external" data-source="f6s" title="Open F6S jobs in a new tab">F6S ↗</button>
         <button type="button" class="chip" data-filter="linkedin_eligible">Best fit</button>
         <button type="button" class="chip" data-filter="linkedin_review">Needs review</button>
         <button type="button" class="chip" data-filter="posted_24h">Posted 24h</button>
@@ -1136,10 +1136,28 @@
 
     const RESEARCH_STEP_LABELS = {
       starting: "Starting research…",
-      linkedin_collect: "Collecting LinkedIn posts — can take 15–30+ minutes",
+      linkedin_collect: "Collecting LinkedIn posts",
       linkedin_jobs_collect: "Collecting LinkedIn jobs (pagination)",
       discover: "Discovering job boards",
       generate_table: "Building today's apply table",
+    };
+
+    /** Board filters open the site in a new tab; ingestion pipeline is LinkedIn-only. */
+    const EXTERNAL_BOARD_SOURCES = {
+      himalayas: { url: "https://himalayas.app/jobs", label: "Himalayas" },
+      google: {
+        url: "https://www.google.com/search?q=remote+AI+engineer+agentic+jobs",
+        label: "Google",
+      },
+      remoteok: { url: "https://remoteok.com/", label: "RemoteOK" },
+      weworkremotely: {
+        url: "https://weworkremotely.com/categories/remote-programming-jobs",
+        label: "We Work Remotely",
+      },
+      opentoworkremote: { url: "https://opentoworkremote.com/", label: "Open To Work Remote" },
+      wellfound: { url: "https://wellfound.com/jobs", label: "Wellfound" },
+      defi: { url: "https://www.defi.jobs/", label: "DeFi Jobs" },
+      f6s: { url: "https://www.f6s.com/jobs", label: "F6S" },
     };
 
     let researchPollTimer = null;
@@ -2236,6 +2254,14 @@
     document.getElementById("toolbarFilters").addEventListener("click", e => {
       const chip = e.target.closest(".chip[data-source], .chip[data-filter]");
       if (!chip) return;
+      const ext = chip.dataset.source ? EXTERNAL_BOARD_SOURCES[chip.dataset.source] : null;
+      if (ext) {
+        window.open(ext.url, "_blank", "noopener,noreferrer");
+        showToast(
+          `${ext.label}: opened in a new tab. Daily ingestion here is LinkedIn only; showing saved ${ext.label} roles below if any.`,
+          true
+        );
+      }
       if (chip.classList.contains("active")) return;
       document.querySelectorAll("#toolbarFilters .chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
