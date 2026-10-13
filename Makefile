@@ -138,6 +138,13 @@ reset-data: ## Delete local data; backup first (CONFIRM=1 required)
 audit-ingestion: ## Snapshot research status + registry (see logs/ingestion-watch.log)
 	bash scripts/ingestion_audit.sh
 
+.PHONY: support-bundle telemetry-doctor
+support-bundle: require-install ## Redacted debug JSON under runs/ (share with maintainers)
+	@$(PYTHON) scripts/support_bundle.py
+
+telemetry-doctor: ## Check secrets/telemetry.json (Firebase / GA4 opt-in)
+	@PYTHONPATH=scripts $(PYTHON) -c "import json,sys; from pathlib import Path; from retrieval.shared.telemetry import public_config, telemetry_enabled; p=Path('secrets/telemetry.json'); print('telemetry.json:', 'found' if p.is_file() else 'missing (copy examples/telemetry.firebase.json)'); print('enabled:', telemetry_enabled()); print('web SDK config:', json.dumps(public_config(), indent=2)); sys.exit(0 if (not p.is_file()) or telemetry_enabled() or not json.loads(p.read_text()).get('enabled') else 1)"
+
 fresh-start: reset-data bootstrap ## Wipe data + copy track template (CONFIRM=1)
 	@echo ""
 	@echo "Fresh track template under tracks/$(TRACK)/"

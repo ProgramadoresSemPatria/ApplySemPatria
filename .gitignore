@@ -1,3 +1,7 @@
+# Local jobsearch settings (optional; copy from examples/)
+jobsearch.settings.yaml
+jobsearch.settings.json
+
 # Secrets & credentials
 secrets/
 .env

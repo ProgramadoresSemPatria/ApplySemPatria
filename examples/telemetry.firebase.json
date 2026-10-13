@@ -1,0 +1,15 @@
+{
+  "_comment": "Copy to secrets/telemetry.json and set enabled: true after Firebase setup (see docs/telemetry/FIREBASE_SETUP.md).",
+  "enabled": false,
+  "measurement_id": "G-XXXXXXXXXX",
+  "api_secret": "paste-from-ga4-web-stream-api-secrets",
+  "firebase_web": {
+    "apiKey": "AIza...",
+    "authDomain": "your-project.firebaseapp.com",
+    "projectId": "your-project-id",
+    "storageBucket": "your-project-id.appspot.com",
+    "messagingSenderId": "123456789",
+    "appId": "1:123456789:web:abc123",
+    "measurementId": "G-XXXXXXXXXX"
+  }
+}
