@@ -26,6 +26,7 @@ help: ## Show targets (default)
 	@echo "  make quickstart && make onboarding && make ui"
 	@echo "  make discover SINCE=14d"
 	@echo "  make ui PORT=8765"
+	@echo "  make stop          # free port 8765 + stop ingestion workers"
 	@echo "  make reset-data CONFIRM=1   # wipe local data (backup first)"
 	@echo "  make fresh-start CONFIRM=1  # reset + bootstrap track template"
 
@@ -92,6 +93,41 @@ table: require-install ## Refresh applications table + UI snapshot
 
 ui: require-install ## Applications dashboard (PORT=8765 default)
 	$(JOBSEARCH) ui --port $(PORT)
+
+.PHONY: stop-ui stop-ingestion stop
+stop-ui: ## Stop applications UI listening on PORT= (default 8765)
+	@pids=$$(lsof -ti tcp:$(PORT) 2>/dev/null || true); \
+	if [ -z "$$pids" ]; then \
+	  echo "○ No process on port $(PORT)"; \
+	  exit 0; \
+	fi; \
+	echo "Stopping process(es) on port $(PORT): $$pids"; \
+	kill $$pids 2>/dev/null || true; \
+	sleep 1; \
+	still=$$(lsof -ti tcp:$(PORT) 2>/dev/null || true); \
+	if [ -n "$$still" ]; then \
+	  echo "Force stop: $$still"; \
+	  kill -9 $$still 2>/dev/null || true; \
+	fi; \
+	if lsof -ti tcp:$(PORT) >/dev/null 2>&1; then \
+	  echo "✗ Port $(PORT) still in use"; \
+	  exit 1; \
+	fi; \
+	echo "✓ Port $(PORT) is free"
+
+stop-ingestion: ## Stop daily_research / LinkedIn collect workers (UI keeps running)
+	@stopped=0; \
+	for pat in daily_research.py linkedin-deep-collect.sh linkedin-jobs-collect.sh; do \
+	  pids=$$(pgrep -f "$$pat" 2>/dev/null || true); \
+	  if [ -n "$$pids" ]; then \
+	    echo "Stopping $$pat ($$pids)"; \
+	    kill $$pids 2>/dev/null || true; \
+	    stopped=1; \
+	  fi; \
+	done; \
+	if [ "$$stopped" = 0 ]; then echo "○ No ingestion workers running"; fi
+
+stop: stop-ingestion stop-ui ## Stop ingestion workers and UI server (then: make ui)
 
 tracks: require-install ## List tracks and readiness
 	$(JOBSEARCH) tracks list
