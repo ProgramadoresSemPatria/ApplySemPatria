@@ -2,7 +2,14 @@
 # LinkedIn browser session setup (cookies for Patchright — no Cursor MCP required).
 set -euo pipefail
 
-UVX="${UVX:-/Users/caio/.local/bin/uvx}"
+if [[ -n "${UVX:-}" ]] && [[ -x "$UVX" ]]; then
+  :
+elif command -v uvx >/dev/null 2>&1; then
+  UVX="$(command -v uvx)"
+else
+  echo "✗ uvx not found. Install uv or set UVX to your uvx binary." >&2
+  exit 1
+fi
 # Cookie helper from upstream package; we do NOT use LinkedIn MCP in Cursor.
 PKG="mcp-server-linkedin@4.23.1"
 

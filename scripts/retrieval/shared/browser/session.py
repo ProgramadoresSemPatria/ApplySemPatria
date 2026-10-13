@@ -9,6 +9,7 @@ from __future__ import annotations
 import functools
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -31,6 +32,7 @@ def linkedin_collect_headless() -> bool:
 HEADLESS_SHELL_EXECUTABLE_CANDIDATES = (
     "chrome-headless-shell-mac-arm64/chrome-headless-shell",
     "chrome-headless-shell-mac-x64/chrome-headless-shell",
+    "chrome-headless-shell-linux64/chrome-headless-shell",
     "chrome-linux/headless_shell",
     "chrome-win/headless_shell.exe",
 )
@@ -41,6 +43,21 @@ TEST_CHROME_EXECUTABLE = (
     / "chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 )
 
+def _windows_chrome_candidates() -> tuple[Path, ...]:
+    if sys.platform != "win32":
+        return ()
+    local = os.environ.get("LOCALAPPDATA", "")
+    prog = os.environ.get("ProgramFiles", r"C:\Program Files")
+    prog86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+    out: list[Path] = []
+    for base in (prog, prog86):
+        if base:
+            out.append(Path(base) / "Google/Chrome/Application/chrome.exe")
+    if local:
+        out.append(Path(local) / "Google/Chrome/Application/chrome.exe")
+    return tuple(out)
+
+
 REAL_CHROME_CANDIDATES = (
     Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
     Path("/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"),
@@ -48,6 +65,8 @@ REAL_CHROME_CANDIDATES = (
     Path("/usr/bin/google-chrome"),
     Path("/usr/bin/google-chrome-stable"),
     Path("/usr/bin/chromium-browser"),
+    Path("/usr/bin/chromium"),
+    *_windows_chrome_candidates(),
 )
 
 
@@ -79,7 +98,10 @@ def _uvx_executable() -> Path | None:
         path = Path(raw).expanduser()
         return path if path.is_file() else None
     default = Path.home() / ".local/bin/uvx"
-    return default if default.is_file() else None
+    if default.is_file():
+        return default
+    on_path = shutil.which("uvx")
+    return Path(on_path) if on_path else None
 
 
 @functools.lru_cache(maxsize=1)
@@ -130,27 +152,35 @@ def headless_chromium_executable_for_collect() -> Path | None:
 
 
 def headless_chromium_ready_for_collect() -> bool:
+    """True when LinkedIn collect can launch a browser on this machine."""
     if not linkedin_collect_headless():
-        return resolve_chrome_executable() is not None or bool(
-            os.environ.get("JOBSEARCH_BROWSER_CHANNEL", "chrome").strip()
-        )
+        if resolve_chrome_executable() is not None:
+            return True
+        # Visible Patchright Chromium when Google Chrome is not installed.
+        return headless_chromium_executable_for_collect() is not None
     return headless_chromium_executable_for_collect() is not None
 
 
 def headless_chromium_missing_message(*, for_collect: bool = False) -> str:
     root = headless_browsers_root()
+    if for_collect and not linkedin_collect_headless():
+        return (
+            "Visible LinkedIn collect needs Google Chrome or Patchright Chromium. "
+            "Install Chrome, run `make browser` from the repo, set JOBSEARCH_CHROME_EXECUTABLE, "
+            "or unset JOBSEARCH_COLLECT_HEADED to use headless ingest."
+        )
     if for_collect:
         rev = _uvx_patchright_headless_revision()
         if rev:
             return (
                 "Patchright headless Chromium for LinkedIn collect is not installed "
                 f"(expected {root}/chromium_headless_shell-{rev}). "
-                f"Run: PLAYWRIGHT_BROWSERS_PATH={root} uvx --with patchright patchright install chromium"
+                "Run: make browser  (or: patchright install chromium)"
             )
     return (
         "Patchright headless Chromium is not installed "
         f"(expected under {root}/chromium_headless_shell-*). "
-        f"Run: PLAYWRIGHT_BROWSERS_PATH={root} patchright install chromium"
+        "Run: make browser  (or: patchright install chromium)"
     )
 
 

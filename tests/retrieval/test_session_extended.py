@@ -22,6 +22,20 @@ def test_linkedin_collect_headless_env(monkeypatch):
     assert linkedin_collect_headless() is False
 
 
+def test_headed_collect_ready_without_chrome_requires_bundled(monkeypatch):
+    from browser_session import headless_chromium_ready_for_collect, resolve_chrome_executable
+
+    monkeypatch.setenv("JOBSEARCH_COLLECT_HEADED", "1")
+    monkeypatch.setattr("browser_session.resolve_chrome_executable", lambda: None)
+    monkeypatch.setattr("browser_session.headless_chromium_executable_for_collect", lambda: None)
+    assert headless_chromium_ready_for_collect() is False
+    monkeypatch.setattr(
+        "browser_session.headless_chromium_executable_for_collect",
+        lambda: "/fake/chromium",
+    )
+    assert headless_chromium_ready_for_collect() is True
+
+
 def test_browser_launch_kwargs():
     kw = browser_launch_kwargs(headless=True)
     assert kw.get("headless") is True
