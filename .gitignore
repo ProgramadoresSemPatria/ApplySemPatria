@@ -64,3 +64,6 @@ patchright-profile/
 .DS_Store
 .idea/
 .vscode/
+
+jobsearch.settings.yaml
+jobsearch.settings.json

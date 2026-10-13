@@ -37,7 +37,10 @@ When you need LinkedIn or form apply in the browser: **`make browser`** once.
 | Health check | `make doctor` |
 | List tracks | `make tracks` |
 | Reinstall deps after `git pull` | `make upgrade` then `make doctor` |
-| Install Chromium via CLI | `make install-cli` |
+| Install Chromium via CLI | `make install-cli` or `make browser` |
+| Broken `.venv` / install fails | `make clean-venv` then `make quickstart` |
+| Ingestion health snapshot | `make audit-ingestion` |
+| Download debug report (CLI) | `make support-bundle` — or **Download debug report** in the UI |
 
 ## Reset local data (bugs / first-run replay)
 
