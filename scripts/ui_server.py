@@ -127,7 +127,8 @@ def _browser_deps_ok() -> tuple[bool, str]:
         return False, (
             "Browser automation unavailable (patchright missing). "
             f"Run: {ROOT / '.venv-test' / 'bin' / 'pip'} install -r requirements-dev.txt "
-            "&& patchright install chromium"
+            f"&& PLAYWRIGHT_BROWSERS_PATH={Path.home() / '.linkedin-mcp' / 'patchright-browsers'} "
+            "patchright install chromium"
         )
     if not headless_chromium_ready():
         return False, headless_chromium_missing_message()
@@ -1264,10 +1265,13 @@ def serve(*, port: int = 8765, open_browser: str | None = "safari") -> int:
 
     if open_browser:
         browser = open_browser.lower()
-        if browser == "safari":
-            subprocess.run(["open", "-a", "Safari", url], check=False)
-        else:
-            webbrowser.open(url)
+        try:
+            if browser == "safari" and sys.platform == "darwin":
+                subprocess.run(["open", "-a", "Safari", url], check=False)
+            elif not webbrowser.open(url):
+                print(f"Could not open a browser automatically; visit {url}")
+        except (OSError, webbrowser.Error) as exc:
+            print(f"Could not open a browser automatically: {exc}. Visit {url}")
 
     try:
         httpd.serve_forever()

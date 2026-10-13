@@ -126,7 +126,7 @@ PyPI-only `pip install jobsearch-cli` without a clone is **not** supported yet (
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[browser,gmail]"
-patchright install chromium
+PLAYWRIGHT_BROWSERS_PATH="$HOME/.linkedin-mcp/patchright-browsers" patchright install chromium
 bash scripts/bootstrap_local.sh ai-engineer
 jobsearch onboarding --track ai-engineer
 ```
