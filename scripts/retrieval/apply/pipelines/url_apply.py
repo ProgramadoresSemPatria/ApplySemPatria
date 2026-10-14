@@ -34,6 +34,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import form_answers  # noqa: E402
 from browser_session import close_session, launch_context  # noqa: E402
+from cover_letter import overlay_form_cover  # noqa: E402
 from flow_runner import resolve_recipe, run_recipe  # noqa: E402
 from track_store import load_profile as load_track_profile  # noqa: E402
 
@@ -502,7 +503,11 @@ async def run(
     role: str = "",
     track_id: str | None = None,
 ) -> None:
-    profile = load_profile(track_id)
+    profile = overlay_form_cover(
+        load_profile(track_id),
+        {"role": role, "company": company, "url": url, "track": track_id or ""},
+        track_id=track_id,
+    )
     pw, browser, ctx = await launch_context(headless=False)
     try:
         page = await ctx.new_page()

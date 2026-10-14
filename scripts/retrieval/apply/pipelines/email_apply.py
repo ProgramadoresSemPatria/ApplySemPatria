@@ -29,6 +29,7 @@ from apply_email import apply_email_for_job  # noqa: E402
 from audit_log import error as audit_error  # noqa: E402
 from audit_log import info as audit_info  # noqa: E402
 from audit_log import warn as audit_warn  # noqa: E402
+from cover_letter import prepare_for_channel  # noqa: E402
 from registry import job_key, load_registry  # noqa: E402
 from track_store import filter_jobs_by_track, load_email_config, resolve_track  # noqa: E402
 
@@ -125,7 +126,20 @@ def render_body(cfg: dict, job: dict[str, Any], template_text: str) -> str:
 def build_message(cfg: dict, job: dict[str, Any], to_email: str) -> MIMEMultipart:
     template_path = ROOT / cfg["body_template_file"]
     template_text = template_path.read_text(encoding="utf-8")
+    resume_path = Path(cfg["resume_path"]).expanduser()
+    if not resume_path.exists():
+        raise FileNotFoundError(f"Resume not found: {resume_path}")
+
     body = render_body(cfg, job, template_text)
+    decision = prepare_for_channel(
+        job,
+        channel="email",
+        email_cfg=cfg,
+        track_id=job.get("track"),
+        root=ROOT,
+    )
+    if decision and decision.get("injected") and decision.get("text"):
+        body = str(decision["text"])
     role = job.get("role") or "AI Engineer"
     subject = cfg["subject_template"].format(role=role)
 
@@ -135,13 +149,11 @@ def build_message(cfg: dict, job: dict[str, Any], to_email: str) -> MIMEMultipar
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain", "utf-8"))
 
-    resume_path = Path(cfg["resume_path"]).expanduser()
-    if not resume_path.exists():
-        raise FileNotFoundError(f"Resume not found: {resume_path}")
     with resume_path.open("rb") as fh:
         part = MIMEApplication(fh.read(), _subtype="pdf")
     part.add_header("Content-Disposition", "attachment", filename=resume_path.name)
     msg.attach(part)
+    msg.cover_decision = decision  # type: ignore[attr-defined]
     return msg
 
 
@@ -423,9 +435,18 @@ def main() -> int:
             return 1
 
         subject = msg["Subject"]
+        cover_decision = getattr(msg, "cover_decision", None)
         print(f"\n{'[DRY RUN] ' if dry_run else ''}To: {to_email}")
         print(f"  Subject: {subject}")
         print(f"  Company: {job.get('company')} | Role: {job.get('role')}")
+        if isinstance(cover_decision, dict):
+            print(
+                "  Cover: "
+                f"injected={cover_decision.get('injected')} "
+                f"fallback={cover_decision.get('used_fallback')} "
+                f"score={cover_decision.get('quality_score')} "
+                f"failed={cover_decision.get('failed_checks')}"
+            )
 
         if dry_run:
             audit_info(
@@ -453,17 +474,25 @@ def main() -> int:
             )
             continue
 
-        sent_log.setdefault("sent", []).append(
-            {
-                "job_key": job_key(job),
-                "company": job.get("company"),
-                "role": job.get("role"),
-                "to": to_email,
-                "subject": subject,
-                "gmail_message_id": msg_id,
-                "sent_at": datetime.now(TZ).isoformat(),
+        sent_entry: dict[str, Any] = {
+            "job_key": job_key(job),
+            "company": job.get("company"),
+            "role": job.get("role"),
+            "to": to_email,
+            "subject": subject,
+            "gmail_message_id": msg_id,
+            "sent_at": datetime.now(TZ).isoformat(),
+        }
+        if isinstance(cover_decision, dict):
+            sent_entry["cover_letter"] = {
+                "passed_guardrails": cover_decision.get("passed_guardrails"),
+                "failed_checks": cover_decision.get("failed_checks"),
+                "quality_score": cover_decision.get("quality_score"),
+                "used_fallback": cover_decision.get("used_fallback"),
+                "injected": cover_decision.get("injected"),
+                "model": cover_decision.get("model"),
             }
-        )
+        sent_log.setdefault("sent", []).append(sent_entry)
         save_sent_log(sent_path, sent_log)
         log_applika(cfg, job, to_email)
         sent_count += 1
