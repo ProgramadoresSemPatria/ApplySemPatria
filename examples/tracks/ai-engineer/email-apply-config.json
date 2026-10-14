@@ -14,5 +14,16 @@
   "log_to_applika": false,
   "email_apply_enabled": false,
   "email_apply_mode": "manual",
-  "email_message_confirmed": false
+  "email_message_confirmed": false,
+  "cover_letter": {
+    "enabled": false,
+    "auto_inject": true,
+    "max_words": 220,
+    "min_words": 120,
+    "quality_threshold": 0.7,
+    "allow_fallback": true,
+    "language": "auto",
+    "model": "gpt-4o-mini",
+    "channels": { "email": true, "form": false, "linkedin": false }
+  }
 }
